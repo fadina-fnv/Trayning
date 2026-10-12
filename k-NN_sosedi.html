@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Метод k-ближайших соседей: объяснение и разбор примеров</title>
+<style>
+:root{
+  --ink:#14213D; --paper:#FFFFFF; --wash:#F1F5FB; --line:#B9C5D8; --muted:#4A5873;
+  --blue:#0B6BC4; --green:#12A14B; --rose:#F4908C; --mint:#C5E0B4; --amber:#FFD966;
+  --ok:#1B7F3B; --bad:#B3261E;
+  --text:"Times New Roman",Times,serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--text);line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid #FFB300;outline-offset:2px}
+
+.top{background:var(--ink);color:#fff;padding:.9rem 1.5rem 0}
+.top-in,.wrap{max-width:1320px;margin:0 auto}
+.top h1{margin:0;font-size:2.1rem;line-height:1.15}
+.top p{margin:.15rem 0 .8rem;font-size:1.05rem;color:#D5DEEE}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap}
+.tab{border:0;border-radius:10px 10px 0 0;padding:.6rem 1.4rem;font-size:1.15rem;font-weight:bold;background:#31426B;color:#fff}
+.tab[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+
+main{padding:1.2rem 1.5rem 3rem}
+section.panel[hidden]{display:none}
+h2{font-size:1.6rem;line-height:1.2;margin:2rem 0 .6rem;padding-bottom:.25rem;border-bottom:3px solid var(--ink)}
+.panel>.wrap>h2:first-child{margin-top:.4rem}
+h3{font-size:1.2rem;margin:1rem 0 .4rem}
+p{margin:.5rem 0}
+.lead{font-size:1.2rem;max-width:62rem}
+
+.btn{border:2px solid var(--ink);background:#fff;border-radius:8px;padding:.45rem .9rem;font-size:1rem;font-weight:bold}
+.btn:hover{background:var(--wash)}
+.btn.primary{background:var(--ink);color:#fff;font-size:1.1rem;padding:.6rem 1rem}
+.btn.primary:hover{background:#22345E}
+.btn:disabled{opacity:.5;cursor:default}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:2px solid var(--ink);background:#fff;padding:.35rem .8rem;font-weight:bold}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.stepper{display:inline-flex;align-items:center;border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.stepper button{border:0;background:#fff;width:2.4rem;height:2.2rem;font-size:1.3rem;font-weight:bold}
+.stepper button:hover{background:var(--wash)}
+.stepper output{min-width:4.2rem;text-align:center;font-weight:bold;font-size:1.15rem;background:var(--ink);color:#fff;height:2.2rem;line-height:2.2rem}
+label.chk{display:inline-flex;gap:.4rem;align-items:center;font-size:1rem}
+label.chk input{width:1.2rem;height:1.2rem}
+
+/* схема */
+.scheme-box{border:2px solid var(--line);border-radius:12px;padding:.6rem;background:#fff;overflow-x:auto}
+.scheme-box svg{display:block;width:100%;min-width:900px;height:auto;font-family:var(--text)}
+.scheme-tools{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
+#scheme .node,#scheme .edge{transition:opacity .35s}
+#scheme.focus .node:not(.hot),#scheme.focus .edge:not(.hot),#scheme.focus .deco{opacity:.22}
+#scheme.focus .node.hot rect{stroke:var(--ink);stroke-width:5}
+#scheme.focus .edge.hot{stroke:var(--ink);stroke-width:5}
+.path-note{font-size:1.15rem;font-weight:bold}
+.path-note span{padding:.1rem .5rem;border-radius:6px}
+
+/* термины */
+.terms{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin:.8rem 0}
+.term{border-left:8px solid var(--blue);background:var(--wash);padding:.6rem .8rem;border-radius:0 8px 8px 0}
+.term b{display:block;font-size:1.2rem}
+
+/* демонстрация */
+.demo{display:grid;grid-template-columns:minmax(0,640px) minmax(0,1fr);gap:1.4rem;align-items:start}
+.plane{border:2px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden}
+.plane svg{display:block;width:100%;height:auto;font-family:var(--text);cursor:crosshair;user-select:none}
+.legend{display:flex;gap:1.2rem;flex-wrap:wrap;margin:.4rem 0;font-weight:bold}
+.legend svg{width:1.3rem;height:1.3rem;vertical-align:-.25rem;margin-right:.25rem}
+.side .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
+.side .row>span.lbl{font-weight:bold}
+.steps{list-style:none;margin:.8rem 0;padding:0;counter-reset:st}
+.steps li{counter-increment:st;position:relative;padding:.45rem .7rem .45rem 3rem;border:2px solid var(--line);border-radius:8px;margin-bottom:.35rem;background:#fff}
+.steps li::before{content:counter(st);position:absolute;left:.6rem;top:.4rem;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--line);color:var(--ink);font-weight:bold;text-align:center;line-height:1.8rem}
+.steps li.now{border-color:var(--ink);background:#FFF4C2;font-weight:bold}
+.steps li.now::before{background:var(--ink);color:#fff}
+.msg{border:2px solid var(--ink);border-radius:8px;padding:.6rem .8rem;background:var(--wash);font-size:1.1rem;min-height:5.4rem}
+.hint{color:var(--muted);font-size:.95rem}
+table{border-collapse:collapse;width:100%;font-size:1rem}
+th,td{border:1.5px solid var(--line);padding:.25rem .5rem;text-align:center}
+th{background:var(--ink);color:#fff}
+td.num{font-family:var(--mono);font-size:.9rem}
+tr.cur td{outline:3px solid var(--ink);outline-offset:-3px;font-weight:bold}
+.tables{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.4rem;margin-top:1rem;align-items:start}
+.tbl-scroll{max-height:24rem;overflow:auto;border-radius:8px}
+.mk svg{width:1.05rem;height:1.05rem;vertical-align:-.15rem;margin-right:.25rem}
+
+.formula{font-family:var(--mono);font-size:1.15rem;background:var(--wash);border-radius:8px;padding:.6rem .9rem;display:inline-block;margin:.3rem .6rem .3rem 0}
+.formula .rad{border-top:2px solid var(--ink);padding:0 .15rem}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem}
+ul.plain{margin:.3rem 0;padding-left:1.3rem}
+ul.plain li{margin:.3rem 0}
+
+/* разбор примеров */
+details.guide{border:2px solid var(--line);border-radius:10px;padding:.5rem .9rem;margin:.6rem 0 1rem;background:var(--wash)}
+details.guide summary{font-weight:bold;cursor:pointer;font-size:1.1rem}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.8rem;margin:.6rem 0 .3rem}
+.rules div{background:#fff;border-radius:8px;padding:.5rem .7rem;border:2px solid var(--line)}
+.ex-pick{margin:.2rem 0 1rem}
+.ex-tools{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
+#result{font-weight:bold;font-size:1.15rem;min-height:1.7rem}
+.pool{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;min-height:4rem;padding:.7rem;border:3px dashed var(--line);border-radius:12px;margin-bottom:1rem}
+.pool.empty::after{content:"Все карточки разложены. Нажмите «Проверить».";color:var(--muted);grid-column:1/-1;text-align:center;padding:.6rem}
+.card{border:2.5px solid var(--ink);border-radius:10px;background:#fff;padding:.55rem .75rem;font-size:1.05rem;line-height:1.3;text-align:left;cursor:grab}
+.card.sel{background:#FFF4C2;box-shadow:0 0 0 4px #FFB300}
+.card.ok{border-color:var(--ok);background:#E8F5EC}
+.card.bad{border-color:var(--bad);background:#FCEBEA}
+.card .mark{font-weight:bold;display:block;margin-top:.3rem}
+.card.ok .mark{color:var(--ok)} .card.bad .mark{color:var(--bad)}
+.card .why{display:block;margin-top:.2rem;font-size:.95rem;color:var(--ink)}
+.cols{display:grid;gap:1rem}
+.col{border:3px solid var(--ink);border-radius:12px;overflow:hidden;background:#fff;min-height:16rem;display:flex;flex-direction:column}
+.col.over,.col.ready:hover{box-shadow:0 0 0 5px #FFB300}
+.col header{padding:.5rem .8rem;border-bottom:3px solid var(--ink)}
+.col header b{font-size:1.4rem;display:block;line-height:1.2}
+.col header small{font-size:.95rem;display:block}
+.chip{display:inline-block;color:#fff;border-radius:999px;padding:0 .6rem;font-size:.85rem;font-weight:bold;margin-top:.25rem}
+.chip.sup{background:var(--blue)} .chip.unsup{background:#0C7C39}
+.col .list{padding:.6rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.col .list:empty::after{content:"Выберите карточку и щёлкните здесь";color:var(--muted);text-align:center;margin:auto;font-size:.95rem}
+
+@media (max-width:1000px){
+  html{font-size:18px}
+  .demo,.tables,.two{grid-template-columns:1fr}
+  .terms{grid-template-columns:1fr 1fr}
+  .pool{grid-template-columns:1fr}
+  .cols{grid-template-columns:1fr !important}
+}
+@media (prefers-reduced-motion:reduce){#scheme .node,#scheme .edge{transition:none}}
+@media print{.tabs,.btn,.seg,.stepper{display:none} section.panel[hidden]{display:block}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <h1>Метод k-ближайших соседей (k-NN)</h1>
+    <p>Информатика, 10 класс. Обучение с учителем, задача классификации</p>
+    <div class="tabs" role="tablist" aria-label="Разделы урока">
+      <button class="tab" role="tab" id="tab1" aria-controls="p1" aria-selected="true">Объяснение метода</button>
+      <button class="tab" role="tab" id="tab2" aria-controls="p2" aria-selected="false" tabindex="-1">Разбор примеров</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ======================= ВКЛАДКА 1 ======================= -->
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="tab1">
+<div class="wrap">
+
+  <h2>Где метод k-ближайших соседей на схеме машинного обучения</h2>
+  <div class="scheme-tools">
+    <button class="btn" id="btnFocus" aria-pressed="false">Показать путь к методу k-ближайших соседей</button>
+    <span class="path-note" id="pathNote" hidden>
+      <span style="background:var(--blue);color:#fff">с учителем</span> →
+      <span style="background:var(--rose)">классификация</span> →
+      <span style="background:var(--amber)">метод k-ближайших соседей</span>
+    </span>
+  </div>
+  <div class="scheme-box" id="schemeBox"></div>
+
+  <h2>Идея метода</h2>
+  <p class="lead">Метод k-ближайших соседей относит новый объект к тому классу, которого больше всего среди k самых близких к нему объектов с известным классом. Правило простое: посмотри на соседей и поступи как большинство.</p>
+  <div class="terms">
+    <div class="term"><b>Обучающая выборка</b>объекты, класс которых уже известен</div>
+    <div class="term"><b>Новый объект</b>объект, класс которого нужно определить</div>
+    <div class="term"><b>Число k</b>сколько ближайших соседей голосует; его задаёт человек</div>
+    <div class="term"><b>Голосование</b>побеждает класс, которого больше среди k соседей</div>
+  </div>
+
+  <h2>Алгоритм по шагам</h2>
+  <div class="demo">
+    <div>
+      <div class="plane"><svg id="plane" viewBox="0 0 640 640" role="img" aria-label="Координатная плоскость с объектами известных классов и новым объектом"></svg></div>
+      <div class="legend" id="legend"></div>
+      <p class="hint">Щёлкните любое место плоскости, чтобы переставить новый объект. В режиме «области классов» белым закрашены места, где голоса делятся поровну.</p>
+    </div>
+    <div class="side">
+      <div class="row"><span class="lbl">Объекты:</span>
+        <span class="seg" id="segSet">
+          <button data-set="eight" aria-pressed="true">8 объектов</button>
+          <button data-set="twenty" aria-pressed="false">20 объектов</button>
+          <button data-set="three" aria-pressed="false">3 класса</button>
+        </span>
+      </div>
+      <div class="row"><span class="lbl">Число соседей:</span>
+        <span class="stepper">
+          <button id="kMinus" aria-label="Уменьшить k">−</button>
+          <output id="kOut">k = 3</output>
+          <button id="kPlus" aria-label="Увеличить k">+</button>
+        </span>
+        <label class="chk"><input type="checkbox" id="chkRegions"> Показать области классов</label>
+      </div>
+      <ol class="steps" id="steps">
+        <li>Задать число k и взять новый объект.</li>
+        <li>Вычислить расстояния от нового объекта до всех объектов с известным классом.</li>
+        <li>Выбрать k ближайших соседей.</li>
+        <li>Провести голосование: новый объект получает класс большинства соседей.</li>
+      </ol>
+      <div class="row">
+        <button class="btn primary" id="btnStep">Шаг 2. Вычислить расстояния</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnAll">Сразу к ответу</button>
+        <button class="btn" id="btnReset">Сначала</button>
+      </div>
+      <div class="msg" id="msg" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="tables">
+    <div>
+      <h3 id="distTitle">Расстояния от нового объекта</h3>
+      <div class="tbl-scroll" id="distBox"></div>
+    </div>
+    <div>
+      <h3>Ответ при разных k</h3>
+      <div id="kBox"></div>
+      <p class="hint">Один и тот же новый объект может получить разный класс при разных k. Поэтому выбор k влияет на ответ.</p>
+    </div>
+  </div>
+
+  <h2>Формула и ограничения</h2>
+  <div class="two">
+    <div>
+      <h3>Расстояние от нового объекта (x; y) до объекта (x<sub>i</sub>; y<sub>i</sub>)</h3>
+      <div class="formula">d = √<span class="rad">(x − x<sub>i</sub>)² + (y − y<sub>i</sub>)²</span></div>
+      <h3>Чем метод отличается от k-средних</h3>
+      <ul class="plain">
+        <li>Классы объектов известны заранее: это обучение с учителем.</li>
+        <li>Число k означает количество соседей, а не количество групп.</li>
+        <li>Итераций нет: ответ получается за один проход.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Что важно помнить</h3>
+      <ul class="plain">
+        <li>Слишком маленькое k делает ответ зависимым от одной случайной точки. Проверьте: поставьте k = 1.</li>
+        <li>Слишком большое k отдаёт победу самому многочисленному классу.</li>
+        <li>Для двух классов k берут нечётным, иначе возможна ничья. Проверьте: поставьте k = 2 или k = 4.</li>
+        <li>Признаки должны быть в сопоставимых единицах, иначе признак с большими числами «перетянет» расстояние.</li>
+        <li>Все расчёты выполняются заново для каждого нового объекта, поэтому на больших данных метод работает медленно.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======================= ВКЛАДКА 2 ======================= -->
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="tab2" hidden>
+<div class="wrap">
+  <div class="ex-pick">
+    <span class="seg" id="segEx">
+      <button data-ex="tasks" aria-pressed="true">Какая это задача?</button>
+      <button data-ex="algos" aria-pressed="false">k-средних или k-ближайших соседей?</button>
+    </span>
+  </div>
+  <h2 id="exTitle"></h2>
+  <p class="lead" id="exLead"></p>
+  <details class="guide" id="exGuide"></details>
+
+  <div class="ex-tools">
+    <button class="btn primary" id="btnCheck">Проверить</button>
+    <button class="btn" id="btnAnswers">Показать правильные ответы</button>
+    <button class="btn" id="btnNew">Новые примеры</button>
+    <label class="chk"><input type="checkbox" id="chkInstant"> Проверять каждую карточку сразу</label>
+  </div>
+  <div id="result" aria-live="polite"></div>
+
+  <div class="pool" id="pool" aria-label="Карточки с примерами"></div>
+  <div class="cols" id="cols"></div>
+</div>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = v => v.toFixed(2).replace('.', ',');
+const fmtShort = v => Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : String(v).replace('.', ',');
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- вкладки (переключение только показывает и скрывает, состояние сохраняется) ---------- */
+const tabs = [$('#tab1'), $('#tab2')];
+function showTab(i) {
+  tabs.forEach((t, j) => {
+    t.setAttribute('aria-selected', j === i);
+    t.tabIndex = j === i ? 0 : -1;
+    $('#' + t.getAttribute('aria-controls')).hidden = j !== i;
+  });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => showTab(i));
+  t.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = (i + 1) % 2; showTab(n); tabs[n].focus(); }
+  });
+});
+
+/* ======================= СХЕМА ======================= */
+(function buildScheme() {
+  const INK = '#14213D';
+  const N = [
+    {id:'sup',  x:90,  y:112, w:250, h:88,  fill:'#0B6BC4', fg:'#fff', t:['С учителем'], s:['данные размечены:','известны правильные ответы']},
+    {id:'unsup',x:90,  y:312, w:250, h:80,  fill:'#12A14B', fg:'#fff', t:['Без учителя'], s:['данные не размечены:','ответов нет']},
+    {id:'semi', x:90,  y:404, w:250, h:92,  fill:'#8A909B', fg:'#fff', t:['С частичным','привлечением учителя'], s:['размечена лишь часть данных']},
+    {id:'rl',   x:90,  y:508, w:250, h:84,  fill:'#C55A11', fg:'#fff', t:['С подкреплением'], s:['агент действует в среде,','получает награды и штрафы']},
+    {id:'cls',  x:400, y:58,  w:330, h:88,  fill:'#F4908C', fg:INK, t:['Классификация'], s:['отнести объект к одному','из заранее известных классов']},
+    {id:'reg',  x:400, y:196, w:330, h:74,  fill:'#F4908C', fg:INK, t:['Регрессия'], s:['по набору признаков спрогнозировать число']},
+    {id:'clu',  x:400, y:296, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Кластеризация'], s:['разбить похожие объекты на группы']},
+    {id:'asc',  x:400, y:372, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Ассоциация'], s:['найти наборы, часто встречающиеся вместе']},
+    {id:'dim',  x:400, y:448, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Понижение размерности'], s:['сократить число признаков, сохранив главное']},
+    {id:'act',  x:400, y:524, w:330, h:66,  fill:'#F8CBAD', fg:INK, t:['Выбор действий'], s:['выработать стратегию: игры, роботы']},
+    {id:'nb',   x:790, y:14,  w:330, h:42,  fill:'#FFD966', fg:INK, t:['Наивный байесовский классификатор'], s:[]},
+    {id:'knn',  x:790, y:64,  w:330, h:42,  fill:'#FFD966', fg:INK, t:['Метод k-ближайших соседей'], s:[]},
+    {id:'tree', x:790, y:114, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Дерево решений'], s:[]},
+    {id:'perc', x:790, y:164, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Перцептрон (простейшая нейросеть)'], s:[]},
+    {id:'lin',  x:790, y:212, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Линейная регрессия'], s:[]},
+    {id:'km',   x:790, y:308, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Метод k-средних'], s:[]},
+    {id:'nn',   x:790, y:404, w:330, h:104, fill:'#7030A0', fg:'#fff', t:['Нейронные сети'], s:['строятся из перцептронов;','применяются во всех видах обучения']}
+  ];
+  const by = Object.fromEntries(N.map(n => [n.id, n]));
+  const cy = n => n.y + n.h / 2;
+  const E = [['sup','reg',370],['unsup','clu',370],['unsup','asc',370],['unsup','dim',370],['rl','act',370],
+             ['cls','nb',760],['cls','tree',760],['cls','perc',760],['reg','lin',760],['clu','km',760],
+             ['sup','cls',370],['cls','knn',760]];   // выделяемые связи рисуются последними, поверх остальных
+  const HOT = new Set(['sup','cls','knn','sup>cls','cls>knn']);
+  let h = '';
+  h += `<g class="deco"><rect x="10" y="20" width="44" height="572" rx="6" fill="#0B6BC4"/>
+        <text transform="translate(39 306) rotate(-90)" text-anchor="middle" font-size="20" font-weight="bold" fill="#fff">Основные виды машинного обучения</text>
+        <path d="M54 306H72M72 ${cy(by.sup)}V${cy(by.rl)}" fill="none" stroke="#5B6B88" stroke-width="2.5"/>`;
+  ['sup','unsup','semi','rl'].forEach(id => { h += `<path d="M72 ${cy(by[id])}H90" fill="none" stroke="#5B6B88" stroke-width="2.5"/>`; });
+  h += `</g>`;
+  E.forEach(([a, b, xm]) => {
+    const A = by[a], B = by[b], key = a + '>' + b;
+    h += `<path class="edge${HOT.has(key) ? ' hot' : ''}" d="M${A.x + A.w} ${cy(A)}H${xm}V${cy(B)}H${B.x}" fill="none" stroke="#5B6B88" stroke-width="2.5"/>`;
+  });
+  h += `<path class="edge" d="M1120 185H1164V456H1132" fill="none" stroke="#7030A0" stroke-width="2.5" stroke-dasharray="7 6"/>
+        <path class="edge" d="M1120 456l14 -8v16z" fill="#7030A0" stroke="none"/>`;
+  N.forEach(n => {
+    const tSize = n.s.length || n.h > 50 ? 19 : 16.5, lh = 19, total = n.t.length * 22 + n.s.length * lh;
+    let y = n.y + (n.h - total) / 2 + 16;
+    h += `<g class="node${HOT.has(n.id) ? ' hot' : ''}"><rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="5" fill="${n.fill}" stroke="#B58F00" stroke-width="${n.fill === '#FFD966' ? 1.5 : 0}"/>`;
+    n.t.forEach(line => { h += `<text x="${n.x + n.w / 2}" y="${y}" text-anchor="middle" font-size="${tSize}" font-weight="bold" fill="${n.fg}">${esc(line)}</text>`; y += 22; });
+    n.s.forEach(line => { h += `<text x="${n.x + n.w / 2}" y="${y - 2}" text-anchor="middle" font-size="14.5" fill="${n.fg}">${esc(line)}</text>`; y += lh; });
+    h += `</g>`;
+  });
+  [[90,250,'Виды машинного обучения'],[400,330,'Задачи МО'],[790,330,'Алгоритмы МО']].forEach(([x, w, t]) => {
+    h += `<g class="deco"><path d="M${x + w / 2 - 60} 612l60 -12l60 12z" fill="#7B828E"/><rect x="${x}" y="612" width="${w}" height="32" rx="4" fill="#7B828E"/>
+          <text x="${x + w / 2}" y="634" text-anchor="middle" font-size="18" fill="#fff">${t}</text></g>`;
+  });
+  $('#schemeBox').innerHTML = `<svg id="scheme" viewBox="0 0 1180 652" role="img" aria-label="Схема: виды машинного обучения, задачи и алгоритмы. Метод k-ближайших соседей решает задачу классификации, это обучение с учителем.">${h}</svg>`;
+  $('#btnFocus').addEventListener('click', e => {
+    const on = $('#scheme').classList.toggle('focus');
+    e.currentTarget.setAttribute('aria-pressed', on);
+    e.currentTarget.textContent = on ? 'Показать всю схему' : 'Показать путь к методу k-ближайших соседей';
+    $('#pathNote').hidden = !on;
+  });
+})();
+
+/* ======================= ДЕМОНСТРАЦИЯ k-NN ======================= */
+const CLS = [
+  {name: 'класс А', col: '#1565C0', light: '#D6E6F8', shape: 'circle'},
+  {name: 'класс Б', col: '#E65100', light: '#FCE1CF', shape: 'square'},
+  {name: 'класс В', col: '#2E7D32', light: '#D5ECD7', shape: 'triangle'}
+];
+const SETS = {
+  eight:  {max: 8,  letters: true,  n: [4, 5],
+           pts: [[2,2,0],[3,1,0],[2,3,0],[5,4,0],[6,6,1],[7,4,1],[6,5,1],[7,5,1]]},
+  twenty: {max: 12, letters: false, n: [6, 9],
+           pts: [[6,7,0],[4,4,0],[1,7,0],[10,5,1],[7,8,0],[10,1,1],[5,9,1],[2,7,0],[6,5,1],[10,8,1],[4,3,1],[5,6,0],[7,4,1],[2,6,1],[9,4,1],[4,6,0],[5,7,0],[11,6,1],[3,5,0],[7,3,0]]},
+  three:  {max: 12, letters: false, n: [9, 3],
+           pts: [[6,4,2],[4,9,0],[5,8,1],[5,6,2],[5,9,0],[9,9,1],[2,7,0],[7,10,1],[3,8,0],[4,4,2],[7,7,2],[8,5,1],[1,9,0],[6,3,2],[10,9,1],[5,3,2],[6,6,1],[1,8,0]]}
+};
+const PHASES = ['start', 'dist', 'near', 'vote'];
+const nn = {setId: 'eight', pts: [], max: 8, letters: true, N: {x: 4, y: 5}, k: 3, phase: 'start', regions: false};
+
+const labelOf = i => nn.letters ? String.fromCharCode(65 + i) : String(i + 1);
+const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+const classesUsed = () => [...new Set(nn.pts.map(p => p.c))].sort();
+function neighbours(N) {            // все объекты по возрастанию расстояния; при равенстве раньше идёт тот, что раньше в списке
+  return nn.pts.map((p, i) => ({i, d: dist(p, N)})).sort((a, b) => a.d - b.d || a.i - b.i);
+}
+function vote(N, k) {
+  const top = neighbours(N).slice(0, k), cnt = {};
+  top.forEach(t => { const c = nn.pts[t.i].c; cnt[c] = (cnt[c] || 0) + 1; });
+  const best = Math.max(...Object.values(cnt)), win = Object.keys(cnt).filter(c => cnt[c] === best).map(Number);
+  return {cnt, win: win.length === 1 ? win[0] : null};
+}
+function loadSet(id) {
+  const S = SETS[id];
+  Object.assign(nn, {setId: id, max: S.max, letters: S.letters, pts: S.pts.map(([x, y, c]) => ({x, y, c})), N: {x: S.n[0], y: S.n[1]}, phase: 'start'});
+  nn.k = Math.min(nn.k, nn.pts.length);
+  render();
+}
+
+/* --- рисование --- */
+const PL = {W: 640, H: 640, l: 46, r: 22, t: 22, b: 44};
+const sc = () => (PL.W - PL.l - PL.r) / nn.max;
+const X = v => PL.l + v * sc(), Y = v => PL.H - PL.b - v * sc();
+function shape(kind, x, y, r, fill, stroke, sw) {
+  const a = `fill="${fill}" stroke="${stroke}" stroke-width="${sw}"`;
+  if (kind === 'square') return `<rect x="${x - r * .9}" y="${y - r * .9}" width="${r * 1.8}" height="${r * 1.8}" rx="2" ${a}/>`;
+  if (kind === 'triangle') return `<path d="M${x} ${y - r * 1.15}L${x + r * 1.1} ${y + r * .8}H${x - r * 1.1}Z" ${a}/>`;
+  if (kind === 'diamond') return `<path d="M${x} ${y - r * 1.25}L${x + r * 1.25} ${y}L${x} ${y + r * 1.25}L${x - r * 1.25} ${y}Z" ${a}/>`;
+  return `<circle cx="${x}" cy="${y}" r="${r}" ${a}/>`;
+}
+const icon = c => `<svg viewBox="0 0 24 24" aria-hidden="true">${shape(CLS[c].shape, 12, 12, 9, CLS[c].col, '#14213D', 1.5)}</svg>`;
+function renderPlane() {
+  const s = nn, ph = PHASES.indexOf(s.phase), nb = neighbours(s.N), top = nb.slice(0, s.k), topSet = new Set(top.map(t => t.i));
+  const res = vote(s.N, s.k);
+  let g = '';
+  if (s.regions) {                                   // области классов для текущего k
+    const cells = 36, step = s.max / cells, w = sc() * step + .6;
+    for (let i = 0; i < cells; i++) for (let j = 0; j < cells; j++) {
+      const v = vote({x: (i + .5) * step, y: (j + .5) * step}, s.k);
+      if (v.win !== null) g += `<rect x="${X(i * step)}" y="${Y((j + 1) * step)}" width="${w}" height="${w}" fill="${CLS[v.win].light}"/>`;
+    }
+  }
+  for (let i = 0; i <= s.max; i++) {
+    g += `<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(s.max)}" stroke="#C9D2E0" stroke-width="1"/>
+          <line x1="${X(0)}" y1="${Y(i)}" x2="${X(s.max)}" y2="${Y(i)}" stroke="#C9D2E0" stroke-width="1"/>
+          <text x="${X(i)}" y="${Y(0) + 24}" text-anchor="middle" font-size="17" fill="#14213D">${i}</text>`;
+    if (i) g += `<text x="${X(0) - 10}" y="${Y(i) + 6}" text-anchor="end" font-size="17" fill="#14213D">${i}</text>`;
+  }
+  g += `<path d="M${X(0)} ${Y(s.max)}V${Y(0)}H${X(s.max)}" fill="none" stroke="#14213D" stroke-width="2.5"/>
+        <text x="${X(s.max) - 2}" y="${Y(0) - 10}" text-anchor="end" font-size="19" font-style="italic" fill="#14213D">x</text>
+        <text x="${X(0) + 10}" y="${Y(s.max) + 14}" font-size="19" font-style="italic" fill="#14213D">y</text>`;
+  const nx = X(s.N.x), ny = Y(s.N.y);
+  if (ph === 1) nb.forEach(t => {                    // шаг 2: линии ко всем объектам
+    const p = s.pts[t.i];
+    g += `<line x1="${nx}" y1="${ny}" x2="${X(p.x)}" y2="${Y(p.y)}" stroke="#5F6B7E" stroke-width="1.8" stroke-dasharray="5 5"/>`;
+  });
+  if (ph >= 2) {                                     // шаги 3 и 4: круг и линии к k соседям
+    const dk = top[top.length - 1].d, next = nb[s.k] ? nb[s.k].d : Infinity;     // граница круга проходит между k-м и следующим объектом
+    const rad = Math.min(dk * sc() + 16, (dk + next) / 2 * sc());
+    g += `<circle cx="${nx}" cy="${ny}" r="${rad}" fill="rgba(255,213,79,.28)" stroke="#14213D" stroke-width="2.5" stroke-dasharray="9 7"/>`;
+    top.forEach(t => {
+      const p = s.pts[t.i];
+      g += `<line x1="${nx}" y1="${ny}" x2="${X(p.x)}" y2="${Y(p.y)}" stroke="${CLS[p.c].col}" stroke-width="4"/>`;
+    });
+  }
+  s.pts.forEach((p, i) => {
+    const hot = ph >= 2 && topSet.has(i), dim = ph >= 2 && !hot;
+    g += `<g opacity="${dim ? .45 : 1}">${shape(CLS[p.c].shape, X(p.x), Y(p.y), hot ? 14 : 11.5, CLS[p.c].col, hot ? '#14213D' : '#fff', hot ? 3.5 : 2.5)}
+          <text x="${X(p.x) + 15}" y="${Y(p.y) - 12}" font-size="18" font-weight="bold" fill="#14213D" stroke="#fff" stroke-width="4" paint-order="stroke">${labelOf(i)}</text></g>`;
+  });
+  if (ph === 3 && res.win !== null) {
+    g += shape(CLS[res.win].shape, nx, ny, 17, CLS[res.win].col, '#14213D', 4.5) +
+         `<text x="${nx}" y="${ny - 26}" text-anchor="middle" font-size="18" font-weight="bold" fill="#14213D" stroke="#fff" stroke-width="5" paint-order="stroke">новый: ${CLS[res.win].name}</text>`;
+  } else {
+    g += shape('diamond', nx, ny, 15, '#14213D', '#fff', 3) +
+         `<text x="${nx}" y="${ny + 7}" text-anchor="middle" font-size="21" font-weight="bold" fill="#fff">?</text>
+          <text x="${nx}" y="${ny - 26}" text-anchor="middle" font-size="18" font-weight="bold" fill="#14213D" stroke="#fff" stroke-width="5" paint-order="stroke">новый</text>`;
+  }
+  $('#plane').innerHTML = g;
+  $('#legend').innerHTML = classesUsed().map(c => `<span>${icon(c)}${CLS[c].name}</span>`).join('') +
+    `<span><svg viewBox="0 0 24 24" aria-hidden="true">${shape('diamond', 12, 12, 8, '#14213D', '#fff', 1)}</svg>новый объект</span>`;
+}
+
+/* --- текст и таблицы --- */
+const tally = cnt => classesUsed().map(c => `${CLS[c].name}: ${cnt[c] || 0}`).join(', ');
+function message() {
+  const s = nn, nb = neighbours(s.N), top = nb.slice(0, s.k), res = vote(s.N, s.k);
+  const where = `(${fmtShort(s.N.x)}; ${fmtShort(s.N.y)})`;
+  if (s.phase === 'start') return `<b>Шаг 1.</b> Известны ${s.pts.length} объектов, их классы показаны цветом и формой. Появился новый объект ${where}. К какому классу его отнести? Число соседей k = ${s.k}.`;
+  if (s.phase === 'dist') return `<b>Шаг 2.</b> Вычислены расстояния от нового объекта ${where} до каждого из ${s.pts.length} объектов. Они записаны в таблице.`;
+  const names = top.map(t => labelOf(t.i)).join(', ');
+  const tie = s.k < nb.length && Math.abs(nb[s.k - 1].d - nb[s.k].d) < 1e-9
+    ? ` Объекты ${labelOf(nb[s.k - 1].i)} и ${labelOf(nb[s.k].i)} находятся на одинаковом расстоянии: в соседи взят тот, что раньше в списке.` : '';
+  if (s.phase === 'near') return `<b>Шаг 3.</b> Объекты упорядочены по расстоянию. ${s.k === 1 ? 'Ближайший сосед' : 'Ближайшие соседи'} (k = ${s.k}): ${names}.${tie}`;
+  if (res.win === null) return `<b>Шаг 4.</b> Голоса соседей: ${tally(res.cnt)}. Голоса разделились поровну, класс определить нельзя. Выберите другое k.`;
+  return `<b>Шаг 4.</b> Голоса соседей: ${tally(res.cnt)}. Большинство за ${CLS[res.win].name}, поэтому новый объект отнесён к этому классу.${tie}`;
+}
+function renderTables() {
+  const s = nn, ph = PHASES.indexOf(s.phase), nb = neighbours(s.N);
+  $('#distTitle').textContent = ph >= 2 ? 'Объекты по возрастанию расстояния' : 'Расстояния от нового объекта';
+  if (ph === 0) $('#distBox').innerHTML = '<p class="hint">Таблица появится после вычисления расстояний.</p>';
+  else {
+    const rows = ph >= 2 ? nb : nb.slice().sort((a, b) => a.i - b.i);
+    let h = `<table><thead><tr>${ph >= 2 ? '<th>Место</th>' : ''}<th>Объект</th><th>(x; y)</th><th>Класс</th><th>Расстояние d</th>${ph >= 2 ? '<th>Сосед</th>' : ''}</tr></thead><tbody>`;
+    rows.forEach((t, r) => {
+      const p = s.pts[t.i], isTop = ph >= 2 && r < s.k;
+      h += `<tr style="${isTop ? `background:${CLS[p.c].light};font-weight:bold` : ''}">${ph >= 2 ? `<td>${r + 1}</td>` : ''}<td><b>${labelOf(t.i)}</b></td><td>(${p.x}; ${p.y})</td>
+            <td class="mk" style="text-align:left">${icon(p.c)}${CLS[p.c].name}</td><td class="num">${fmt(t.d)}</td>${ph >= 2 ? `<td>${isTop ? 'да' : ''}</td>` : ''}</tr>`;
+    });
+    $('#distBox').innerHTML = h + '</tbody></table>';
+  }
+  if (ph < 3) $('#kBox').innerHTML = '<p class="hint">Таблица появится после голосования.</p>';
+  else {
+    let h = '<table><thead><tr><th>k</th><th>Голоса соседей</th><th>Класс нового объекта</th></tr></thead><tbody>';
+    for (let k = 1; k <= Math.min(7, s.pts.length); k++) {
+      const v = vote(s.N, k);
+      h += `<tr class="${k === s.k ? 'cur' : ''}"><td><b>${k}</b></td><td>${tally(v.cnt)}</td>
+            <td class="mk" style="${v.win !== null ? `background:${CLS[v.win].light}` : ''}">${v.win !== null ? icon(v.win) + CLS[v.win].name : 'ничья'}</td></tr>`;
+    }
+    $('#kBox').innerHTML = h + '</tbody></table>';
+  }
+}
+function render() {
+  const s = nn, ph = PHASES.indexOf(s.phase);
+  renderPlane(); renderTables();
+  $('#msg').innerHTML = message();
+  document.querySelectorAll('#steps li').forEach((li, i) => li.classList.toggle('now', i === ph));
+  const b = $('#btnStep');
+  b.disabled = ph === 3;
+  b.textContent = ['Шаг 2. Вычислить расстояния', 'Шаг 3. Выбрать ближайших соседей', 'Шаг 4. Провести голосование', 'Класс определён'][ph];
+  if (ph === 3 && vote(s.N, s.k).win === null) b.textContent = 'Ничья: измените k';
+  $('#btnAll').disabled = ph === 3;
+  $('#kOut').textContent = 'k = ' + s.k;
+  $('#kMinus').disabled = s.k <= 1; $('#kPlus').disabled = s.k >= Math.min(9, s.pts.length);
+  document.querySelectorAll('#segSet button').forEach(x => x.setAttribute('aria-pressed', x.dataset.set === s.setId));
+}
+$('#btnStep').addEventListener('click', () => { nn.phase = PHASES[Math.min(3, PHASES.indexOf(nn.phase) + 1)]; render(); });
+$('#btnAll').addEventListener('click', () => { nn.phase = 'vote'; render(); });
+$('#btnReset').addEventListener('click', () => loadSet(nn.setId));
+$('#kMinus').addEventListener('click', () => { nn.k = Math.max(1, nn.k - 1); render(); });
+$('#kPlus').addEventListener('click', () => { nn.k = Math.min(9, nn.pts.length, nn.k + 1); render(); });
+$('#chkRegions').addEventListener('change', e => { nn.regions = e.target.checked; render(); });
+$('#segSet').addEventListener('click', e => { const b = e.target.closest('button'); if (b) loadSet(b.dataset.set); });
+$('#plane').addEventListener('click', e => {
+  const svg = $('#plane'), m = svg.getScreenCTM(); if (!m) return;
+  const q = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+  const x = Math.round((q.x - PL.l) / sc() * 2) / 2, y = Math.round((PL.H - PL.b - q.y) / sc() * 2) / 2;
+  if (x < 0 || y < 0 || x > nn.max || y > nn.max || nn.pts.some(p => p.x === x && p.y === y)) return;
+  nn.N = {x, y};
+  render();                                          // шаг не сбрасывается: ответ пересчитывается сразу
+});
+
+/* ======================= РАЗБОР ПРИМЕРОВ ======================= */
+const EX = {
+  tasks: {
+    title: 'Какая это задача машинного обучения?',
+    lead: 'Распределите девять примеров по трём задачам. Выберите карточку, затем щёлкните нужный столбец. Карточку можно и перетащить.',
+    guide: `<summary>Подсказка: как рассуждать</summary>
+      <p>Спросите себя: что должен выдать алгоритм и есть ли у него примеры с правильными ответами?</p>
+      <div class="rules">
+        <div><b>Один из заранее известных классов</b><br>да / нет, вид, категория. Есть размеченные примеры. Это классификация.</div>
+        <div><b>Число</b><br>цена, время, балл, количество. Есть примеры с известным ответом. Это регрессия.</div>
+        <div><b>Группы, которых заранее никто не задавал</b><br>правильных ответов нет, алгоритм сам ищет похожие объекты. Это кластеризация.</div>
+      </div>`,
+    per: 3,
+    cols: [
+      {id: 'cls', name: 'Классификация', def: 'отнести объект к одному из заранее известных классов', kind: 'с учителем', chip: 'sup', bg: '#F4908C'},
+      {id: 'reg', name: 'Регрессия', def: 'по набору признаков спрогнозировать число', kind: 'с учителем', chip: 'sup', bg: '#F4908C'},
+      {id: 'clu', name: 'Кластеризация', def: 'разбить похожие объекты на группы', kind: 'без учителя', chip: 'unsup', bg: '#C5E0B4'}
+    ],
+    bank: {
+      cls: [
+        ['Смартфон по изображению лица решает: это владелец или посторонний.', 'Ответ: один из двух заранее известных классов.'],
+        ['Онлайн-кинотеатр по описанию фильма определяет жанр: комедия, драма или боевик.', 'Ответ выбирается из заранее заданного списка жанров.'],
+        ['Программа по результатам анализа крови относит пациента к группе «здоров» или «нужна консультация врача».', 'Два известных класса. Анализы для обучения размечены врачами.'],
+        ['Приложение по записи голоса определяет язык: казахский, русский или английский.', 'Ответ выбирается из трёх заранее известных классов.'],
+        ['Сканер в магазине по фотографии определяет сорт яблок из списка сортов.', 'Список сортов известен заранее, ответ: один из них.'],
+        ['Учебная платформа по первым заданиям относит ученика к уровню: начальный, средний или продвинутый.', 'Уровни заданы заранее, ответ: один из трёх классов.']
+      ],
+      reg: [
+        ['По росту родителей спрогнозировать рост ребёнка во взрослом возрасте.', 'Ответ: число, рост в сантиметрах.'],
+        ['Агроном по количеству осадков и удобрений прогнозирует урожай пшеницы в центнерах с гектара.', 'Ответ: число, урожайность.'],
+        ['Навигатор оценивает расход топлива на маршруте в литрах.', 'Ответ: число, количество литров.'],
+        ['Интернет-магазин прогнозирует число заказов на следующей неделе.', 'Ответ: число заказов.'],
+        ['Фитнес-браслет по пульсу и числу шагов оценивает, сколько калорий потрачено за день.', 'Ответ: число калорий.'],
+        ['Энергокомпания прогнозирует потребление электричества в городе на завтра в киловатт-часах.', 'Ответ: число киловатт-часов.']
+      ],
+      clu: [
+        ['Библиотека объединяет книги в группы по похожим текстам, не имея готового списка тем.', 'Тем заранее нет: книги группируются по сходству.'],
+        ['Астрономы группируют звёзды по сходству яркости и температуры, не зная заранее их типов.', 'Типы не известны: алгоритм сам находит похожие звёзды.'],
+        ['Школа делит учеников на группы по похожим интересам, чтобы решить, какие кружки открыть. Списка кружков заранее нет.', 'Группы заранее не заданы, правильных ответов нет.'],
+        ['Банк разбивает клиентов на группы по похожим расходам, чтобы потом придумать предложение для каждой группы.', 'Группы заранее не известны: клиенты объединяются по сходству.'],
+        ['Приложение собирает фотографии с похожими лицами в альбомы, не зная имён людей.', 'Имён, то есть классов, нет: фотографии группируются по сходству.'],
+        ['Городская служба выделяет районы с похожим движением транспорта, не имея готовых типов районов.', 'Типы районов не заданы: районы группируются по сходству.']
+      ]
+    }
+  },
+  algos: {
+    title: 'Метод k-средних или метод k-ближайших соседей?',
+    lead: 'Названия похожи, а методы разные. Распределите восемь карточек: к какому методу относится каждое утверждение или пример?',
+    guide: `<summary>Подсказка: как рассуждать</summary>
+      <p>Оба метода измеряют расстояние между объектами, поэтому их легко перепутать. Спросите себя: известны ли классы объектов заранее и что означает число k?</p>
+      <div class="rules">
+        <div><b>Классов заранее нет</b><br>алгоритм сам делит объекты на k групп и двигает центроиды. Это метод k-средних.</div>
+        <div><b>Классы известны</b><br>новый объект получает класс большинства из k ближайших соседей. Это метод k-ближайших соседей.</div>
+      </div>`,
+    per: 4,
+    cols: [
+      {id: 'km', name: 'Метод k-средних', def: 'кластеризация: разбить объекты на группы', kind: 'без учителя', chip: 'unsup', bg: '#FFD966'},
+      {id: 'knn', name: 'Метод k-ближайших соседей', def: 'классификация: определить класс нового объекта', kind: 'с учителем', chip: 'sup', bg: '#FFD966'}
+    ],
+    bank: {
+      km: [
+        ['Правильных ответов нет: группы алгоритм находит сам.', 'Это обучение без учителя, задача кластеризации.'],
+        ['Число k означает количество групп, на которые делятся объекты.', 'В методе k-средних k — число кластеров.'],
+        ['На каждой итерации центроиды перемещаются в средние точки своих групп.', 'Центроиды есть только в методе k-средних.'],
+        ['Алгоритм останавливается, когда центроиды перестают меняться.', 'Это условие остановки метода k-средних.'],
+        ['Результат зависит от того, какие начальные центроиды выбраны.', 'Начальные центроиды выбираются в методе k-средних.'],
+        ['Служба доставки разбивает адреса клиентов на три зоны.', 'Зоны заранее не заданы: это кластеризация.'],
+        ['Магазин делит покупателей на группы по похожим покупкам, не зная групп заранее.', 'Групп заранее нет: это кластеризация.'],
+        ['Алгоритм повторяет одни и те же шаги несколько раз подряд.', 'Метод k-средних работает итерациями.']
+      ],
+      knn: [
+        ['Нужны объекты, класс которых уже известен.', 'Это обучение с учителем: без размеченных объектов метод не работает.'],
+        ['Число k означает количество соседей, которые голосуют.', 'В методе k-ближайших соседей k — число соседей.'],
+        ['Класс нового объекта определяется голосованием ближайших объектов.', 'Голосование есть только в методе k-ближайших соседей.'],
+        ['Для двух классов k берут нечётным, чтобы не было ничьей.', 'Ничья возможна при голосовании соседей.'],
+        ['Все расчёты выполняются в момент, когда появляется новый объект.', 'Метод k-ближайших соседей ничего не вычисляет заранее.'],
+        ['Письмо считается спамом, если спамом были большинство самых похожих на него писем.', 'Классы известны, решает большинство похожих объектов.'],
+        ['По росту и весу нового спортсмена определить его вид спорта, зная данные спортсменов разных секций.', 'Классы (виды спорта) известны: это классификация нового объекта.'],
+        ['Ответ получается за один проход: вычислить расстояния, выбрать соседей, посчитать голоса.', 'В методе k-ближайших соседей нет итераций.']
+      ]
+    }
+  }
+};
+let curEx = 'tasks', instant = false;
+const E = () => EX[curEx];
+function newRound(id) {
+  const ex = EX[id]; let n = 0; const cards = [];
+  ex.cols.forEach(col => shuffle(ex.bank[col.id]).slice(0, ex.per).forEach(([text, why]) => cards.push({id: n++, col: col.id, text, why, place: null, status: null})));
+  ex.cards = shuffle(cards); ex.sel = null; ex.result = '';
+}
+function cardHtml(c) {
+  const ex = E(); let extra = '';
+  if (c.status === 'ok') extra = `<span class="mark">✓ Верно</span><span class="why">${esc(c.why)}</span>`;
+  else if (c.status === 'shown') extra = `<span class="why">${esc(c.why)}</span>`;
+  else if (c.status === 'bad') extra = `<span class="mark">✗ Подумайте ещё</span>`;
+  return `<div class="card ${c.status === 'ok' ? 'ok' : c.status === 'bad' ? 'bad' : ''} ${ex.sel === c.id ? 'sel' : ''}" data-id="${c.id}" tabindex="0" role="button" aria-pressed="${ex.sel === c.id}" draggable="true">${esc(c.text)}${extra}</div>`;
+}
+function renderEx() {
+  const ex = E(), pool = ex.cards.filter(c => c.place === null);
+  $('#exTitle').textContent = ex.title; $('#exLead').textContent = ex.lead;
+  if ($('#exGuide').dataset.ex !== curEx) { $('#exGuide').innerHTML = ex.guide; $('#exGuide').dataset.ex = curEx; $('#exGuide').open = false; }
+  $('#result').textContent = ex.result;
+  $('#pool').innerHTML = pool.map(cardHtml).join('');
+  $('#pool').classList.toggle('empty', pool.length === 0);
+  $('#cols').style.gridTemplateColumns = `repeat(${ex.cols.length}, 1fr)`;
+  $('#cols').innerHTML = ex.cols.map(t => `
+    <div class="col ${ex.sel !== null ? 'ready' : ''}" data-col="${t.id}">
+      <header style="background:${t.bg}"><b>${t.name}</b><small>${t.def}</small><span class="chip ${t.chip}">${t.kind}</span></header>
+      <div class="list">${ex.cards.filter(c => c.place === t.id).map(cardHtml).join('')}</div>
+    </div>`).join('');
+  document.querySelectorAll('#segEx button').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === curEx));
+}
+function place(id, col) {
+  const ex = E(), c = ex.cards.find(c => c.id === id); if (!c) return;
+  c.place = col; c.status = null; ex.sel = null; ex.result = '';
+  if (instant && col) c.status = c.col === col ? 'ok' : 'bad';
+  renderEx();
+}
+function check() {
+  const ex = E(), placed = ex.cards.filter(c => c.place !== null), left = ex.cards.length - placed.length;
+  placed.forEach(c => { c.status = c.col === c.place ? 'ok' : 'bad'; });
+  const ok = placed.filter(c => c.status === 'ok').length;
+  let t = `Верно: ${ok} из ${ex.cards.length}.`;
+  if (left) t += ` Не разложено карточек: ${left}.`;
+  if (placed.some(c => c.status === 'bad')) t += ' Карточки с отметкой ✗ переложите и проверьте снова.';
+  if (ok === ex.cards.length) t = 'Все карточки распределены верно.';
+  ex.result = t; ex.sel = null; renderEx();
+}
+function showAnswers() {
+  const ex = E();
+  ex.cards.forEach(c => { c.place = c.col; c.status = 'shown'; });
+  ex.sel = null; ex.result = 'Правильное распределение с пояснениями.';
+  renderEx();
+}
+const exRoot = $('#p2');
+exRoot.addEventListener('click', e => {
+  const ex = E(), card = e.target.closest('.card'), col = e.target.closest('.col');
+  if (card) { const id = +card.dataset.id; ex.sel = ex.sel === id ? null : id; renderEx(); return; }
+  if (col && ex.sel !== null) { place(ex.sel, col.dataset.col); return; }
+  if (e.target.closest('#pool') && ex.sel !== null) place(ex.sel, null);
+});
+exRoot.addEventListener('keydown', e => {
+  const ex = E(), card = e.target.closest('.card');
+  if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); card.click(); return; }
+  const n = +e.key;
+  if (ex.sel !== null && n >= 1 && n <= ex.cols.length) place(ex.sel, ex.cols[n - 1].id);
+});
+exRoot.addEventListener('dragstart', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  e.dataTransfer.setData('text/plain', card.dataset.id); e.dataTransfer.effectAllowed = 'move';
+});
+exRoot.addEventListener('dragover', e => {
+  const zone = e.target.closest('.col, #pool'); if (!zone) return;
+  e.preventDefault(); if (zone.classList.contains('col')) zone.classList.add('over');
+});
+exRoot.addEventListener('dragleave', e => { const col = e.target.closest('.col'); if (col && !col.contains(e.relatedTarget)) col.classList.remove('over'); });
+exRoot.addEventListener('drop', e => {
+  const zone = e.target.closest('.col, #pool'); if (!zone) return;
+  e.preventDefault();
+  const id = parseInt(e.dataTransfer.getData('text/plain'), 10); if (Number.isNaN(id)) return;
+  place(id, zone.classList.contains('col') ? zone.dataset.col : null);
+});
+$('#btnCheck').addEventListener('click', check);
+$('#btnAnswers').addEventListener('click', showAnswers);
+$('#btnNew').addEventListener('click', () => { newRound(curEx); renderEx(); });
+$('#chkInstant').addEventListener('change', e => { instant = e.target.checked; });
+$('#segEx').addEventListener('click', e => {            // переключение задания не сбрасывает разложенные карточки
+  const b = e.target.closest('button'); if (!b) return;
+  curEx = b.dataset.ex; renderEx();
+});
+
+/* ---------- запуск ---------- */
+loadSet('eight');
+newRound('tasks'); newRound('algos');
+renderEx();
+</script>
+</body>
+</html>
