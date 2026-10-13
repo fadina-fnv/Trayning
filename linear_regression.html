@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Линейная регрессия: объяснение и разбор примеров</title>
+<style>
+:root{
+  --ink:#1F3F6E; --edge:#2F6DB5; --paper:#FFFFFF; --wash:#EEF5FC; --sky:#DCEBFA; --line:#B5CBE4; --muted:#4F6A8F;
+  --blue:#0B6BC4; --green:#12A14B; --rose:#F4908C; --mint:#C5E0B4; --amber:#FFD966;
+  --model:#E65100; --pred:#1B8A3E; --pt:#1976D2;
+  --ok:#1B7F3B; --retry:#B25A00;
+  --text:"Times New Roman",Times,serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--text);line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid #FFB300;outline-offset:2px}
+
+.top{background:var(--sky);padding:.9rem 1.5rem 0;border-bottom:3px solid var(--edge)}
+.top-in,.wrap{max-width:1320px;margin:0 auto}
+.top h1{margin:0;font-size:2.1rem;line-height:1.15}
+.top p{margin:.15rem 0 .8rem;font-size:1.05rem}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:-3px}
+.tab{border:3px solid var(--edge);border-bottom:0;border-radius:10px 10px 0 0;padding:.55rem 1.4rem;font-size:1.15rem;font-weight:bold;background:#B9D4F0;color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--paper)}
+
+main{padding:1.2rem 1.5rem 3rem}
+section.panel[hidden]{display:none}
+h2{font-size:1.6rem;line-height:1.2;margin:2rem 0 .6rem;padding-bottom:.25rem;border-bottom:3px solid var(--edge)}
+.panel>.wrap>h2:first-child{margin-top:.4rem}
+h3{font-size:1.2rem;margin:1rem 0 .4rem}
+p{margin:.5rem 0}
+.lead{font-size:1.2rem;max-width:62rem}
+
+.btn{border:2px solid var(--edge);background:#fff;border-radius:8px;padding:.45rem .9rem;font-size:1rem;font-weight:bold}
+.btn:hover{background:var(--wash)}
+.btn.primary{background:var(--edge);color:#fff;font-size:1.1rem;padding:.6rem 1rem}
+.btn.primary:hover{background:#2861A4}
+.btn:disabled{opacity:.5;cursor:default}
+.seg{display:inline-flex;flex-wrap:wrap;border:2px solid var(--edge);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:2px solid var(--edge);background:#fff;padding:.35rem .8rem;font-weight:bold}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--edge);color:#fff}
+.stepper{display:inline-flex;align-items:center;border:2px solid var(--edge);border-radius:8px;overflow:hidden}
+.stepper button{border:0;background:#fff;width:2.4rem;height:2.2rem;font-size:1.3rem;font-weight:bold}
+.stepper button:hover{background:var(--wash)}
+.stepper output{min-width:6.2rem;text-align:center;font-weight:bold;font-size:1.1rem;background:var(--sky);height:2.2rem;line-height:2.2rem}
+label.chk{display:inline-flex;gap:.4rem;align-items:center;font-size:1rem}
+label.chk input{width:1.2rem;height:1.2rem}
+
+/* схема */
+.scheme-box{border:2px solid var(--line);border-radius:12px;padding:.6rem;background:#fff;overflow-x:auto}
+.scheme-box svg{display:block;width:100%;min-width:900px;height:auto;font-family:var(--text)}
+.scheme-tools{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
+#scheme .node,#scheme .edge{transition:opacity .35s}
+#scheme.focus .node:not(.hot),#scheme.focus .edge:not(.hot),#scheme.focus .deco{opacity:.22}
+#scheme.focus .node.hot rect{stroke:var(--ink);stroke-width:5}
+#scheme.focus .edge.hot{stroke:var(--ink);stroke-width:5}
+.path-note{font-size:1.15rem;font-weight:bold}
+.path-note span{padding:.1rem .5rem;border-radius:6px}
+
+/* термины */
+.terms{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin:.8rem 0}
+.term{border-left:8px solid var(--blue);background:var(--wash);padding:.6rem .8rem;border-radius:0 8px 8px 0}
+.term b{display:block;font-size:1.2rem}
+
+/* демонстрация */
+.demo{display:grid;grid-template-columns:minmax(0,640px) minmax(0,1fr);gap:1.4rem;align-items:start}
+.plane{border:2px solid var(--edge);border-radius:12px;background:#fff;overflow:hidden}
+.plane svg{display:block;width:100%;height:auto;font-family:var(--text);cursor:crosshair;user-select:none}
+.legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin:.4rem 0;font-weight:bold;font-size:.95rem}
+.legend svg{width:1.7rem;height:1.1rem;vertical-align:-.15rem;margin-right:.25rem}
+.side .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem}
+.side .row>span.lbl{font-weight:bold}
+.eq{font-family:var(--mono);font-size:1.2rem;font-weight:bold;background:var(--wash);border:2px solid var(--line);border-radius:8px;padding:.35rem .8rem;display:flex;gap:1.2rem;justify-content:space-between;flex-wrap:wrap;margin-bottom:.6rem}
+.eq .err{color:var(--model)}
+.knobs{display:grid;grid-template-columns:auto 1fr auto;gap:.3rem .6rem;align-items:center;margin-bottom:.6rem}
+.knobs b{font-family:var(--mono);font-size:1.1rem}
+.knobs input[type=range]{width:100%;height:1.6rem;accent-color:var(--edge)}
+.knobs output{font-family:var(--mono);font-weight:bold;min-width:3.6rem;text-align:right}
+.steps{list-style:none;margin:.6rem 0;padding:0;counter-reset:st}
+.steps li{counter-increment:st;position:relative;padding:.4rem .7rem .4rem 3rem;border:2px solid var(--line);border-radius:8px;margin-bottom:.3rem;background:#fff}
+.steps li::before{content:counter(st);position:absolute;left:.6rem;top:.35rem;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--line);color:var(--ink);font-weight:bold;text-align:center;line-height:1.8rem}
+.steps li.now{border-color:var(--edge);background:#FFF4C2;font-weight:bold}
+.steps li.now::before{background:var(--edge);color:#fff}
+.msg{border:2px solid var(--edge);border-radius:8px;padding:.6rem .8rem;background:var(--wash);font-size:1.1rem;min-height:5.4rem}
+.predict{border:2px solid var(--pred);border-radius:8px;padding:.5rem .8rem;margin-top:.6rem;background:#F0F9F2}
+.predict .row{margin-bottom:.2rem}
+.predict output.val{font-family:var(--mono);font-weight:bold;font-size:1.2rem;color:var(--pred)}
+.hint{color:var(--muted);font-size:.95rem}
+table{border-collapse:collapse;width:100%;font-size:1rem}
+th,td{border:1.5px solid var(--line);padding:.25rem .5rem;text-align:center}
+th{background:var(--sky);color:var(--ink)}
+td.num{font-family:var(--mono);font-size:.9rem}
+tr.cur td{outline:3px solid var(--edge);outline-offset:-3px;font-weight:bold}
+tr.big td{background:#FFF1D6}
+tfoot td{font-weight:bold;background:var(--wash)}
+.tables{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.4rem;margin-top:1rem;align-items:start}
+.tbl-scroll{max-height:26rem;overflow:auto;border-radius:8px}
+
+.formula{font-family:var(--mono);font-size:1.15rem;background:var(--wash);border-radius:8px;padding:.6rem .9rem;display:inline-block;margin:.3rem .6rem .3rem 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem}
+ul.plain{margin:.3rem 0;padding-left:1.3rem}
+ul.plain li{margin:.3rem 0}
+
+/* разбор примеров */
+details.guide{border:2px solid var(--line);border-radius:10px;padding:.5rem .9rem;margin:.6rem 0 1rem;background:var(--wash)}
+details.guide summary{font-weight:bold;cursor:pointer;font-size:1.1rem}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.8rem;margin:.6rem 0 .3rem}
+.rules div{background:#fff;border-radius:8px;padding:.5rem .7rem;border:2px solid var(--line)}
+.ex-pick{margin:.2rem 0 1rem}
+.ex-tools{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
+#result{font-weight:bold;font-size:1.15rem;min-height:1.7rem}
+.pool{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;min-height:4rem;padding:.7rem;border:3px dashed var(--line);border-radius:12px;margin-bottom:1rem}
+.pool.empty::after{content:"Все карточки разложены. Нажмите «Проверить».";color:var(--muted);grid-column:1/-1;text-align:center;padding:.6rem}
+.card{border:2.5px solid var(--edge);border-radius:10px;background:#fff;padding:.55rem .75rem;font-size:1.05rem;line-height:1.3;text-align:left;cursor:grab}
+.card.sel{background:#FFF4C2;box-shadow:0 0 0 4px #FFB300}
+.card.ok{border-color:var(--ok);background:#E8F5EC}
+.card.retry{border-color:#E08A1E;background:#FFF3E0}
+.card .mark{font-weight:bold;display:block;margin-top:.3rem}
+.card.ok .mark{color:var(--ok)} .card.retry .mark{color:var(--retry)}
+.card .why{display:block;margin-top:.2rem;font-size:.95rem;color:var(--ink)}
+.cols{display:grid;gap:1rem}
+.col{border:3px solid var(--edge);border-radius:12px;overflow:hidden;background:#fff;min-height:16rem;display:flex;flex-direction:column}
+.col.over,.col.ready:hover{box-shadow:0 0 0 5px #FFB300}
+.col header{padding:.5rem .8rem;border-bottom:3px solid var(--edge)}
+.col header b{font-size:1.4rem;display:block;line-height:1.2}
+.col header small{font-size:.95rem;display:block}
+.chip{display:inline-block;color:#fff;border-radius:999px;padding:0 .6rem;font-size:.85rem;font-weight:bold;margin-top:.25rem}
+.chip.sup{background:var(--blue)} .chip.unsup{background:#0C7C39}
+.col .list{padding:.6rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.col .list:empty::after{content:"Выберите карточку и щёлкните здесь";color:var(--muted);text-align:center;margin:auto;font-size:.95rem}
+
+@media (max-width:1000px){
+  html{font-size:18px}
+  .demo,.tables,.two{grid-template-columns:1fr}
+  .terms{grid-template-columns:1fr 1fr}
+  .pool{grid-template-columns:1fr}
+  .cols{grid-template-columns:1fr !important}
+}
+@media (prefers-reduced-motion:reduce){#scheme .node,#scheme .edge{transition:none}}
+@media print{.tabs,.btn,.seg,.stepper{display:none} section.panel[hidden]{display:block}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <h1>Линейная регрессия</h1>
+    <p>Обучение с учителем, задача регрессии</p>
+    <div class="tabs" role="tablist" aria-label="Разделы урока">
+      <button class="tab" role="tab" id="tab1" aria-controls="p1" aria-selected="true">Объяснение метода</button>
+      <button class="tab" role="tab" id="tab2" aria-controls="p2" aria-selected="false" tabindex="-1">Разбор примеров</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ======================= ВКЛАДКА 1 ======================= -->
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="tab1">
+<div class="wrap">
+
+  <h2>Где линейная регрессия на схеме машинного обучения</h2>
+  <div class="scheme-tools">
+    <button class="btn" id="btnFocus" aria-pressed="false">Показать путь к линейной регрессии</button>
+    <span class="path-note" id="pathNote" hidden>
+      <span style="background:var(--blue);color:#fff">с учителем</span> →
+      <span style="background:var(--rose)">регрессия</span> →
+      <span style="background:var(--amber)">линейная регрессия</span>
+    </span>
+  </div>
+  <div class="scheme-box" id="schemeBox"></div>
+
+  <h2>Идея метода</h2>
+  <p class="lead">Линейная регрессия проводит через точки прямую, которая проходит как можно ближе ко всем точкам сразу. По этой прямой можно спрогнозировать число для нового объекта.</p>
+  <div class="terms">
+    <div class="term"><b>Признак x</b>то, что известно об объекте, например расстояние до клиента</div>
+    <div class="term"><b>Ответ y</b>число, которое нужно спрогнозировать, например время доставки</div>
+    <div class="term"><b>Модель</b>уравнение прямой y = a · x + b</div>
+    <div class="term"><b>Обучение</b>подбор чисел a и b, при которых ошибка наименьшая</div>
+  </div>
+
+  <h2>Алгоритм по шагам</h2>
+  <div class="demo">
+    <div>
+      <div class="plane"><svg id="plane" viewBox="0 0 640 640" role="img" aria-label="Координатная плоскость: расстояние и время доставки, точки заказов и прямая модели"></svg></div>
+      <div class="legend" id="legend"></div>
+      <p class="hint">Щёлкните любое место плоскости, чтобы выбрать расстояние для нового заказа.</p>
+    </div>
+    <div class="side">
+      <div class="row"><span class="lbl">Данные:</span>
+        <span class="seg" id="segSet">
+          <button data-set="six" aria-pressed="true">6 заказов</button>
+          <button data-set="fifteen" aria-pressed="false">15 заказов</button>
+          <button data-set="outlier" aria-pressed="false">С выбросом</button>
+        </span>
+      </div>
+      <div class="eq"><span id="eqOut">y = a · x + b</span><span class="err" id="errOut"></span></div>
+      <div class="knobs">
+        <b>a</b><input type="range" id="aRange" min="0" max="6" step="0.05" aria-label="Коэффициент a"><output id="aOut"></output>
+        <b>b</b><input type="range" id="bRange" min="0" max="30" step="0.5" aria-label="Коэффициент b"><output id="bOut"></output>
+      </div>
+      <ol class="steps" id="steps">
+        <li>Взять объекты с известным ответом: признак x и ответ y.</li>
+        <li>Провести пробную прямую y = a · x + b.</li>
+        <li>Вычислить ошибку: сумму квадратов отклонений точек от прямой.</li>
+        <li>Изменить a и b так, чтобы ошибка уменьшилась.</li>
+        <li>Ошибка ещё уменьшается? Да: вернуться к шагу 3. Нет: стоп, модель обучена.</li>
+      </ol>
+      <div class="row">
+        <button class="btn primary" id="btnStep">Шаг 2. Провести пробную прямую</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnRun">Обучать до остановки</button>
+        <button class="btn" id="btnBest">Сразу лучшая прямая</button>
+        <button class="btn" id="btnLog">Записать попытку</button>
+        <button class="btn" id="btnReset">Сначала</button>
+      </div>
+      <div class="msg" id="msg" aria-live="polite"></div>
+      <div class="predict">
+        <div class="row"><span class="lbl">Новый заказ:</span>
+          <span class="stepper">
+            <button id="xMinus" aria-label="Уменьшить расстояние">−</button>
+            <output id="xOut"></output>
+            <button id="xPlus" aria-label="Увеличить расстояние">+</button>
+          </span>
+          <output class="val" id="predOut" aria-live="polite"></output>
+        </div>
+        <div class="hint" id="predNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tables">
+    <div>
+      <h3>Прогнозы и ошибки для каждого заказа</h3>
+      <div class="tbl-scroll" id="objBox"></div>
+    </div>
+    <div>
+      <h3>Журнал обучения</h3>
+      <div class="tbl-scroll" id="journalBox"></div>
+      <p class="hint">Ошибка: сумма квадратов отклонений точек от прямой. Чем она меньше, тем лучше прямая описывает данные.</p>
+    </div>
+  </div>
+
+  <h2>Формулы и ограничения</h2>
+  <div class="two">
+    <div>
+      <h3>Модель: уравнение прямой</h3>
+      <div class="formula">y = a · x + b</div>
+      <ul class="plain">
+        <li>a показывает, на сколько меняется y, когда x увеличивается на 1.</li>
+        <li>b показывает, чему равен y при x = 0.</li>
+      </ul>
+      <h3>Ошибка модели на n объектах</h3>
+      <div class="formula">E = (y<sub>1</sub> − p<sub>1</sub>)² + (y<sub>2</sub> − p<sub>2</sub>)² + … + (y<sub>n</sub> − p<sub>n</sub>)²</div>
+      <p>Здесь y — настоящий ответ, p — прогноз модели для того же объекта. Квадрат нужен, чтобы отклонения вверх и вниз не гасили друг друга, а большие промахи весили больше.</p>
+    </div>
+    <div>
+      <h3>Чем метод отличается от k-ближайших соседей</h3>
+      <ul class="plain">
+        <li>Оба метода учатся на объектах с известным ответом. Но k-ближайших соседей отвечает классом, а линейная регрессия числом.</li>
+        <li>После обучения достаточно хранить два числа, a и b. Методу k-ближайших соседей нужны все объекты.</li>
+      </ul>
+      <h3>Что важно помнить</h3>
+      <ul class="plain">
+        <li>Метод подходит, только если точки лежат примерно вдоль прямой.</li>
+        <li>Один необычный объект заметно сдвигает прямую. Проверьте: выберите данные «С выбросом».</li>
+        <li>Прогноз за пределами известных данных ненадёжен. Проверьте: поставьте новый заказ на 12 км.</li>
+        <li>Прямая показывает связь между x и y, но не доказывает, что x является причиной y.</li>
+        <li>Одного признака может не хватить: на время доставки влияют ещё пробки и погода.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======================= ВКЛАДКА 2 ======================= -->
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="tab2" hidden>
+<div class="wrap">
+  <div class="ex-pick">
+    <span class="seg" id="segEx">
+      <button data-ex="tasks" aria-pressed="true">Какая это задача?</button>
+      <button data-ex="pairs" aria-pressed="false">Класс или число?</button>
+      <button data-ex="algos" aria-pressed="false">Какой это метод?</button>
+    </span>
+  </div>
+  <h2 id="exTitle"></h2>
+  <p class="lead" id="exLead"></p>
+  <details class="guide" id="exGuide"></details>
+
+  <div class="ex-tools">
+    <button class="btn primary" id="btnCheck">Проверить</button>
+    <button class="btn" id="btnAnswers">Показать правильные ответы</button>
+    <button class="btn" id="btnNew">Новые примеры</button>
+    <label class="chk"><input type="checkbox" id="chkInstant"> Проверять каждую карточку сразу</label>
+  </div>
+  <div id="result" aria-live="polite"></div>
+
+  <div class="pool" id="pool" aria-label="Карточки с примерами"></div>
+  <div class="cols" id="cols"></div>
+</div>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = v => (Math.abs(v) < 0.005 ? 0 : v).toFixed(2).replace('.', ',').replace('-', '−');
+const fmt1 = v => (Math.abs(v) < 0.05 ? 0 : v).toFixed(1).replace('.', ',').replace('-', '−');
+const fmtShort = v => Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : String(v).replace('.', ',');
+const signed = v => (v > 0.005 ? '+' : '') + fmt(v);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- вкладки (переключение только показывает и скрывает, состояние сохраняется) ---------- */
+const tabs = [$('#tab1'), $('#tab2')];
+function showTab(i) {
+  tabs.forEach((t, j) => {
+    t.setAttribute('aria-selected', j === i);
+    t.tabIndex = j === i ? 0 : -1;
+    $('#' + t.getAttribute('aria-controls')).hidden = j !== i;
+  });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => showTab(i));
+  t.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = (i + 1) % 2; showTab(n); tabs[n].focus(); }
+  });
+});
+
+/* ======================= СХЕМА ======================= */
+(function buildScheme() {
+  const INK = '#1F3F6E';
+  const N = [
+    {id:'sup',  x:90,  y:112, w:250, h:88,  fill:'#0B6BC4', fg:'#fff', t:['С учителем'], s:['данные размечены:','известны правильные ответы']},
+    {id:'unsup',x:90,  y:312, w:250, h:80,  fill:'#12A14B', fg:'#fff', t:['Без учителя'], s:['данные не размечены:','ответов нет']},
+    {id:'semi', x:90,  y:404, w:250, h:92,  fill:'#8A909B', fg:'#fff', t:['С частичным','привлечением учителя'], s:['размечена лишь часть данных']},
+    {id:'rl',   x:90,  y:508, w:250, h:84,  fill:'#C55A11', fg:'#fff', t:['С подкреплением'], s:['агент действует в среде,','получает награды и штрафы']},
+    {id:'cls',  x:400, y:58,  w:330, h:88,  fill:'#F4908C', fg:INK, t:['Классификация'], s:['отнести объект к одному','из заранее известных классов']},
+    {id:'reg',  x:400, y:196, w:330, h:74,  fill:'#F4908C', fg:INK, t:['Регрессия'], s:['по набору признаков спрогнозировать число']},
+    {id:'clu',  x:400, y:296, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Кластеризация'], s:['разбить похожие объекты на группы']},
+    {id:'asc',  x:400, y:372, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Ассоциация'], s:['найти наборы, часто встречающиеся вместе']},
+    {id:'dim',  x:400, y:448, w:330, h:66,  fill:'#C5E0B4', fg:INK, t:['Понижение размерности'], s:['сократить число признаков, сохранив главное']},
+    {id:'act',  x:400, y:524, w:330, h:66,  fill:'#F8CBAD', fg:INK, t:['Выбор действий'], s:['выработать стратегию: игры, роботы']},
+    {id:'nb',   x:790, y:14,  w:330, h:42,  fill:'#FFD966', fg:INK, t:['Наивный байесовский классификатор'], s:[]},
+    {id:'knn',  x:790, y:64,  w:330, h:42,  fill:'#FFD966', fg:INK, t:['Метод k-ближайших соседей'], s:[]},
+    {id:'tree', x:790, y:114, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Дерево решений'], s:[]},
+    {id:'perc', x:790, y:164, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Перцептрон (простейшая нейросеть)'], s:[]},
+    {id:'lin',  x:790, y:212, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Линейная регрессия'], s:[]},
+    {id:'km',   x:790, y:308, w:330, h:42,  fill:'#FFD966', fg:INK, t:['Метод k-средних'], s:[]},
+    {id:'nn',   x:790, y:404, w:330, h:104, fill:'#7030A0', fg:'#fff', t:['Нейронные сети'], s:['строятся из перцептронов;','применяются во всех видах обучения']}
+  ];
+  const by = Object.fromEntries(N.map(n => [n.id, n]));
+  const cy = n => n.y + n.h / 2;
+  const E = [['sup','cls',370],['unsup','clu',370],['unsup','asc',370],['unsup','dim',370],['rl','act',370],
+             ['cls','nb',760],['cls','knn',760],['cls','tree',760],['cls','perc',760],['clu','km',760],
+             ['sup','reg',370],['reg','lin',760]];   // выделяемые связи рисуются последними, поверх остальных
+  const HOT = new Set(['sup','reg','lin','sup>reg','reg>lin']);
+  let h = '';
+  h += `<g class="deco"><rect x="10" y="20" width="44" height="572" rx="6" fill="#0B6BC4"/>
+        <text transform="translate(39 306) rotate(-90)" text-anchor="middle" font-size="20" font-weight="bold" fill="#fff">Основные виды машинного обучения</text>
+        <path d="M54 306H72M72 ${cy(by.sup)}V${cy(by.rl)}" fill="none" stroke="#6A85AB" stroke-width="2.5"/>`;
+  ['sup','unsup','semi','rl'].forEach(id => { h += `<path d="M72 ${cy(by[id])}H90" fill="none" stroke="#6A85AB" stroke-width="2.5"/>`; });
+  h += `</g>`;
+  E.forEach(([a, b, xm]) => {
+    const A = by[a], B = by[b], key = a + '>' + b;
+    h += `<path class="edge${HOT.has(key) ? ' hot' : ''}" d="M${A.x + A.w} ${cy(A)}H${xm}V${cy(B)}H${B.x}" fill="none" stroke="#6A85AB" stroke-width="2.5"/>`;
+  });
+  h += `<path class="edge" d="M1120 185H1164V456H1132" fill="none" stroke="#7030A0" stroke-width="2.5" stroke-dasharray="7 6"/>
+        <path class="edge" d="M1120 456l14 -8v16z" fill="#7030A0" stroke="none"/>`;
+  N.forEach(n => {
+    const tSize = n.s.length || n.h > 50 ? 19 : 16.5, lh = 19, total = n.t.length * 22 + n.s.length * lh;
+    let y = n.y + (n.h - total) / 2 + 16;
+    h += `<g class="node${HOT.has(n.id) ? ' hot' : ''}"><rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="5" fill="${n.fill}" stroke="#B58F00" stroke-width="${n.fill === '#FFD966' ? 1.5 : 0}"/>`;
+    n.t.forEach(line => { h += `<text x="${n.x + n.w / 2}" y="${y}" text-anchor="middle" font-size="${tSize}" font-weight="bold" fill="${n.fg}">${esc(line)}</text>`; y += 22; });
+    n.s.forEach(line => { h += `<text x="${n.x + n.w / 2}" y="${y - 2}" text-anchor="middle" font-size="14.5" fill="${n.fg}">${esc(line)}</text>`; y += lh; });
+    h += `</g>`;
+  });
+  [[90,250,'Виды машинного обучения'],[400,330,'Задачи МО'],[790,330,'Алгоритмы МО']].forEach(([x, w, t]) => {
+    h += `<g class="deco"><path d="M${x + w / 2 - 60} 612l60 -12l60 12z" fill="#8494AC"/><rect x="${x}" y="612" width="${w}" height="32" rx="4" fill="#8494AC"/>
+          <text x="${x + w / 2}" y="634" text-anchor="middle" font-size="18" fill="#fff">${t}</text></g>`;
+  });
+  $('#schemeBox').innerHTML = `<svg id="scheme" viewBox="0 0 1180 652" role="img" aria-label="Схема: виды машинного обучения, задачи и алгоритмы. Линейная регрессия решает задачу регрессии, это обучение с учителем.">${h}</svg>`;
+  $('#btnFocus').addEventListener('click', e => {
+    const on = $('#scheme').classList.toggle('focus');
+    e.currentTarget.setAttribute('aria-pressed', on);
+    e.currentTarget.textContent = on ? 'Показать всю схему' : 'Показать путь к линейной регрессии';
+    $('#pathNote').hidden = !on;
+  });
+})();
+
+/* ======================= ДЕМОНСТРАЦИЯ: линейная регрессия ======================= */
+const INK = '#1F3F6E', MODEL = '#E65100', PRED = '#1B8A3E', PT = '#1976D2';
+const XMAX = 12, YMAX = 50;
+const SETS = {
+  six:     {letters: true,  xnew: 6, pts: [[1,12],[2,13],[4,22],[5,21],[7,31],[9,35]]},
+  fifteen: {letters: false, xnew: 6, pts: [[2,17],[6,25],[1,13],[9,41],[4,20],[7,35],[3,18],[10,39],[5,28],[8,31],[3,22],[6,30],[9,35],[5,23],[7,30]]},
+  outlier: {letters: false, xnew: 6, pts: [[2,17],[6,25],[1,13],[9,41],[4,20],[7,35],[3,18],[10,39],[5,28],[8,31],[3,22],[6,30],[9,35],[5,23],[7,30],[2,44,1]]}
+};
+const INIT = {a: 1, b: 20};
+const RATE = 0.6;                                   // доля пути к лучшим коэффициентам за один шаг обучения
+const lr = {setId: 'six', pts: [], letters: true, a: INIT.a, b: INIT.b, phase: 'start', steps: 0, journal: [], xnew: 6, last: null, how: '', timer: null};
+
+const labelOf = i => lr.letters ? String.fromCharCode(65 + i) : String(i + 1);
+const predict = (x, a = lr.a, b = lr.b) => a * x + b;
+const sse = (a = lr.a, b = lr.b, pts = lr.pts) => pts.reduce((s, p) => s + (p.y - (a * p.x + b)) ** 2, 0);
+function best(pts = lr.pts) {                       // метод наименьших квадратов
+  const n = pts.length, sx = pts.reduce((s, p) => s + p.x, 0), sy = pts.reduce((s, p) => s + p.y, 0),
+        sxy = pts.reduce((s, p) => s + p.x * p.y, 0), sxx = pts.reduce((s, p) => s + p.x * p.x, 0);
+  const a = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  return {a, b: (sy - a * sx) / n};
+}
+const eqText = (a, b) => `y = ${fmt(a)} · x ${b < -0.005 ? '−' : '+'} ${fmt(Math.abs(b))}`;
+const hasLine = () => lr.phase !== 'start';
+const hasErr = () => lr.phase !== 'start' && lr.phase !== 'line';
+function log(label) { lr.journal.push({label, a: lr.a, b: lr.b, e: sse()}); }
+function stopRun() { if (lr.timer) { clearInterval(lr.timer); lr.timer = null; } }
+
+function loadSet(id) {
+  stopRun();
+  const S = SETS[id];
+  Object.assign(lr, {setId: id, letters: S.letters, pts: S.pts.map(([x, y, out]) => ({x, y, out: !!out})), a: INIT.a, b: INIT.b,
+                     phase: 'start', steps: 0, journal: [], xnew: S.xnew, last: null, how: ''});
+  render();
+}
+function step() {
+  const s = lr;
+  if (s.phase === 'start') s.phase = 'line';
+  else if (s.phase === 'line') { s.phase = 'error'; log('проба'); }
+  else if (s.phase === 'error' || s.phase === 'learn') {
+    const o = best(), e0 = sse(), na = s.a + RATE * (o.a - s.a), nb = s.b + RATE * (o.b - s.b);
+    s.last = {a: s.a, b: s.b, e: e0};
+    if (e0 - sse(na, nb) < 0.01) {                  // ошибка почти не уменьшается: обучение закончено
+      s.a = o.a; s.b = o.b; s.phase = 'done'; s.how = 'learn'; log('итог'); stopRun();
+    } else {
+      s.a = na; s.b = nb; s.steps++; s.phase = 'learn'; log('шаг ' + s.steps);
+    }
+  }
+  render();
+}
+function manual(key, value) {                       // ручной подбор ползунками: шаг обучения не сбрасывает журнал
+  stopRun();
+  lr[key] = value;
+  if (lr.phase !== 'error') lr.phase = 'error';
+  lr.last = null; lr.how = 'manual';
+  render();
+}
+
+/* --- плоскость --- */
+const PL = {W: 640, H: 640, l: 62, r: 20, t: 24, b: 58};
+const X = v => PL.l + v * (PL.W - PL.l - PL.r) / XMAX, Y = v => PL.H - PL.b - v * (PL.H - PL.t - PL.b) / YMAX;
+function renderPlane() {
+  const s = lr;
+  let g = `<defs><clipPath id="clip"><rect x="${X(0)}" y="${Y(YMAX)}" width="${X(XMAX) - X(0)}" height="${Y(0) - Y(YMAX)}"/></clipPath></defs>`;
+  for (let i = 0; i <= XMAX; i++)
+    g += `<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(YMAX)}" stroke="#D3DEEC" stroke-width="1"/>
+          <text x="${X(i)}" y="${Y(0) + 22}" text-anchor="middle" font-size="17" fill="${INK}">${i}</text>`;
+  for (let j = 0; j <= YMAX; j += 5)
+    g += `<line x1="${X(0)}" y1="${Y(j)}" x2="${X(XMAX)}" y2="${Y(j)}" stroke="#D3DEEC" stroke-width="1"/>` +
+         (j ? `<text x="${X(0) - 9}" y="${Y(j) + 6}" text-anchor="end" font-size="17" fill="${INK}">${j}</text>` : '');
+  g += `<path d="M${X(0)} ${Y(YMAX)}V${Y(0)}H${X(XMAX)}" fill="none" stroke="${INK}" stroke-width="2.5"/>
+        <text x="${(X(0) + X(XMAX)) / 2}" y="${PL.H - 12}" text-anchor="middle" font-size="18" font-weight="bold" fill="${INK}">Расстояние x, км</text>
+        <text transform="translate(18 ${(Y(0) + Y(YMAX)) / 2}) rotate(-90)" text-anchor="middle" font-size="18" font-weight="bold" fill="${INK}">Время y, мин</text>`;
+  const xs = s.pts.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let c = '';
+  if (hasErr()) s.pts.forEach(p => {                // отклонения точек от прямой
+    c += `<line x1="${X(p.x)}" y1="${Y(p.y)}" x2="${X(p.x)}" y2="${Y(predict(p.x))}" stroke="${MODEL}" stroke-width="4" opacity=".55"/>`;
+  });
+  if (hasLine()) {                                  // сплошная там, где есть данные; пунктир за их пределами
+    const seg = (xa, xb, dash) => `<line x1="${X(xa)}" y1="${Y(predict(xa))}" x2="${X(xb)}" y2="${Y(predict(xb))}" stroke="${MODEL}" stroke-width="${dash ? 3 : 4.5}" ${dash ? 'stroke-dasharray="9 7"' : ''}/>`;
+    c += seg(0, x0, true) + seg(x0, x1, false) + seg(x1, XMAX, true);
+    if (s.phase === 'done' && s.pts.some(p => p.out)) {   // для сравнения: прямая, обученная без необычного заказа
+      const o = best(s.pts.filter(p => !p.out));
+      c += `<line x1="${X(0)}" y1="${Y(o.b)}" x2="${X(XMAX)}" y2="${Y(o.a * XMAX + o.b)}" stroke="${PT}" stroke-width="3" stroke-dasharray="3 6"/>
+            <text x="${X(XMAX) - 6}" y="${Y(o.a * XMAX + o.b) + 26}" text-anchor="end" font-size="16" font-weight="bold" fill="${PT}" stroke="#fff" stroke-width="4" paint-order="stroke">без пробки</text>`;
+    }
+    const py = predict(s.xnew);
+    if (py >= 0 && py <= YMAX)
+      c += `<path d="M${X(s.xnew)} ${Y(0)}V${Y(py)}H${X(0)}" fill="none" stroke="${PRED}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+  }
+  g += `<g clip-path="url(#clip)">${c}</g>`;
+  s.pts.forEach((p, i) => {
+    const below = hasLine() && p.y < predict(p.x);     // точка под прямой: подпись ставится снизу, чтобы не закрывать отклонение
+    g += `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${p.out ? 12 : 10}" fill="${p.out ? '#F9A825' : PT}" stroke="${p.out ? INK : '#fff'}" stroke-width="2.5"/>
+          <text x="${X(p.x) + 13}" y="${Y(p.y) + (below ? 24 : -10)}" font-size="${s.letters ? 19 : 16}" font-weight="bold" fill="${INK}" stroke="#fff" stroke-width="4" paint-order="stroke">${p.out ? labelOf(i) + ' (пробка)' : labelOf(i)}</text>`;
+    if (hasErr() && s.pts.length <= 8) {
+      const e = p.y - predict(p.x), my = (Y(p.y) + Y(predict(p.x))) / 2;
+      if (Math.abs(Y(p.y) - Y(predict(p.x))) > 24 && my > Y(YMAX) && my < Y(0))
+        g += `<text x="${X(p.x) + 7}" y="${my + 6}" font-size="16" font-weight="bold" fill="${MODEL}" stroke="#fff" stroke-width="4" paint-order="stroke">${(e > 0.05 ? '+' : '') + fmt1(e)}</text>`;
+    }
+  });
+  if (hasLine()) {
+    const py = predict(s.xnew);
+    if (py >= 0 && py <= YMAX) {
+      const px = X(s.xnew), qy = Y(py);
+      g += `<path d="M${px} ${qy - 15}L${px + 15} ${qy}L${px} ${qy + 15}L${px - 15} ${qy}Z" fill="${PRED}" stroke="#fff" stroke-width="3"/>
+            <text x="${px + 20}" y="${qy + 22}" font-size="18" font-weight="bold" fill="${PRED}" stroke="#fff" stroke-width="5" paint-order="stroke">${fmt1(py)} мин</text>`;
+    }
+  }
+  $('#plane').innerHTML = g;
+  $('#legend').innerHTML =
+    `<span><svg viewBox="0 0 34 22" aria-hidden="true"><circle cx="17" cy="11" r="8" fill="${PT}"/></svg>заказ с известным временем</span>
+     <span><svg viewBox="0 0 34 22" aria-hidden="true"><line x1="2" y1="17" x2="32" y2="5" stroke="${MODEL}" stroke-width="4"/></svg>прямая модели</span>
+     <span><svg viewBox="0 0 34 22" aria-hidden="true"><line x1="17" y1="2" x2="17" y2="20" stroke="${MODEL}" stroke-width="5" opacity=".55"/></svg>отклонение</span>
+     <span><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M17 2L26 11L17 20L8 11Z" fill="${PRED}"/></svg>прогноз для нового заказа</span>`;
+}
+
+/* --- текст и таблицы --- */
+function message() {
+  const s = lr, n = s.pts.length, e = sse();
+  if (s.phase === 'start') return `<b>Шаг 1.</b> Известны ${n} заказов: для каждого записаны расстояние x и время доставки y. Нужно научиться прогнозировать время для нового заказа.`;
+  if (s.phase === 'line') return `<b>Шаг 2.</b> Проведена пробная прямая ${eqText(s.a, s.b)}. Числа a и b взяты наугад, поэтому прямая пока плохо описывает точки.`;
+  if (s.phase === 'error') return (s.how === 'manual' ? '<b>Подбор вручную.</b> ' : '<b>Шаг 3.</b> ') +
+    `Для каждой точки найдено отклонение от прямой: оно показано оранжевым отрезком. Ошибка модели, то есть сумма квадратов отклонений: ${fmt(e)}.`;
+  if (s.phase === 'learn') return `<b>Шаги 4 и 5, проход ${s.steps}.</b> Алгоритм изменил коэффициенты: a: ${fmt(s.last.a)} → ${fmt(s.a)}, b: ${fmt(s.last.b)} → ${fmt(s.b)}. Ошибка уменьшилась: ${fmt(s.last.e)} → ${fmt(e)}. Значит, обучение продолжается.`;
+  let t = s.how === 'best'
+    ? `<b>Лучшая прямая</b> найдена сразу, по формулам метода наименьших квадратов: ${eqText(s.a, s.b)}. Ошибка: ${fmt(e)}. Меньше она быть не может.`
+    : `<b>Шаг 5.</b> Ошибка почти перестала уменьшаться. Модель обучена: ${eqText(s.a, s.b)}. Ошибка: ${fmt(e)}.`;
+  if (s.pts.some(p => p.out)) {
+    const o = best(s.pts.filter(p => !p.out));
+    t += ` Без заказа с пробкой прямая была бы другой: ${eqText(o.a, o.b)}. Она показана синим пунктиром.`;
+  }
+  return t;
+}
+function renderTables() {
+  const s = lr, line = hasLine(), err = hasErr();
+  const sq = s.pts.map(p => (p.y - predict(p.x)) ** 2), big = err ? sq.indexOf(Math.max(...sq)) : -1;
+  let h = '<table><thead><tr><th>Заказ</th><th>x, км</th><th>y, мин</th><th>Прогноз, мин</th><th>Ошибка<br><small>y − прогноз</small></th><th>Квадрат ошибки</th></tr></thead><tbody>';
+  s.pts.forEach((p, i) => {
+    const f = predict(p.x);
+    h += `<tr class="${i === big ? 'big' : ''}"><td><b>${labelOf(i)}</b></td><td>${fmtShort(p.x)}</td><td>${fmtShort(p.y)}</td>
+          <td class="num">${line ? fmt(f) : ''}</td><td class="num">${err ? signed(p.y - f) : ''}</td><td class="num">${err ? fmt(sq[i]) : ''}</td></tr>`;
+  });
+  h += `</tbody><tfoot><tr><td colspan="5" style="text-align:right">Ошибка модели (сумма квадратов)</td><td class="num">${err ? fmt(sse()) : ''}</td></tr></tfoot></table>`;
+  $('#objBox').innerHTML = h;
+  if (!s.journal.length) $('#journalBox').innerHTML = '<p class="hint">Журнал заполняется на каждом шаге обучения. Попытку ручного подбора добавляет кнопка «Записать попытку».</p>';
+  else $('#journalBox').innerHTML = '<table><thead><tr><th>Запись</th><th>a</th><th>b</th><th>Ошибка</th></tr></thead><tbody>' +
+    s.journal.map((j, i) => `<tr class="${i === s.journal.length - 1 ? 'cur' : ''}"><td>${j.label}</td><td class="num">${fmt(j.a)}</td><td class="num">${fmt(j.b)}</td><td class="num">${fmt(j.e)}</td></tr>`).join('') + '</tbody></table>';
+}
+function render() {
+  const s = lr, line = hasLine();
+  renderPlane(); renderTables();
+  $('#msg').innerHTML = message();
+  const now = {start: 0, line: 1, error: 2, learn: 3, done: 4}[s.phase];
+  document.querySelectorAll('#steps li').forEach((li, i) => li.classList.toggle('now', i === now));
+  $('#eqOut').textContent = line ? eqText(s.a, s.b) : 'y = a · x + b';
+  $('#errOut').textContent = hasErr() ? 'ошибка: ' + fmt(sse()) : '';
+  $('#aRange').value = s.a; $('#bRange').value = s.b;
+  $('#aOut').textContent = fmt(s.a); $('#bOut').textContent = fmt(s.b);
+  const b = $('#btnStep');
+  b.disabled = s.phase === 'done';
+  b.textContent = {start: 'Шаг 2. Провести пробную прямую', line: 'Шаг 3. Вычислить ошибку', error: 'Шаг 4. Изменить a и b', learn: 'Шаг 4. Изменить a и b', done: 'Модель обучена'}[s.phase];
+  $('#btnRun').textContent = s.timer ? 'Пауза' : 'Обучать до остановки';
+  $('#btnRun').disabled = s.phase === 'done';
+  $('#btnLog').disabled = !hasErr();
+  document.querySelectorAll('#segSet button').forEach(x => x.setAttribute('aria-pressed', x.dataset.set === s.setId));
+  // прогноз
+  $('#xOut').textContent = 'x = ' + fmtShort(s.xnew) + ' км';
+  $('#xMinus').disabled = s.xnew <= 0; $('#xPlus').disabled = s.xnew >= XMAX;
+  const xs = s.pts.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  if (!line) { $('#predOut').textContent = ''; $('#predNote').textContent = 'Прогноз появится, когда будет проведена прямая.'; }
+  else {
+    $('#predOut').textContent = `→ прогноз: ${fmt1(predict(s.xnew))} мин`;
+    $('#predNote').textContent = (s.xnew < x0 || s.xnew > x1)
+      ? `В данных есть заказы только от ${fmtShort(x0)} до ${fmtShort(x1)} км. За этими пределами прогноз ненадёжен: там прямая показана пунктиром.`
+      : `Прогноз вычислен по уравнению: ${fmt(s.a)} · ${fmtShort(s.xnew)} ${s.b < -0.005 ? '−' : '+'} ${fmt(Math.abs(s.b))} = ${fmt(predict(s.xnew))}.` +
+        (s.phase === 'done' ? '' : ' Модель ещё не обучена, поэтому прогноз неточный.');
+  }
+}
+$('#btnStep').addEventListener('click', () => { stopRun(); step(); });
+$('#btnRun').addEventListener('click', () => {
+  if (lr.timer) { stopRun(); render(); return; }
+  step();
+  if (lr.phase !== 'done') lr.timer = setInterval(step, 1100);
+  render();
+});
+$('#btnBest').addEventListener('click', () => {
+  stopRun();
+  const o = best(); lr.a = o.a; lr.b = o.b; lr.phase = 'done'; lr.how = 'best'; lr.last = null; log('лучшая прямая');
+  render();
+});
+$('#btnLog').addEventListener('click', () => { if (hasErr()) { log('вручную'); render(); } });
+$('#btnReset').addEventListener('click', () => loadSet(lr.setId));
+$('#aRange').addEventListener('input', e => manual('a', +e.target.value));
+$('#bRange').addEventListener('input', e => manual('b', +e.target.value));
+$('#xMinus').addEventListener('click', () => { lr.xnew = Math.max(0, lr.xnew - 0.5); render(); });
+$('#xPlus').addEventListener('click', () => { lr.xnew = Math.min(XMAX, lr.xnew + 0.5); render(); });
+$('#segSet').addEventListener('click', e => { const b = e.target.closest('button'); if (b) loadSet(b.dataset.set); });
+$('#plane').addEventListener('click', e => {
+  const m = $('#plane').getScreenCTM(); if (!m) return;
+  const q = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+  const x = Math.round((q.x - PL.l) / ((PL.W - PL.l - PL.r) / XMAX) * 2) / 2;
+  lr.xnew = Math.min(XMAX, Math.max(0, x));
+  render();
+});
+
+/* ======================= РАЗБОР ПРИМЕРОВ ======================= */
+const COLS = {
+  cls: {id: 'cls', name: 'Классификация', def: 'отнести объект к одному из заранее известных классов', kind: 'с учителем', chip: 'sup', bg: '#F4908C'},
+  reg: {id: 'reg', name: 'Регрессия', def: 'по набору признаков спрогнозировать число', kind: 'с учителем', chip: 'sup', bg: '#F4908C'},
+  clu: {id: 'clu', name: 'Кластеризация', def: 'разбить похожие объекты на группы', kind: 'без учителя', chip: 'unsup', bg: '#C5E0B4'}
+};
+const EX = {
+  tasks: {
+    title: 'Какая это задача машинного обучения?',
+    lead: 'Распределите девять примеров по трём задачам. Выберите карточку, затем щёлкните нужный столбец. Карточку можно и перетащить.',
+    guide: `<summary>Подсказка: как рассуждать</summary>
+      <p>Спросите себя: что должен выдать алгоритм и есть ли у него примеры с правильными ответами?</p>
+      <div class="rules">
+        <div><b>Один из заранее известных классов</b><br>да / нет, вид, категория. Есть размеченные примеры. Это классификация.</div>
+        <div><b>Число</b><br>цена, время, балл, количество. Есть примеры с известным ответом. Это регрессия.</div>
+        <div><b>Группы, которых заранее никто не задавал</b><br>правильных ответов нет, алгоритм сам ищет похожие объекты. Это кластеризация.</div>
+      </div>`,
+    per: 3,
+    cols: [COLS.cls, COLS.reg, COLS.clu],
+    bank: {
+      cls: [
+        ['Сервис читает отзыв о товаре и определяет его тон: положительный, нейтральный или отрицательный.', 'Ответ выбирается из трёх заранее известных классов.'],
+        ['Камера на стройке определяет, надел рабочий каску или нет.', 'Ответ: один из двух заранее известных классов.'],
+        ['Приложение по записи пения определяет вид птицы, выбирая из списка видов.', 'Список видов известен заранее, ответ: один из них.'],
+        ['Антивирус решает, опасен файл или безопасен.', 'Ответ: один из двух заранее известных классов.'],
+        ['Сортировочная линия по фотографии определяет материал отходов: пластик, стекло или бумага.', 'Ответ выбирается из трёх заранее известных классов.'],
+        ['Сервис определяет, написан текст человеком или нейросетью.', 'Ответ: один из двух заранее известных классов.']
+      ],
+      reg: [
+        ['По числу подписчиков и времени публикации спрогнозировать, сколько просмотров наберёт видео.', 'Ответ: число просмотров.'],
+        ['Служба доставки по расстоянию до клиента прогнозирует время доставки в минутах.', 'Ответ: число, время в минутах.'],
+        ['По возрасту дерева и толщине ствола оценить его высоту в метрах.', 'Ответ: число, высота в метрах.'],
+        ['Кинотеатр прогнозирует, сколько билетов продаст на премьеру.', 'Ответ: число билетов.'],
+        ['По длине трассы и перепаду высот оценить, за сколько минут её пройдёт лыжник.', 'Ответ: число, время в минутах.'],
+        ['Служба спасения прогнозирует, на сколько сантиметров поднимется вода в реке во время паводка.', 'Ответ: число, уровень воды в сантиметрах.']
+      ],
+      clu: [
+        ['Сервис объединяет похожие отзывы о товаре в группы, чтобы понять, о чём пишут чаще всего. Тем заранее нет.', 'Тем заранее нет: отзывы группируются по сходству.'],
+        ['Археологи группируют найденные черепки по сходству состава глины, не зная, из каких они мастерских.', 'Мастерские не известны: черепки группируются по сходству.'],
+        ['Онлайн-игра делит игроков на группы по похожему стилю игры, заранее не задавая типы игроков.', 'Типы игроков не заданы: алгоритм сам находит похожих.'],
+        ['Сеть кофеен группирует свои точки по похожим продажам, не имея готовых категорий.', 'Категорий заранее нет: точки группируются по сходству.'],
+        ['Учёные разбивают города на группы по похожему климату, не используя готовую классификацию.', 'Готовых классов нет: города группируются по сходству.'],
+        ['Музей объединяет картины с похожей цветовой гаммой в подборки без готового списка стилей.', 'Стили не заданы: картины группируются по сходству.']
+      ]
+    }
+  },
+  pairs: {
+    title: 'Класс или число?',
+    lead: 'Классификация и регрессия учатся на примерах с известным ответом. Различие в том, что нужно получить. Распределите восемь вопросов: в каждой теме один вопрос на классификацию и один на регрессию.',
+    guide: `<summary>Подсказка: как рассуждать</summary>
+      <p>Спросите себя: каким будет ответ?</p>
+      <div class="rules">
+        <div><b>Слово из готового списка</b><br>да или нет, один из нескольких вариантов. Это классификация.</div>
+        <div><b>Число</b><br>сколько минут, сколько баллов, сколько штук. Это регрессия.</div>
+      </div>`,
+    per: 4,
+    cols: [COLS.cls, COLS.reg],
+    pairs: [
+      ['Будет ли завтра дождь?', 'Ответ: «да» или «нет», один из двух классов.', 'Сколько миллиметров осадков выпадет завтра?', 'Ответ: число миллиметров.'],
+      ['Сдаст ли ученик экзамен?', 'Ответ: «сдаст» или «не сдаст», один из двух классов.', 'Сколько баллов ученик наберёт на экзамене?', 'Ответ: число баллов.'],
+      ['Опоздает ли курьер с заказом?', 'Ответ: «да» или «нет», один из двух классов.', 'Через сколько минут курьер привезёт заказ?', 'Ответ: число минут.'],
+      ['Купит ли посетитель сайта товар?', 'Ответ: «купит» или «не купит», один из двух классов.', 'Сколько товаров посетитель сайта положит в корзину?', 'Ответ: число товаров.'],
+      ['Кто победит в матче: хозяева, гости или будет ничья?', 'Ответ: один из трёх заранее известных классов.', 'Сколько голов забьют в матче?', 'Ответ: число голов.'],
+      ['К какому типу жилья относится квартира: эконом, комфорт или бизнес?', 'Ответ: один из трёх заранее известных классов.', 'Какова площадь квартиры, если известны число комнат и тип дома?', 'Ответ: число квадратных метров.'],
+      ['Взойдёт ли семя?', 'Ответ: «да» или «нет», один из двух классов.', 'На сколько сантиметров вырастет росток за неделю?', 'Ответ: число сантиметров.'],
+      ['Хватит ли заряда телефона до вечера?', 'Ответ: «да» или «нет», один из двух классов.', 'Сколько часов проработает телефон без подзарядки?', 'Ответ: число часов.']
+    ]
+  },
+  algos: {
+    title: 'Какой это метод?',
+    lead: 'Мы изучили три метода. Распределите девять карточек: к какому методу относится каждое утверждение или пример?',
+    guide: `<summary>Подсказка: как рассуждать</summary>
+      <p>Спросите себя: есть ли правильные ответы и что получается в результате?</p>
+      <div class="rules">
+        <div><b>Ответов нет, результат — группы</b><br>алгоритм делит объекты на k групп и двигает центроиды. Это метод k-средних.</div>
+        <div><b>Ответы есть, результат — класс</b><br>новый объект получает класс большинства из k ближайших соседей. Это метод k-ближайших соседей.</div>
+        <div><b>Ответы есть, результат — число</b><br>алгоритм подбирает прямую y = a · x + b и по ней вычисляет прогноз. Это линейная регрессия.</div>
+      </div>`,
+    per: 3,
+    cols: [
+      {id: 'km', name: 'Метод k-средних', def: 'кластеризация: разбить объекты на группы', kind: 'без учителя', chip: 'unsup', bg: '#FFD966'},
+      {id: 'knn', name: 'Метод k-ближайших соседей', def: 'классификация: определить класс нового объекта', kind: 'с учителем', chip: 'sup', bg: '#FFD966'},
+      {id: 'lin', name: 'Линейная регрессия', def: 'регрессия: спрогнозировать число', kind: 'с учителем', chip: 'sup', bg: '#FFD966'}
+    ],
+    bank: {
+      km: [
+        ['Правильных ответов нет: группы алгоритм находит сам.', 'Это обучение без учителя, задача кластеризации.'],
+        ['Число k означает количество групп, на которые делятся объекты.', 'В методе k-средних k — число кластеров.'],
+        ['На каждой итерации центроиды перемещаются в средние точки своих групп.', 'Центроиды есть только в методе k-средних.'],
+        ['Алгоритм останавливается, когда центроиды перестают меняться.', 'Это условие остановки метода k-средних.'],
+        ['Служба доставки разбивает адреса клиентов на три зоны.', 'Зоны заранее не заданы: это кластеризация.'],
+        ['Результат зависит от того, какие начальные центроиды выбраны.', 'Начальные центроиды выбираются в методе k-средних.']
+      ],
+      knn: [
+        ['Класс нового объекта определяется голосованием ближайших объектов.', 'Голосование есть только в методе k-ближайших соседей.'],
+        ['Число k означает количество соседей, которые голосуют.', 'В методе k-ближайших соседей k — число соседей.'],
+        ['Для двух классов k берут нечётным, чтобы не было ничьей.', 'Ничья возможна при голосовании соседей.'],
+        ['Чтобы дать ответ, нужно хранить все объекты с известным классом.', 'Соседей ищут среди всех известных объектов.'],
+        ['Письмо считается спамом, если спамом были большинство самых похожих на него писем.', 'Классы известны, решает большинство похожих объектов.'],
+        ['Результат работы — класс нового объекта.', 'Метод k-ближайших соседей решает задачу классификации.']
+      ],
+      lin: [
+        ['Результат обучения — уравнение прямой y = a · x + b.', 'Прямую строит линейная регрессия.'],
+        ['Алгоритм подбирает числа a и b так, чтобы ошибка была наименьшей.', 'Коэффициенты a и b есть в линейной регрессии.'],
+        ['Ответ для нового объекта — число, вычисленное по уравнению.', 'Линейная регрессия прогнозирует число.'],
+        ['После обучения достаточно хранить два числа.', 'Это коэффициенты a и b уравнения прямой.'],
+        ['Служба доставки по расстоянию прогнозирует время доставки в минутах.', 'Ответ: число. Это задача регрессии.'],
+        ['Один необычный объект может заметно сдвинуть прямую.', 'Прямая и её чувствительность к выбросам — свойства линейной регрессии.']
+      ]
+    }
+  }
+};
+let curEx = 'tasks', instant = false;
+const E = () => EX[curEx];
+function newRound(id) {
+  const ex = EX[id]; let n = 0; const cards = [];
+  if (ex.pairs) shuffle(ex.pairs).slice(0, ex.per).forEach(([t1, w1, t2, w2]) => {
+    cards.push({id: n++, col: 'cls', text: t1, why: w1, place: null, status: null});
+    cards.push({id: n++, col: 'reg', text: t2, why: w2, place: null, status: null});
+  });
+  else ex.cols.forEach(col => shuffle(ex.bank[col.id]).slice(0, ex.per).forEach(([text, why]) => cards.push({id: n++, col: col.id, text, why, place: null, status: null})));
+  ex.cards = shuffle(cards); ex.sel = null; ex.result = '';
+}
+function cardHtml(c) {
+  const ex = E(); let extra = '';
+  if (c.status === 'ok') extra = `<span class="mark">✓ Верно</span><span class="why">${esc(c.why)}</span>`;
+  else if (c.status === 'shown') extra = `<span class="why">${esc(c.why)}</span>`;
+  else if (c.status === 'retry') extra = `<span class="mark">↺ Подумайте ещё</span>`;
+  return `<div class="card ${c.status === 'ok' ? 'ok' : c.status === 'retry' ? 'retry' : ''} ${ex.sel === c.id ? 'sel' : ''}" data-id="${c.id}" tabindex="0" role="button" aria-pressed="${ex.sel === c.id}" draggable="true">${esc(c.text)}${extra}</div>`;
+}
+function renderEx() {
+  const ex = E(), pool = ex.cards.filter(c => c.place === null);
+  $('#exTitle').textContent = ex.title; $('#exLead').textContent = ex.lead;
+  if ($('#exGuide').dataset.ex !== curEx) { $('#exGuide').innerHTML = ex.guide; $('#exGuide').dataset.ex = curEx; $('#exGuide').open = false; }
+  $('#result').textContent = ex.result;
+  $('#pool').innerHTML = pool.map(cardHtml).join('');
+  $('#pool').classList.toggle('empty', pool.length === 0);
+  $('#cols').style.gridTemplateColumns = `repeat(${ex.cols.length}, 1fr)`;
+  $('#cols').innerHTML = ex.cols.map(t => `
+    <div class="col ${ex.sel !== null ? 'ready' : ''}" data-col="${t.id}">
+      <header style="background:${t.bg}"><b>${t.name}</b><small>${t.def}</small><span class="chip ${t.chip}">${t.kind}</span></header>
+      <div class="list">${ex.cards.filter(c => c.place === t.id).map(cardHtml).join('')}</div>
+    </div>`).join('');
+  document.querySelectorAll('#segEx button').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === curEx));
+}
+function place(id, col) {
+  const ex = E(), c = ex.cards.find(c => c.id === id); if (!c) return;
+  c.place = col; c.status = null; ex.sel = null; ex.result = '';
+  if (instant && col) c.status = c.col === col ? 'ok' : 'retry';
+  renderEx();
+}
+function check() {
+  const ex = E(), placed = ex.cards.filter(c => c.place !== null), left = ex.cards.length - placed.length;
+  placed.forEach(c => { c.status = c.col === c.place ? 'ok' : 'retry'; });
+  const ok = placed.filter(c => c.status === 'ok').length;
+  let t = `Верно: ${ok} из ${ex.cards.length}.`;
+  if (left) t += ` Не разложено карточек: ${left}.`;
+  if (placed.some(c => c.status === 'retry')) t += ' Карточки с отметкой ↺ переложите и проверьте снова.';
+  if (ok === ex.cards.length) t = 'Все карточки распределены верно.';
+  ex.result = t; ex.sel = null; renderEx();
+}
+function showAnswers() {
+  const ex = E();
+  ex.cards.forEach(c => { c.place = c.col; c.status = 'shown'; });
+  ex.sel = null; ex.result = 'Правильное распределение с пояснениями.';
+  renderEx();
+}
+const exRoot = $('#p2');
+exRoot.addEventListener('click', e => {
+  const ex = E(), card = e.target.closest('.card'), col = e.target.closest('.col');
+  if (card) { const id = +card.dataset.id; ex.sel = ex.sel === id ? null : id; renderEx(); return; }
+  if (col && ex.sel !== null) { place(ex.sel, col.dataset.col); return; }
+  if (e.target.closest('#pool') && ex.sel !== null) place(ex.sel, null);
+});
+exRoot.addEventListener('keydown', e => {
+  const ex = E(), card = e.target.closest('.card');
+  if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); card.click(); return; }
+  const n = +e.key;
+  if (ex.sel !== null && n >= 1 && n <= ex.cols.length) place(ex.sel, ex.cols[n - 1].id);
+});
+exRoot.addEventListener('dragstart', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  e.dataTransfer.setData('text/plain', card.dataset.id); e.dataTransfer.effectAllowed = 'move';
+});
+exRoot.addEventListener('dragover', e => {
+  const zone = e.target.closest('.col, #pool'); if (!zone) return;
+  e.preventDefault(); if (zone.classList.contains('col')) zone.classList.add('over');
+});
+exRoot.addEventListener('dragleave', e => { const col = e.target.closest('.col'); if (col && !col.contains(e.relatedTarget)) col.classList.remove('over'); });
+exRoot.addEventListener('drop', e => {
+  const zone = e.target.closest('.col, #pool'); if (!zone) return;
+  e.preventDefault();
+  const id = parseInt(e.dataTransfer.getData('text/plain'), 10); if (Number.isNaN(id)) return;
+  place(id, zone.classList.contains('col') ? zone.dataset.col : null);
+});
+$('#btnCheck').addEventListener('click', check);
+$('#btnAnswers').addEventListener('click', showAnswers);
+$('#btnNew').addEventListener('click', () => { newRound(curEx); renderEx(); });
+$('#chkInstant').addEventListener('change', e => { instant = e.target.checked; });
+$('#segEx').addEventListener('click', e => {            // переключение задания не сбрасывает разложенные карточки
+  const b = e.target.closest('button'); if (!b) return;
+  curEx = b.dataset.ex; renderEx();
+});
+
+/* ---------- запуск ---------- */
+loadSet('six');
+newRound('tasks'); newRound('pairs'); newRound('algos');
+renderEx();
+</script>
+</body>
+</html>
