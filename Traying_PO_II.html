@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Программное обеспечение и искусственный интеллект — учебник-тренажёр</title>
+<style>
+:root{
+  --bg:#f2f7fb; --card:#ffffff; --ink:#27384f; --muted:#56677f; --line:#c9d8e8;
+  --head:#e3eefa; --accent:#3d7fc4; --accent-bg:#e1eefb;
+  --sys:#3d7fc4; --sys-bg:#e1eefb;
+  --app:#1f8f7a; --app-bg:#dbf3ee;
+  --ins:#7558bd; --ins-bg:#ece6fa;
+  --ai:#a9730a;  --ai-bg:#fff1c9;
+  --ok:#35863f;  --ok-bg:#e1f4df;
+  --no:#b9602f;  --no-bg:#fde9db;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Times New Roman",Times,serif;font-size:21px;line-height:1.4}
+button,input{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+h1,h2,h3,p{margin:0}
+
+/* ---------- шапка ---------- */
+header{background:var(--head);border-bottom:2px solid var(--line)}
+.head{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;justify-content:space-between;padding-top:10px;padding-bottom:8px}
+.head h1{font-size:25px;line-height:1.15}
+.head .sub{font-size:18px;color:var(--muted);font-weight:normal;white-space:nowrap}
+.who{display:flex;flex-wrap:wrap;gap:10px 14px}
+.who label{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--muted);font-weight:bold}
+.who input{padding:5px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;font-size:21px;font-weight:bold}
+.who input:focus{outline:none;border-color:var(--accent)}
+.who input.need{border-color:var(--no);background:var(--no-bg)}
+#fio{width:260px;max-width:100%}
+#klass{width:84px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:10px}
+.tabbtn{flex:1 1 160px;padding:8px 10px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:21px;font-weight:bold}
+.tabbtn:hover{border-color:var(--accent)}
+.tabbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tabstat{display:inline-block;margin-left:8px;padding:1px 10px;border-radius:10px;font-size:17px;line-height:1.35;background:#eef2f6;color:var(--muted);border:2px solid var(--line);vertical-align:2px}
+.tabstat.part{background:var(--no-bg);color:#8a4a1f;border-color:var(--no)}
+.tabstat.all{background:var(--ok-bg);color:#256b2e;border-color:var(--ok)}
+
+main.wrap{padding-top:12px;padding-bottom:16px}
+.tab{display:none}
+.tab.on{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px 24px}
+
+.btn{padding:9px 22px;border:2px solid var(--accent);border-radius:12px;background:var(--accent);color:#fff;font-size:21px;font-weight:bold}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:#fff;color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default;filter:none}
+
+/* ---------- теория ---------- */
+.parts{display:flex;gap:8px;margin-bottom:10px}
+.partbtn{flex:1;padding:7px 10px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:21px;font-weight:bold}
+.partbtn.on[data-part="po"]{background:var(--sys-bg);border-color:var(--sys)}
+.partbtn.on[data-part="ai"]{background:var(--ai-bg);border-color:var(--ai)}
+.slides{min-height:400px}
+.slide{display:none;font-size:24px;line-height:1.3}
+.slide.on{display:block}
+.slide h2{font-size:32px;line-height:1.15;margin-bottom:10px}
+.slide p{margin:8px 0}
+.slide .note{margin-top:12px;padding:9px 16px;border-radius:12px;background:var(--accent-bg);border-left:8px solid var(--accent)}
+.slide[data-part="ai"] .note{background:var(--ai-bg);border-left-color:var(--ai)}
+.tag{display:inline-block;padding:2px 14px;border-radius:10px}
+.t-sys{background:var(--sys-bg);border:2px solid var(--sys)}
+.t-app{background:var(--app-bg);border:2px solid var(--app)}
+.t-ins{background:var(--ins-bg);border:2px solid var(--ins)}
+.t-ai{background:var(--ai-bg);border:2px solid var(--ai)}
+.grid{display:grid;gap:10px;margin-top:10px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.cell{border-radius:14px;padding:10px 14px;border:2px solid var(--line);background:#f8fbfe}
+.cell h3{font-size:25px;margin-bottom:2px}
+.cell .ico{font-size:32px;line-height:1;display:block;margin-bottom:4px}
+.g4 .cell .ico{display:inline;margin:0 6px 0 0;font-size:27px;vertical-align:-3px}
+.g4 .cell h3{display:inline}
+.g4 .cell h3::after{content:'';display:block}
+.cell .small{font-size:.94em;color:var(--muted)}
+.cell .kind{color:var(--muted)}
+.progs{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0 4px}
+.pg{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:2px 12px 2px 3px;border-radius:11px;background:#fff;border:2px solid;font-weight:bold;line-height:1.15}
+.pg.t{padding-left:12px}
+.g4 .pg{white-space:nowrap}
+.g4 .cell{padding:8px 12px}
+.g4 .progs{gap:5px 6px}
+.t-sys .pg{color:#2c66a8}
+.t-app .pg{color:#17735f}
+.t-ins .pg{color:#5e43a6}
+.t-ai .pg{color:#8a5c00}
+.pg.big{font-size:1.25em;min-height:52px;padding-right:16px}
+.pg.big .lg{width:44px;height:44px}
+.etc{font-weight:bold;color:var(--muted)}
+.lg{display:inline-flex;flex:none;width:32px;height:32px;border-radius:8px;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle}
+.lg svg{display:block;width:100%;height:100%}
+.lg.em{font-size:23px;line-height:1;font-weight:normal;background:#f1f5fa}
+.item-n .lg{width:46px;height:46px;margin-right:12px;vertical-align:-10px}
+.item-n .lg.em{font-size:32px}
+.cell.t-sys,.cell.t-app,.cell.t-ins,.cell.t-ai{border-width:2px}
+.formula{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:10px 0}
+.formula .cell{flex:1 1 200px;text-align:center}
+.formula .sign{align-self:center;font-size:40px;font-weight:bold;color:var(--muted)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-top:12px}
+.chain .cell{flex:1 1 170px;text-align:center;font-size:22px}
+.chain .sign{align-self:center;font-size:32px;color:var(--muted);font-weight:bold}
+.steps{margin:12px 0 0;padding:0;list-style:none}
+.steps li{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:8px 14px;border-radius:12px;border:2px solid var(--line);background:#f8fbfe}
+.steps .q{flex:1}
+.steps .a{font-weight:bold;white-space:nowrap}
+.watch{margin:8px 0 0;padding-left:26px}
+.watch li{margin-bottom:5px}
+.tnav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:2px solid var(--line)}
+.dots{display:flex;gap:8px;align-items:center}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);background:#fff;padding:0}
+.dot.on{background:var(--accent)}
+.count{font-size:19px;color:var(--muted);margin-left:6px}
+
+/* ---------- задания ---------- */
+.chooser{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding:2px}
+.exbtn{flex:1 1 220px;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:21px;font-weight:bold;text-align:left}
+.exbtn.run{border-color:var(--no);background:var(--no-bg)}
+.exbtn.done{border-color:var(--ok);background:var(--ok-bg)}
+.exbtn.on{box-shadow:0 0 0 4px var(--accent)}
+#tab-po .exbtn:first-child{flex-grow:2.2}
+.exnum{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;flex:none}
+.exstat{margin-left:auto;font-size:18px;color:var(--muted);white-space:nowrap}
+.exbtn.done .exstat{color:#256b2e}
+.exbtn.run .exstat{color:#8a4a1f}
+.nextrow .btn{scroll-margin-bottom:18px}
+.todo{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.todo .btn{padding:6px 16px;font-size:20px}
+.exbox{display:none}
+.exbox.on{display:block}
+.exhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px}
+.exhead h2{font-size:30px}
+.prog{font-size:20px;color:var(--muted);font-weight:bold}
+.bar{height:10px;border-radius:6px;background:#e3ecf5;margin:8px 0 14px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.task{font-size:23px;margin-bottom:12px}
+.warn{margin:12px 0;padding:10px 16px;border-radius:12px;background:var(--no-bg);border:2px solid var(--no);font-weight:bold}
+.item{margin:0 auto 14px;max-width:640px;text-align:center;padding:16px 18px;border-radius:16px;border:3px dashed var(--accent);background:#f8fbfe}
+.item.ok{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.item.no{border-style:solid;border-color:var(--no);background:var(--no-bg)}
+.item-n{font-size:31px;font-weight:bold;line-height:1.2}
+.item-d{font-size:22px;color:var(--muted);margin-top:4px}
+.baskets{display:grid;gap:10px}
+.baskets.n3{grid-template-columns:repeat(3,1fr)}
+.baskets.n2{grid-template-columns:repeat(2,1fr)}
+.basket{display:flex;flex-direction:column;align-items:center;min-height:150px;padding:12px 10px;border-radius:16px;border:3px solid var(--line);background:#fff;text-align:center}
+.basket.t-sys{background:var(--sys-bg);border-color:var(--sys)}
+.basket.t-app{background:var(--app-bg);border-color:var(--app)}
+.basket.t-ins{background:var(--ins-bg);border-color:var(--ins)}
+.basket.t-ai{background:var(--ai-bg);border-color:var(--ai)}
+.basket.t-no{background:#eef2f6;border-color:#8a9bb0}
+.basket:not(:disabled):hover{box-shadow:0 0 0 4px rgba(61,127,196,.25)}
+.basket:disabled{cursor:default;color:var(--ink)}
+.basket.right{box-shadow:0 0 0 5px var(--ok)}
+.basket.wrong{box-shadow:0 0 0 5px var(--no)}
+.b-name{font-size:25px;font-weight:bold}
+.b-sub{font-size:19px;color:var(--muted);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.chip{font-size:17px;padding:2px 9px;border-radius:9px;background:#fff;border:2px solid var(--ok)}
+.chip.miss{border-color:var(--no);border-style:dashed}
+.qtext{font-size:26px;margin-bottom:14px}
+.opts{display:grid;gap:10px}
+.opts.row{grid-template-columns:repeat(3,1fr)}
+.opts.two{grid-template-columns:repeat(2,1fr)}
+.opt{padding:13px 16px;border-radius:14px;border:3px solid var(--line);background:#fff;font-size:23px;text-align:left}
+.opts.row .opt,.opts.two .opt{text-align:center;font-weight:bold}
+.opt.t-sys{background:var(--sys-bg);border-color:var(--sys)}
+.opt.t-app{background:var(--app-bg);border-color:var(--app)}
+.opt.t-ins{background:var(--ins-bg);border-color:var(--ins)}
+.opt:not(:disabled):hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(61,127,196,.2)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg);box-shadow:0 0 0 3px var(--ok)}
+.opt.wrong{border-color:var(--no);background:var(--no-bg);box-shadow:0 0 0 3px var(--no)}
+.fb{min-height:30px;margin-top:14px;font-size:23px}
+.fb.ok,.fb.no,.fb.tip{padding:11px 16px;border-radius:12px;font-weight:bold}
+.fb.ok{background:var(--ok-bg);border:2px solid var(--ok)}
+.fb.no{background:var(--no-bg);border:2px solid var(--no)}
+.fb.tip{background:var(--accent-bg);border:2px solid var(--accent)}
+.nextrow{display:flex;justify-content:flex-end;margin-top:12px;min-height:54px}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px}
+.pcol{display:flex;flex-direction:column;gap:9px}
+.pcol h3{font-size:21px;color:var(--muted)}
+.pbtn{min-height:76px;padding:9px 14px;border-radius:14px;border:3px solid var(--line);background:#fff;font-size:22px;text-align:left;display:flex;align-items:center;gap:10px}
+.pbtn.l{font-weight:bold}
+.pbtn.r{background:var(--ai-bg);border-color:#e2c873}
+.pbtn.sel{border-color:var(--accent);box-shadow:0 0 0 4px rgba(61,127,196,.3)}
+.pbtn.done{border-color:var(--ok);background:var(--ok-bg);cursor:default}
+.pbtn.flash{border-color:var(--no);background:var(--no-bg)}
+.pnum{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;font-weight:bold;font-size:19px}
+.done-score{font-size:34px;margin:10px 0 6px}
+.done-score b{font-size:46px}
+.rowbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+
+/* ---------- результат ---------- */
+.res-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.res-who{font-size:38px;font-weight:bold;line-height:1.15}
+.res-meta{font-size:22px;color:var(--muted);margin-top:2px}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.res-block{border-radius:16px;padding:14px 18px;border:2px solid var(--line)}
+.res-block.po{background:var(--sys-bg);border-color:var(--sys)}
+.res-block.ai{background:var(--ai-bg);border-color:var(--ai)}
+.res-block h3{font-size:26px;display:flex;justify-content:space-between;gap:10px}
+.res-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid rgba(39,56,79,.18);font-size:22px}
+.res-row b{white-space:nowrap}
+.res-row .att{font-weight:normal;color:var(--muted);font-size:18px}
+.res-total{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px;margin-top:16px;padding:16px 22px;border-radius:16px;background:var(--ok-bg);border:2px solid var(--ok)}
+.res-total.wait{background:var(--no-bg);border-color:var(--no)}
+.res-total .big{font-size:36px;font-weight:bold}
+.mark{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:bold;line-height:1.1;text-align:right}
+.mark small{font-size:21px;font-weight:normal;color:var(--muted)}
+.mark span{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:96px;padding:0 10px;border-radius:50%;background:var(--ok-bg);border:5px solid var(--ok);font-size:54px}
+
+@media (max-width:760px){
+  body{font-size:19px}
+  .head h1{font-size:22px}
+  .head .sub{white-space:normal}
+  .slide{font-size:21px}
+  .slide h2{font-size:27px}
+  .g3,.g4{grid-template-columns:repeat(2,1fr)}
+  .res-grid{grid-template-columns:1fr}
+  .card{padding:16px}
+  .slides{min-height:0}
+  .item-n{font-size:25px}
+  .qtext{font-size:22px}
+  .opt,.pbtn{font-size:19px}
+  .res-who{font-size:29px}
+}
+@media (max-width:520px){
+  .g2,.g3,.g4,.baskets.n3,.opts.row{grid-template-columns:1fr}
+  .basket{min-height:0}
+  .pairs{gap:8px 10px}
+  .pbtn{font-size:17px;padding:7px 8px;min-height:92px}
+  .steps li{flex-direction:column;align-items:flex-start;gap:2px}
+  .tnav{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <h1>Программное обеспечение и искусственный интеллект <span class="sub">· учебник-тренажёр</span></h1>
+    <div class="who">
+      <label>Фамилия, имя
+        <input id="fio" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="40">
+      </label>
+      <label>Класс
+        <input id="klass" type="text" autocomplete="off" spellcheck="false" maxlength="5">
+      </label>
+    </div>
+  </div>
+  <nav class="wrap tabs">
+    <button class="tabbtn on" data-act="tab" data-tab="theory">Теория</button>
+    <button class="tabbtn" data-act="tab" data-tab="po">Задания: ПО<span class="tabstat" id="ts-po"></span></button>
+    <button class="tabbtn" data-act="tab" data-tab="ai">Задания: ИИ<span class="tabstat" id="ts-ai"></span></button>
+    <button class="tabbtn" data-act="tab" data-tab="result">Результат</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+<!-- ======================= ТЕОРИЯ ======================= -->
+<section class="tab on" id="tab-theory">
+  <div class="parts">
+    <button class="partbtn on" data-act="part" data-part="po">Часть 1. Программное обеспечение</button>
+    <button class="partbtn" data-act="part" data-part="ai">Часть 2. Искусственный интеллект</button>
+  </div>
+  <div class="card">
+    <div class="slides">
+
+      <!-- ПО 1 -->
+      <div class="slide on" data-part="po">
+        <h2>Что такое программное обеспечение</h2>
+        <div class="formula">
+          <div class="cell"><span class="ico">🖥️</span><h3>Устройства</h3><span class="small">то, что можно потрогать</span></div>
+          <div class="sign">+</div>
+          <div class="cell"><span class="ico">📋</span><h3>Программы</h3><span class="small">команды для компьютера</span></div>
+          <div class="sign">=</div>
+          <div class="cell t-app"><span class="ico">✅</span><h3>Компьютер работает</h3></div>
+        </div>
+        <p><b>Программа</b> — это набор команд, которые выполняет компьютер.</p>
+        <p><b>Программное обеспечение (ПО)</b> — это все программы компьютера.</p>
+        <p class="note">Без программ компьютер ничего не умеет: не покажет картинку, не откроет игру, не выйдет в интернет.</p>
+      </div>
+
+      <!-- ПО 2 -->
+      <div class="slide" data-part="po">
+        <h2>Три вида программного обеспечения</h2>
+        <p>Чтобы определить вид программы, спроси себя: <b>для кого и для чего она работает?</b></p>
+        <div class="grid g3">
+          <div class="cell t-sys"><span class="ico">⚙️</span><h3>Системное ПО</h3><b>Для компьютера.</b><br>Управляет компьютером и обслуживает его.</div>
+          <div class="cell t-app"><span class="ico">🎨</span><h3>Прикладное ПО</h3><b>Для пользователя.</b><br>Помогает человеку выполнить его дело.</div>
+          <div class="cell t-ins"><span class="ico">🧩</span><h3>Инструментальное ПО</h3><b>Для программиста.</b><br>В нём создают новые программы.</div>
+        </div>
+      </div>
+
+      <!-- ПО 3 -->
+      <div class="slide" data-part="po">
+        <h2><span class="tag t-sys">Системное ПО</span> работает для компьютера</h2>
+        <p>Системное ПО управляет компьютером и следит, чтобы он работал исправно.</p>
+        <div class="grid g3">
+          <div class="cell t-sys"><h3>Операционная система</h3>Главная программа: управляет всем компьютером и запускает остальные программы.
+            <div class="progs"><span class="pg"><i data-lg="windows"></i>Windows</span><span class="pg"><i data-lg="android"></i>Android</span><span class="pg"><i data-lg="ios"></i>iOS</span><span class="pg"><i data-lg="linux"></i>Linux</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-sys"><h3>Драйверы</h3>Помогают компьютеру работать с устройствами.
+            <div class="progs"><span class="pg"><i data-lg="printer"></i>драйвер принтера</span><span class="pg"><i data-lg="mouse"></i>драйвер мыши</span><span class="pg"><i data-lg="camera"></i>драйвер камеры</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-sys"><h3>Служебные программы</h3>Обслуживают компьютер.
+            <div class="progs"><span class="pg"><i data-lg="antivirus"></i>Антивирус</span><span class="pg"><i data-lg="archiver"></i>Архиватор</span><span class="etc">и др.</span></div>
+            Антивирус защищает от вирусов, архиватор сжимает файлы.</div>
+        </div>
+        <p class="note">Без системного ПО компьютер не заработает.</p>
+      </div>
+
+      <!-- ПО 4 -->
+      <div class="slide" data-part="po">
+        <h2><span class="tag t-app">Прикладное ПО</span> работает для пользователя</h2>
+        <p>Прикладные программы помогают человеку выполнить его дело.</p>
+        <div class="grid g4">
+          <div class="cell t-app"><b>Написать текст</b><div class="kind">текстовый редактор</div>
+            <div class="progs"><span class="pg"><i data-lg="word"></i>Word</span><span class="pg"><i data-lg="notepad"></i>Блокнот</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Нарисовать</b><div class="kind">графический редактор</div>
+            <div class="progs"><span class="pg"><i data-lg="paint"></i>Paint</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Сделать слайды</b><div class="kind">редактор презентаций</div>
+            <div class="progs"><span class="pg"><i data-lg="ppt"></i>PowerPoint</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Выйти в интернет</b><div class="kind">браузер</div>
+            <div class="progs"><span class="pg"><i data-lg="chrome"></i>Chrome</span><span class="pg"><i data-lg="yandex"></i>Яндекс Браузер</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Пообщаться</b><div class="kind">мессенджер</div>
+            <div class="progs"><span class="pg"><i data-lg="whatsapp"></i>WhatsApp</span><span class="pg"><i data-lg="telegram"></i>Telegram</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Поиграть</b><div class="kind">компьютерная игра</div>
+            <div class="progs"><span class="pg"><i data-lg="minecraft"></i>Minecraft</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Смотреть и слушать</b><div class="kind">проигрыватель</div>
+            <div class="progs"><span class="pg"><i data-lg="player"></i>Медиаплеер</span><span class="etc">и др.</span></div></div>
+          <div class="cell t-app"><b>Посчитать</b><div class="kind">калькулятор, таблицы</div>
+            <div class="progs"><span class="pg"><i data-lg="calc"></i>Калькулятор</span><span class="pg"><i data-lg="excel"></i>Excel</span><span class="etc">и др.</span></div></div>
+        </div>
+      </div>
+
+      <!-- ПО 5 -->
+      <div class="slide" data-part="po">
+        <h2><span class="tag t-ins">Инструментальное ПО</span> работает для программиста</h2>
+        <p>Это программы, в которых <b>создают новые программы</b>. Их ещё называют <b>системами программирования</b>.</p>
+        <div class="grid g2">
+          <div class="cell t-ins"><div class="progs"><span class="pg big"><i data-lg="scratch"></i>Scratch</span></div>Программу собирают из цветных блоков-команд.</div>
+          <div class="cell t-ins"><div class="progs"><span class="pg big"><i data-lg="python"></i>Python</span><span class="etc">и др.</span></div>Программу пишут текстом на языке программирования.</div>
+        </div>
+        <div class="chain">
+          <div class="cell">Программист</div><div class="sign">→</div>
+          <div class="cell t-ins">работает в <b>Scratch</b><br><span class="small">инструментальное ПО</span></div><div class="sign">→</div>
+          <div class="cell t-app">получается <b>игра</b><br><span class="small">прикладное ПО</span></div><div class="sign">→</div>
+          <div class="cell">в неё играет пользователь</div>
+        </div>
+      </div>
+
+      <!-- ПО 6 -->
+      <div class="slide" data-part="po">
+        <h2>Как определить вид программы</h2>
+        <ul class="steps">
+          <li><span class="q">Программа управляет компьютером или обслуживает его?</span><span class="a tag t-sys">Системное ПО</span></li>
+          <li><span class="q">В этой программе создают новые программы?</span><span class="a tag t-ins">Инструментальное ПО</span></li>
+          <li><span class="q">Программа помогает человеку выполнить его дело?</span><span class="a tag t-app">Прикладное ПО</span></li>
+        </ul>
+        <p class="note"><b>Будь внимателен!</b></p>
+        <ul class="watch">
+          <li><b>Антивирус</b> — системное ПО: он защищает сам компьютер.</li>
+          <li><b>Браузер</b> — прикладное ПО: в нём пользователь смотрит сайты.</li>
+          <li><b>Paint</b> встроен в Windows, но это прикладное ПО: важно, для чего программа нужна.</li>
+          <li><b>Игра, созданная в Scratch,</b> — прикладное ПО, а сам <b>Scratch</b> — инструментальное.</li>
+        </ul>
+      </div>
+
+      <!-- ИИ 1 -->
+      <div class="slide" data-part="ai">
+        <h2>Что такое искусственный интеллект</h2>
+        <p><b>Искусственный интеллект (ИИ)</b> — это умение программы выполнять задания, для которых обычно нужен ум человека.</p>
+        <div class="grid g4">
+          <div class="cell t-ai"><span class="ico">👁️</span><h3>Узнаёт</h3>лица, предметы, текст на фото</div>
+          <div class="cell t-ai"><span class="ico">👂</span><h3>Понимает речь</h3>слышит вопрос и отвечает</div>
+          <div class="cell t-ai"><span class="ico">💡</span><h3>Подсказывает</h3>слова, видео, маршрут</div>
+          <div class="cell t-ai"><span class="ico">🎨</span><h3>Создаёт</h3>тексты, картинки, музыку</div>
+        </div>
+        <p class="note">Такая программа <b>учится на примерах</b>. Чтобы она научилась узнавать кошек, ей показывают тысячи фотографий кошек.</p>
+      </div>
+
+      <!-- ИИ 2 -->
+      <div class="slide" data-part="ai">
+        <h2>ИИ живёт внутри программ</h2>
+        <p>ИИ — <b>не четвёртый вид ПО</b>. Это технология, которую встраивают в программы, чтобы они стали «умнее».</p>
+        <div class="formula">
+          <div class="cell t-app"><span class="ico">📷</span><h3>Камера телефона</h3><span class="small">прикладная программа</span></div>
+          <div class="sign">+</div>
+          <div class="cell t-ai"><span class="ico">✨</span><h3>ИИ</h3><span class="small">технология внутри</span></div>
+          <div class="sign">=</div>
+          <div class="cell"><span class="ico">🙂</span><h3>Камера сама находит лица в кадре</h3></div>
+        </div>
+        <p class="note">Чаще всего ИИ встречается в прикладных программах — тех, которыми мы пользуемся каждый день.</p>
+      </div>
+
+      <!-- ИИ 3 -->
+      <div class="slide" data-part="ai">
+        <h2>Где работает ИИ: примеры</h2>
+        <div class="grid g4">
+          <div class="cell t-ai"><b>🗣️ Голосовой помощник</b>
+            <div class="progs"><span class="pg t">Алиса</span><span class="pg t">Siri</span><span class="etc">и др.</span></div>понимает вопрос, заданный вслух, и отвечает</div>
+          <div class="cell t-ai"><b>🌍 Переводчик</b>
+            <div class="progs"><span class="pg t">Google Переводчик</span><span class="etc">и др.</span></div>читает текст на фотографии и переводит его</div>
+          <div class="cell t-ai"><b>▶️ Видеосервис</b>
+            <div class="progs"><span class="pg t">YouTube</span><span class="etc">и др.</span></div>подбирает видео, которые могут понравиться</div>
+          <div class="cell t-ai"><b>💬 Чат-бот</b>
+            <div class="progs"><span class="pg t">ChatGPT</span><span class="etc">и др.</span></div>отвечает на вопросы и пишет тексты</div>
+          <div class="cell t-ai"><b>🖼️ Нейросеть-художник</b>
+            <div class="progs"><span class="pg t">Шедеврум</span><span class="etc">и др.</span></div>создаёт картинку по описанию</div>
+          <div class="cell t-ai"><b>📷 Камера телефона</b><br>находит лица и накладывает на них маски</div>
+          <div class="cell t-ai"><b>⌨️ Клавиатура телефона</b><br>подсказывает следующее слово</div>
+          <div class="cell t-ai"><b>🗺️ Навигатор</b><br>предсказывает пробки и время в пути</div>
+        </div>
+      </div>
+
+      <!-- ИИ 4 -->
+      <div class="slide" data-part="ai">
+        <h2>ИИ или не ИИ?</h2>
+        <div class="grid g2">
+          <div class="cell"><h3>🔢 Обычная программа</h3>
+            Работает по точным правилам, которые записал программист.<br>
+            Одна и та же команда — всегда один и тот же результат.
+            <div class="progs"><span class="pg t">Калькулятор</span><span class="pg t">Будильник</span><span class="pg t">Секундомер</span></div></div>
+          <div class="cell t-ai"><h3>✨ Программа с ИИ</h3>
+            Училась на большом количестве примеров.<br>
+            Справляется с новым случаем, которого раньше не видела.
+            <div class="progs"><span class="pg t">Переводчик с камерой</span><span class="pg t">Голосовой помощник</span></div></div>
+        </div>
+        <p class="note">Калькулятор считает очень быстро, но это не ИИ: он не учится, а выполняет готовые правила.</p>
+      </div>
+
+      <!-- ИИ 5 -->
+      <div class="slide" data-part="ai">
+        <h2>ИИ может ошибаться</h2>
+        <p>ИИ учился на примерах, поэтому иногда отвечает неверно: переводчик может перевести фразу с ошибкой, а чат-бот — уверенно назвать неправильную дату.</p>
+        <div class="grid g3">
+          <div class="cell t-ai"><span class="ico">🔍</span><h3>Проверяй</h3>Важные сведения сверяй с учебником или спроси у взрослых.</div>
+          <div class="cell t-ai"><span class="ico">🧠</span><h3>Думай сам</h3>ИИ — помощник, а не замена твоей голове.</div>
+          <div class="cell t-ai"><span class="ico">🔒</span><h3>Береги личное</h3>Не пиши чат-боту свой адрес, телефон и пароли.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="tnav">
+      <button class="btn ghost" id="tprev" data-act="prev">← Назад</button>
+      <div class="dots" id="tdots"></div>
+      <button class="btn" id="tnext" data-act="next">Далее →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ЗАДАНИЯ: ПО ======================= -->
+<section class="tab" id="tab-po">
+  <div class="chooser">
+    <button class="exbtn on" data-act="open" data-ex="a1"><span class="exnum">1</span><span>Определи вид программы</span><span class="exstat"></span></button>
+    <button class="exbtn" data-act="open" data-ex="a2"><span class="exnum">2</span><span>Верно или неверно</span><span class="exstat"></span></button>
+    <button class="exbtn" data-act="open" data-ex="a3"><span class="exnum">3</span><span>Ситуации</span><span class="exstat"></span></button>
+  </div>
+  <div class="card exbox on" id="ex-a1"></div>
+  <div class="card exbox" id="ex-a2"></div>
+  <div class="card exbox" id="ex-a3"></div>
+</section>
+
+<!-- ======================= ЗАДАНИЯ: ИИ ======================= -->
+<section class="tab" id="tab-ai">
+  <div class="chooser">
+    <button class="exbtn on" data-act="open" data-ex="b1"><span class="exnum">1</span><span>Найди пару</span><span class="exstat"></span></button>
+    <button class="exbtn" data-act="open" data-ex="b2"><span class="exnum">2</span><span>Есть ИИ или нет</span><span class="exstat"></span></button>
+    <button class="exbtn" data-act="open" data-ex="b3"><span class="exnum">3</span><span>Ситуации</span><span class="exstat"></span></button>
+  </div>
+  <div class="card exbox on" id="ex-b1"></div>
+  <div class="card exbox" id="ex-b2"></div>
+  <div class="card exbox" id="ex-b3"></div>
+</section>
+
+<!-- ======================= РЕЗУЛЬТАТ ======================= -->
+<section class="tab" id="tab-result">
+  <div class="card" id="result"></div>
+</section>
+
+</main>
+
+<script>
+(function(){
+'use strict';
+var $  = function(s,r){ return (r||document).querySelector(s); };
+var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function pick(a,n){ return shuffle(a).slice(0,n); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ================== БАЗА ЗАДАНИЙ ================== */
+
+var TYPES = {
+  sys:{name:'Системное',        full:'системное ПО',        sub:'для компьютера',  cls:'t-sys'},
+  app:{name:'Прикладное',       full:'прикладное ПО',       sub:'для пользователя', cls:'t-app'},
+  ins:{name:'Инструментальное', full:'инструментальное ПО', sub:'для программиста', cls:'t-ins'}
+};
+
+/* --- Упражнение «Определи вид программы» --- */
+var PROGRAMS = [
+  {n:'Windows', lg:'windows', d:'операционная система компьютера', a:'sys', w:'Операционная система управляет всем компьютером.'},
+  {n:'Android', lg:'android', d:'операционная система телефона', a:'sys', w:'Операционная система управляет работой телефона.'},
+  {n:'iOS', lg:'ios', d:'операционная система телефонов iPhone', a:'sys', w:'Операционная система управляет работой телефона.'},
+  {n:'Linux', lg:'linux', d:'операционная система', a:'sys', w:'Операционная система управляет всем компьютером.'},
+  {n:'Антивирус', lg:'antivirus', d:'защищает компьютер от вирусов', a:'sys', w:'Антивирус защищает сам компьютер — это системное ПО.'},
+  {n:'Драйвер принтера', lg:'printer', d:'помогает компьютеру работать с принтером', a:'sys', w:'Драйвер нужен компьютеру, чтобы управлять устройством, — это системное ПО.'},
+  {n:'Драйвер веб-камеры', lg:'camera', d:'помогает компьютеру работать с камерой', a:'sys', w:'Драйвер нужен компьютеру, чтобы управлять устройством, — это системное ПО.'},
+  {n:'Архиватор', lg:'archiver', d:'сжимает файлы, чтобы они занимали меньше места', a:'sys', w:'Архиватор — служебная программа, она обслуживает компьютер. Это системное ПО.'},
+  {n:'Проводник', d:'показывает файлы и папки компьютера', a:'sys', w:'Проводник — часть операционной системы. Это системное ПО.'},
+  {n:'Очистка диска', d:'удаляет с компьютера ненужные файлы', a:'sys', w:'Это служебная программа, она обслуживает компьютер. Это системное ПО.'},
+
+  {n:'Word', lg:'word', d:'текстовый редактор', a:'app', w:'В Word пользователь набирает и оформляет текст — это прикладное ПО.'},
+  {n:'Paint', lg:'paint', d:'графический редактор для рисования', a:'app', w:'В Paint пользователь рисует — это прикладное ПО.'},
+  {n:'PowerPoint', lg:'ppt', d:'программа для создания презентаций', a:'app', w:'В PowerPoint пользователь готовит слайды — это прикладное ПО.'},
+  {n:'Excel', lg:'excel', d:'электронные таблицы для расчётов', a:'app', w:'В Excel пользователь считает и строит таблицы — это прикладное ПО.'},
+  {n:'Google Chrome', lg:'chrome', d:'браузер для выхода в интернет', a:'app', w:'В браузере пользователь смотрит сайты — это прикладное ПО.'},
+  {n:'Яндекс Браузер', lg:'yandex', d:'браузер для выхода в интернет', a:'app', w:'В браузере пользователь смотрит сайты — это прикладное ПО.'},
+  {n:'WhatsApp', lg:'whatsapp', d:'мессенджер для общения', a:'app', w:'В мессенджере пользователь общается — это прикладное ПО.'},
+  {n:'Telegram', lg:'telegram', d:'мессенджер для общения', a:'app', w:'В мессенджере пользователь общается — это прикладное ПО.'},
+  {n:'Minecraft', lg:'minecraft', d:'компьютерная игра', a:'app', w:'В игру играет пользователь — это прикладное ПО.'},
+  {n:'Калькулятор', lg:'calc', d:'программа для вычислений', a:'app', w:'Калькулятор помогает пользователю считать — это прикладное ПО.'},
+  {n:'Блокнот', lg:'notepad', d:'простой текстовый редактор', a:'app', w:'В Блокноте пользователь набирает текст — это прикладное ПО.'},
+  {n:'Видеопроигрыватель', lg:'player', d:'показывает фильмы и видео', a:'app', w:'Проигрыватель помогает пользователю смотреть видео — это прикладное ПО.'},
+  {n:'Zoom', d:'программа для видеозвонков', a:'app', w:'С её помощью пользователь общается по видео — это прикладное ПО.'},
+  {n:'Фоторедактор', d:'улучшает и обрезает фотографии', a:'app', w:'В фоторедакторе пользователь обрабатывает снимки — это прикладное ПО.'},
+
+  {n:'Scratch', lg:'scratch', d:'здесь создают игры и мультфильмы из блоков-команд', a:'ins', w:'В Scratch создают новые программы — это инструментальное ПО.'},
+  {n:'Python', lg:'python', d:'здесь пишут программы текстом', a:'ins', w:'В Python создают новые программы — это инструментальное ПО.'}
+];
+
+/* --- Упражнение «Верно или неверно» --- */
+var TRUEFALSE = [
+  {q:'Антивирус — это прикладная программа.', t:false, w:'Антивирус — системное ПО: он защищает сам компьютер.'},
+  {q:'Браузер относится к прикладному ПО.', t:true, w:'В браузере пользователь смотрит сайты — это прикладное ПО.'},
+  {q:'Scratch — это инструментальное ПО.', t:true, w:'В Scratch создают новые программы.'},
+  {q:'Игра, созданная в Scratch, — это инструментальное ПО.', t:false, w:'Игра — прикладное ПО: в неё играет пользователь. Инструментальное ПО — сам Scratch.'},
+  {q:'Операционная система — это прикладное ПО.', t:false, w:'Операционная система — системное ПО: она управляет всем компьютером.'},
+  {q:'Без системного ПО компьютер не сможет работать.', t:true, w:'Системное ПО управляет компьютером и запускает другие программы.'},
+  {q:'Paint — системная программа, потому что он встроен в Windows.', t:false, w:'Paint — прикладное ПО. Важно не где находится программа, а для чего она нужна.'},
+  {q:'Инструментальное ПО нужно, чтобы создавать новые программы.', t:true, w:'В таких программах, как Scratch и Python, создают новые программы.'},
+  {q:'Инструментальное ПО ещё называют системами программирования.', t:true, w:'Это два названия одного вида ПО.'},
+  {q:'Драйвер помогает компьютеру работать с устройством, например с принтером.', t:true, w:'Драйверы — часть системного ПО.'},
+  {q:'Windows и Android — это операционные системы.', t:true, w:'Windows управляет компьютером, Android — телефоном.'},
+  {q:'Мессенджер — это системное ПО.', t:false, w:'Мессенджер — прикладное ПО: в нём общается пользователь.'},
+  {q:'Прикладные программы помогают пользователю рисовать, писать, общаться.', t:true, w:'Прикладное ПО помогает человеку выполнить его дело.'},
+  {q:'Все программы на компьютере — прикладные.', t:false, w:'Программы бывают трёх видов: системные, прикладные и инструментальные.'},
+  {q:'Python — это прикладная программа для рисования.', t:false, w:'Python — инструментальное ПО: в нём пишут новые программы.'},
+  {q:'Калькулятор — это прикладная программа.', t:true, w:'Калькулятор помогает пользователю считать.'},
+  {q:'Архиватор относится к системному ПО.', t:true, w:'Архиватор — служебная программа, она обслуживает компьютер.'},
+  {q:'Компьютер может работать без единой программы.', t:false, w:'Без программ компьютер ничего не умеет.'},
+  {q:'Компьютерные игры относятся к прикладному ПО.', t:true, w:'В игры играет пользователь — это прикладное ПО.'},
+  {q:'Операционная система управляет работой всего компьютера.', t:true, w:'Это главная программа компьютера.'},
+  {q:'Программное обеспечение — это все устройства компьютера.', t:false, w:'Программное обеспечение — это все программы компьютера, а не устройства.'},
+  {q:'Системное ПО работает для компьютера, а прикладное — для пользователя.', t:true, w:'Так и различают эти виды: для кого работает программа.'},
+  {q:'Программист создаёт новые программы в антивирусе.', t:false, w:'Программы создают в инструментальном ПО, например в Scratch или Python.'}
+];
+
+/* --- Упражнение «Ситуации» (ПО). Первый вариант — верный, при показе перемешиваются --- */
+var SIT_PO = [
+  {s:'Данияр хочет сам создать компьютерную игру.', prog:'Scratch', type:'ins',
+   o:['Scratch — здесь программы собирают из блоков','Paint — графический редактор','Антивирус — защита от вирусов','Калькулятор — программа для вычислений'],
+   w1:'В Scratch можно создать свою игру из блоков-команд.', w2:'В Scratch создают новые программы — это инструментальное ПО.'},
+  {s:'Айша хочет нарисовать открытку для мамы.', prog:'Paint', type:'app',
+   o:['Paint — графический редактор','Архиватор — сжимает файлы','Калькулятор — программа для вычислений','Антивирус — защита от вирусов'],
+   w1:'В графическом редакторе Paint рисуют.', w2:'Paint помогает пользователю рисовать — это прикладное ПО.'},
+  {s:'Компьютер стал работать странно: похоже, на нём появился вирус.', prog:'Антивирус', type:'sys',
+   o:['Антивирус — находит и удаляет вирусы','Word — текстовый редактор','Paint — графический редактор','Scratch — здесь создают свои программы'],
+   w1:'Антивирус находит и удаляет вирусы.', w2:'Антивирус защищает сам компьютер — это системное ПО.'},
+  {s:'Тимур хочет найти в интернете информацию о космосе.', prog:'Браузер', type:'app',
+   o:['Браузер (Google Chrome и др.) — программа для выхода в интернет','Paint — графический редактор','Архиватор — сжимает файлы','Блокнот — простой текстовый редактор'],
+   w1:'Сайты открывают в браузере.', w2:'В браузере пользователь ищет информацию — это прикладное ПО.'},
+  {s:'Мадине нужно набрать и красиво оформить текст доклада.', prog:'Word', type:'app',
+   o:['Word — текстовый редактор','Антивирус — защита от вирусов','Scratch — здесь создают свои программы','Музыкальный проигрыватель'],
+   w1:'Текст набирают и оформляют в текстовом редакторе.', w2:'Word помогает пользователю работать с текстом — это прикладное ПО.'},
+  {s:'К компьютеру подключили новый принтер, но компьютер его «не видит».', prog:'Драйвер принтера', type:'sys',
+   o:['Драйвер принтера — помогает компьютеру работать с принтером','Paint — графический редактор','Браузер — программа для выхода в интернет','Мессенджер — программа для общения'],
+   w1:'Чтобы компьютер «понял» принтер, нужен драйвер.', w2:'Драйвер помогает компьютеру управлять устройством — это системное ПО.'},
+  {s:'Ерлан изучает язык Python и хочет написать свою первую программу.', prog:'Python', type:'ins',
+   o:['Python — здесь пишут программы текстом','PowerPoint — программа для презентаций','Калькулятор — программа для вычислений','Антивирус — защита от вирусов'],
+   w1:'Программы на языке Python пишут в программе Python.', w2:'В Python создают новые программы — это инструментальное ПО.'},
+  {s:'Сабина готовит выступление со слайдами.', prog:'PowerPoint', type:'app',
+   o:['PowerPoint — программа для презентаций','Архиватор — сжимает файлы','Блокнот — простой текстовый редактор','Антивирус — защита от вирусов'],
+   w1:'Слайды создают в программе для презентаций.', w2:'PowerPoint помогает пользователю готовить выступление — это прикладное ПО.'},
+  {s:'На новом компьютере пока нет ни одной программы. Что установить первым, чтобы он заработал?', prog:'Операционная система', type:'sys',
+   o:['Операционная система (Windows и др.)','Игра Minecraft','Браузер — программа для выхода в интернет','Paint — графический редактор'],
+   w1:'Без операционной системы другие программы не запустятся.', w2:'Операционная система управляет компьютером — это системное ПО.'},
+  {s:'Нужно сжать большую папку с фотографиями, чтобы она занимала меньше места.', prog:'Архиватор', type:'sys',
+   o:['Архиватор — сжимает файлы','Антивирус — защита от вирусов','Калькулятор — программа для вычислений','Scratch — здесь создают свои программы'],
+   w1:'Файлы сжимает архиватор.', w2:'Архиватор — служебная программа, она обслуживает компьютер. Это системное ПО.'},
+  {s:'Дана хочет позвонить бабушке по видеосвязи.', prog:'Мессенджер', type:'app',
+   o:['Мессенджер (WhatsApp, Telegram и др.) — программа для общения','Архиватор — сжимает файлы','Paint — графический редактор','Scratch — здесь создают свои программы'],
+   w1:'Звонить и переписываться можно в мессенджере.', w2:'В мессенджере пользователь общается — это прикладное ПО.'},
+  {s:'Арман хочет сделать мультфильм: составить из блоков команды, чтобы кот ходил и говорил.', prog:'Scratch', type:'ins',
+   o:['Scratch — здесь программы собирают из блоков','Видеопроигрыватель — показывает готовое видео','Word — текстовый редактор','Антивирус — защита от вирусов'],
+   w1:'Команды из блоков составляют в Scratch.', w2:'В Scratch создают новые программы — это инструментальное ПО.'},
+  {s:'Нурлан хочет быстро посчитать, сколько стоят все покупки.', prog:'Калькулятор', type:'app',
+   o:['Калькулятор — программа для вычислений','Paint — графический редактор','Антивирус — защита от вирусов','Архиватор — сжимает файлы'],
+   w1:'Считать удобно в Калькуляторе.', w2:'Калькулятор помогает пользователю считать — это прикладное ПО.'},
+  {s:'Алина хочет написать программу, которая сама решает примеры на сложение.', prog:'Python', type:'ins',
+   o:['Python — здесь пишут программы текстом','Калькулятор — программа для вычислений','Word — текстовый редактор','Проводник — показывает файлы и папки'],
+   w1:'Чтобы создать свою программу, нужно инструментальное ПО, например Python.', w2:'В Python создают новые программы — это инструментальное ПО.'}
+];
+
+/* --- Упражнение «Найди пару» (ИИ). g — группа: в один набор попадают разные группы --- */
+var PAIRS = [
+  {g:'voice', p:'Голосовой помощник', a:'понимает вопрос, заданный вслух, и отвечает'},
+  {g:'voice', p:'Умная колонка', a:'слышит голосовую команду и выполняет её'},
+  {g:'trans', p:'Переводчик с камерой', a:'читает текст на фотографии и переводит его'},
+  {g:'rec',   p:'YouTube', a:'подбирает видео, которые могут понравиться'},
+  {g:'rec',   p:'Музыкальное приложение', a:'подбирает песни по твоему вкусу'},
+  {g:'face',  p:'Камера телефона', a:'находит лица в кадре и накладывает маски'},
+  {g:'face',  p:'Блокировка телефона', a:'узнаёт лицо владельца и открывает телефон'},
+  {g:'key',   p:'Клавиатура телефона', a:'подсказывает следующее слово'},
+  {g:'map',   p:'Навигатор', a:'предсказывает пробки и время в пути'},
+  {g:'chat',  p:'Чат-бот', a:'отвечает на вопросы и пишет тексты'},
+  {g:'img',   p:'Нейросеть-художник', a:'создаёт картинку по словесному описанию'},
+  {g:'mail',  p:'Электронная почта', a:'сама убирает рекламные письма в папку «Спам»'},
+  {g:'sub',   p:'Видео с субтитрами', a:'превращает речь из ролика в текст на экране'}
+];
+
+/* --- Упражнение «Есть ИИ или нет» --- */
+var AI_OR_NOT = [
+  {n:'Голосовой помощник понимает вопрос, заданный вслух', c:'Голосовой помощник', a:'ai', w:'Понимать речь человека программа научилась на множестве примеров — это ИИ.'},
+  {n:'Переводчик читает текст на фотографии и переводит его', c:'Переводчик с камерой', a:'ai', w:'Узнавать буквы на фото и переводить программа научилась на примерах — это ИИ.'},
+  {n:'Видеосервис подбирает ролики, которые могут тебе понравиться', c:'Подбор видео', a:'ai', w:'Программа изучает, что ты смотришь, и подсказывает похожее — это ИИ.'},
+  {n:'Телефон узнаёт лицо владельца и снимает блокировку', c:'Узнаёт лицо', a:'ai', w:'Узнавать лица программа научилась на примерах — это ИИ.'},
+  {n:'Клавиатура телефона подсказывает следующее слово', c:'Подсказка слов', a:'ai', w:'Программа изучила много текстов и предсказывает слово — это ИИ.'},
+  {n:'Программа рисует картинку по словесному описанию', c:'Рисует по описанию', a:'ai', w:'Создавать новые картинки умеют нейросети — это ИИ.'},
+  {n:'Чат-бот отвечает на вопрос и пишет текст', c:'Чат-бот', a:'ai', w:'Чат-бот учился на огромном количестве текстов — это ИИ.'},
+  {n:'Телефон по слову «кошка» находит все фотографии с кошками', c:'Поиск по фото', a:'ai', w:'Узнавать предметы на фото программа научилась на примерах — это ИИ.'},
+  {n:'Почта сама определяет рекламные письма и убирает их в «Спам»', c:'Фильтр спама', a:'ai', w:'Программа научилась отличать рекламу на множестве писем — это ИИ.'},
+  {n:'Видеосервис сам создаёт субтитры по речи в ролике', c:'Субтитры по речи', a:'ai', w:'Программа распознаёт речь и превращает её в текст — это ИИ.'},
+  {n:'Камера накладывает маску точно на лицо', c:'Маска на лицо', a:'ai', w:'Чтобы наложить маску, программа сначала находит лицо — это ИИ.'},
+  {n:'Навигатор предсказывает пробки и время в пути', c:'Прогноз пробок', a:'ai', w:'Программа учится на данных о движении машин и делает прогноз — это ИИ.'},
+
+  {n:'Калькулятор складывает два числа', c:'Калькулятор', a:'no', w:'Калькулятор считает по точным правилам: 2 + 2 всегда 4. Он не учится — ИИ здесь нет.'},
+  {n:'Будильник звонит в заданное время', c:'Будильник', a:'no', w:'Будильник выполняет простое правило: настало время — звони. ИИ здесь нет.'},
+  {n:'Проигрыватель включает песню, которую ты выбрал', c:'Проигрыватель', a:'no', w:'Программа просто выполняет твою команду. ИИ здесь нет.'},
+  {n:'Заливка в Paint закрашивает фигуру выбранным цветом', c:'Заливка в Paint', a:'no', w:'Заливка работает по точному правилу. ИИ здесь нет.'},
+  {n:'Проводник копирует файл в другую папку', c:'Копирование файла', a:'no', w:'Программа просто выполняет команду. ИИ здесь нет.'},
+  {n:'Секундомер отсчитывает время', c:'Секундомер', a:'no', w:'Секундомер работает по точному правилу. ИИ здесь нет.'},
+  {n:'Архиватор сжимает файл', c:'Архиватор', a:'no', w:'Архиватор работает по готовым правилам. ИИ здесь нет.'},
+  {n:'Календарь показывает, какой сегодня день недели', c:'Календарь', a:'no', w:'День недели вычисляется по точному правилу. ИИ здесь нет.'},
+  {n:'Фонарик в телефоне включает свет', c:'Фонарик', a:'no', w:'Программа просто выполняет команду. ИИ здесь нет.'},
+  {n:'Текстовый редактор делает выделенное слово жирным', c:'Жирный шрифт', a:'no', w:'Программа просто выполняет твою команду. ИИ здесь нет.'},
+  {n:'Таймер в игре отсчитывает 60 секунд', c:'Таймер', a:'no', w:'Таймер работает по точному правилу. ИИ здесь нет.'}
+];
+
+/* --- Упражнение «Ситуации» (ИИ). Первый вариант — верный. k:'safe' — о проверке и безопасности --- */
+var SIT_AI = [
+  {k:'use', s:'Аружан в поездке не может прочитать вывеску на незнакомом языке.', q:'Что ей поможет?',
+   o:['Переводчик с камерой: прочитает текст на фото и переведёт','Калькулятор','Будильник','Музыкальный проигрыватель'],
+   w:'ИИ узнаёт буквы на фотографии и переводит текст.'},
+  {k:'use', s:'У Тимура заняты руки, а ему нужно узнать погоду.', q:'Что ему поможет?',
+   o:['Голосовой помощник: поймёт вопрос, заданный вслух','Графический редактор','Архиватор','Секундомер'],
+   w:'ИИ понимает речь человека и отвечает на вопрос.'},
+  {k:'use', s:'Алия хочет быстро найти среди тысячи фотографий в телефоне снимки своей кошки.', q:'Что ей поможет?',
+   o:['Поиск по фото: напишешь «кошка» — ИИ найдёт снимки с кошками','Калькулятор','Переводчик','Навигатор'],
+   w:'ИИ умеет узнавать предметы и животных на фотографиях.'},
+  {k:'use', s:'Мадина хочет украсить открытку картинкой дракона, но рисовать его не умеет.', q:'Что ей поможет?',
+   o:['Нейросеть, которая создаёт картинку по описанию','Антивирус','Навигатор','Будильник'],
+   w:'ИИ умеет создавать картинки по словесному описанию.'},
+  {k:'use', s:'Папа едет через весь город и хочет объехать пробки.', q:'Что ему поможет?',
+   o:['Навигатор: ИИ предсказывает пробки и подбирает маршрут','Переводчик','Графический редактор','Музыкальный проигрыватель'],
+   w:'ИИ предсказывает пробки и подсказывает быстрый путь.'},
+  {k:'use', s:'Ерлан хочет, чтобы его телефон открывался быстро и только для него.', q:'Что ему поможет?',
+   o:['Разблокировка по лицу: ИИ узнаёт владельца','Подбор видео по интересам','Переводчик','Калькулятор'],
+   w:'ИИ умеет узнавать лицо человека.'},
+  {k:'use', s:'Сабина смотрит видео на английском языке и не всё понимает на слух.', q:'Что ей поможет?',
+   o:['Автоматические субтитры: ИИ превращает речь в текст','Архиватор','Фонарик','Калькулятор'],
+   w:'ИИ распознаёт речь и показывает её в виде текста.'},
+  {k:'use', s:'Бабушке трудно набирать сообщения на маленькой клавиатуре телефона.', q:'Что ей поможет?',
+   o:['Голосовой ввод: она говорит, а ИИ записывает слова текстом','Калькулятор','Архиватор','Секундомер'],
+   w:'ИИ понимает речь и превращает её в текст.'},
+  {k:'use', s:'Данияр посмотрел видео про роботов и хочет увидеть ещё что-нибудь похожее.', q:'Что ему поможет?',
+   o:['Рекомендации: ИИ подберёт похожие видео','Калькулятор','Архиватор','Проводник'],
+   w:'ИИ изучает, что ты смотришь, и подсказывает похожее.'},
+  {k:'safe', s:'Чат-бот назвал Айгерим дату исторического события для доклада.', q:'Как правильно поступить?',
+   o:['Проверить дату в учебнике или другом надёжном источнике','Сразу записать в доклад: ИИ никогда не ошибается','Совсем не писать доклад','Попросить чат-бот написать весь доклад вместо себя'],
+   w:'ИИ может ошибаться, поэтому важные сведения нужно проверять.'},
+  {k:'safe', s:'Переводчик перевёл предложение так, что получилась бессмыслица.', q:'Что это значит?',
+   o:['ИИ ошибся: перевод нужно проверить по словарю или спросить учителя','Перевод верный: ИИ не может ошибаться','Компьютер сломался','Нужно удалить все программы'],
+   w:'ИИ может ошибаться. Его ответы нужно проверять.'},
+  {k:'safe', s:'Марат хочет написать чат-боту свой домашний адрес и пароль от почты.', q:'Как правильно поступить?',
+   o:['Не писать: личные данные чат-боту сообщать нельзя','Написать: чат-бот — надёжный друг','Написать только пароль','Написать только адрес'],
+   w:'Адрес, телефон и пароли — личные данные. Чат-боту их не сообщают.'}
+];
+
+/* ================== ЗНАЧКИ ПРОГРАММ (нарисованы в коде, без файлов) ================== */
+function svg(inner){ return '<span class="lg"><svg viewBox="0 0 32 32" aria-hidden="true">'+inner+'</svg></span>'; }
+function tile(bg, txt, fg, size){ return svg('<rect width="32" height="32" rx="7" fill="'+bg+'"/><text x="16" y="'+(size<16?21:23)+'" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="'+(size||20)+'" fill="'+(fg||'#fff')+'">'+txt+'</text>'); }
+function em(e){ return '<span class="lg em" aria-hidden="true">'+e+'</span>'; }
+var LOGOS = {
+  word:  tile('#2b579a','W'),
+  excel: tile('#217346','X'),
+  ppt:   tile('#d24726','P'),
+  ios:   tile('#8793a3','iOS','#fff',12),
+  python:tile('#3776ab','Py','#ffd43b',17),
+  yandex:svg('<circle cx="16" cy="16" r="15" fill="#fc3f1d"/><text x="16" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="20" fill="#fff">Я</text>'),
+  calc:  svg('<rect width="32" height="32" rx="7" fill="#607d8b"/><rect x="6" y="5" width="20" height="7" rx="2" fill="#e3f2fd"/><g fill="#fff"><rect x="6" y="15" width="5" height="5" rx="1"/><rect x="13.5" y="15" width="5" height="5" rx="1"/><rect x="21" y="15" width="5" height="5" rx="1"/><rect x="6" y="22" width="5" height="5" rx="1"/><rect x="13.5" y="22" width="5" height="5" rx="1"/></g><rect x="21" y="22" width="5" height="5" rx="1" fill="#ffb74d"/>'),
+  windows: svg('<rect width="32" height="32" rx="7" fill="#fff"/><g fill="#00a4ef"><rect x="5" y="5" width="10" height="10"/><rect x="17" y="5" width="10" height="10"/><rect x="5" y="17" width="10" height="10"/><rect x="17" y="17" width="10" height="10"/></g>'),
+  android: svg('<rect width="32" height="32" rx="7" fill="#fff"/><path d="M5 24 A11 11 0 0 1 27 24 Z" fill="#3ddc84"/><path d="M9 9 L12 14 M23 9 L20 14" stroke="#3ddc84" stroke-width="2" stroke-linecap="round"/><circle cx="11.5" cy="19.5" r="1.4" fill="#fff"/><circle cx="20.5" cy="19.5" r="1.4" fill="#fff"/>'),
+  chrome: svg('<path d="M16 16 L3.88 9 A14 14 0 0 1 28.12 9 Z" fill="#ea4335"/><path d="M16 16 L28.12 9 A14 14 0 0 1 16 30 Z" fill="#fbbc05"/><path d="M16 16 L16 30 A14 14 0 0 1 3.88 9 Z" fill="#34a853"/><circle cx="16" cy="16" r="6.6" fill="#fff"/><circle cx="16" cy="16" r="5" fill="#4285f4"/>'),
+  whatsapp: svg('<circle cx="16" cy="16" r="15" fill="#25d366"/><path d="M8 25 L9.6 20 A8 8 0 1 1 13 23.3 Z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M12.5 12.5 q0 6 6.5 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'),
+  telegram: svg('<circle cx="16" cy="16" r="15" fill="#2aabee"/><path d="M7 16 L25 9 L21.5 24 L15.5 19.5 L13 23 L12.5 18.2 Z" fill="#fff"/><path d="M12.5 18.2 L21 12" stroke="#2aabee" stroke-width="1.3"/>'),
+  minecraft: svg('<rect width="32" height="32" rx="5" fill="#8b5a2b"/><path d="M0 5 a5 5 0 0 1 5 -5 h22 a5 5 0 0 1 5 5 v6 H0 Z" fill="#5d9c34"/><g fill="#5d9c34"><rect x="4" y="11" width="4" height="4"/><rect x="14" y="11" width="4" height="6"/><rect x="24" y="11" width="4" height="3"/></g><g fill="#6f4520"><rect x="8" y="20" width="4" height="4"/><rect x="20" y="22" width="4" height="4"/><rect x="14" y="26" width="4" height="3"/></g>'),
+  scratch: svg('<rect width="32" height="32" rx="7" fill="#ff8c1a"/><path d="M7 7 L12 12 H20 L25 7 V18 A9 9 0 0 1 7 18 Z" fill="#fff"/><circle cx="12.5" cy="17" r="1.6" fill="#ff8c1a"/><circle cx="19.5" cy="17" r="1.6" fill="#ff8c1a"/><path d="M13.5 21.5 q2.5 2 5 0" fill="none" stroke="#ff8c1a" stroke-width="1.4" stroke-linecap="round"/>'),
+  player: svg('<rect width="32" height="32" rx="7" fill="#ef6c3a"/><path d="M12 9 L24 16 L12 23 Z" fill="#fff"/>'),
+  paint: em('🎨'), notepad: em('🗒️'), linux: em('🐧'), antivirus: em('🛡️'), archiver: em('🗜️'),
+  printer: em('🖨️'), mouse: em('🖱️'), camera: em('📷')
+};
+
+/* ================== УПРАЖНЕНИЯ ================== */
+
+var TYPE_OPTS = ['sys','app','ins'];
+
+var EX = {
+  a1:{block:'po', title:'Определи вид программы', total:10, kind:'basket',
+      intro:'На экране появится программа. Определи её вид и нажми на нужную корзину. Всего 10 программ.',
+      task:'К какому виду ПО относится программа? Нажми на корзину.',
+      baskets:TYPE_OPTS.map(function(k){ return {k:k, name:TYPES[k].name, sub:TYPES[k].sub, cls:TYPES[k].cls}; }),
+      gen:function(){
+        var by=function(t){ return PROGRAMS.filter(function(p){ return p.a===t; }); };
+        return shuffle(pick(by('sys'),4).concat(pick(by('app'),4), pick(by('ins'),2)))
+          .map(function(p){ return {n:p.n, lg:p.lg, d:p.d, c:p.n, a:p.a, w:p.w}; });
+      }},
+  a2:{block:'po', title:'Верно или неверно', total:7, kind:'choice',
+      intro:'Прочитай утверждение и реши, верно оно или нет. Всего 7 утверждений.',
+      gen:function(){
+        var nt = Math.random()<0.5 ? 3 : 4;
+        var T=TRUEFALSE.filter(function(x){return x.t;}), F=TRUEFALSE.filter(function(x){return !x.t;});
+        return shuffle(pick(T,nt).concat(pick(F,7-nt))).map(function(x){
+          return {q:'«'+esc(x.q)+'»', layout:'two', opts:[{t:'Верно'},{t:'Неверно'}], c:x.t?0:1, w:x.w};
+        });
+      }},
+  a3:{block:'po', title:'Ситуации', total:8, kind:'choice',
+      intro:'Прочитай ситуацию. Сначала выбери нужную программу, потом определи её вид. Всего 4 ситуации, в каждой 2 вопроса.',
+      gen:function(){
+        var chosen=[];
+        TYPE_OPTS.forEach(function(t){ chosen.push(pick(SIT_PO.filter(function(x){return x.type===t;}),1)[0]); });
+        var rest=shuffle(SIT_PO.filter(function(x){ return !chosen.some(function(c){ return c.prog===x.prog; }); }));
+        chosen.push(rest[0]);
+        var qs=[];
+        shuffle(chosen).forEach(function(x){
+          var o=shuffle(x.o.map(function(t,i){ return {t:esc(t), right:i===0}; }));
+          qs.push({q:esc(x.s)+'<br><b>Какая программа нужна?</b>', opts:o, c:o.findIndex(function(v){return v.right;}), w:x.w1});
+          qs.push({q:'Нужная программа — <b>'+esc(x.prog)+'</b>.<br><b>К какому виду ПО она относится?</b>', layout:'row',
+                   opts:TYPE_OPTS.map(function(k){ return {t:TYPES[k].name, cls:TYPES[k].cls}; }), c:TYPE_OPTS.indexOf(x.type), w:x.w2});
+        });
+        return qs;
+      }},
+  b1:{block:'ai', title:'Найди пару', total:5, kind:'pairs',
+      intro:'Соедини программу и то, что в ней делает ИИ. Сначала нажми на программу слева, потом на её умение справа. Всего 5 пар.',
+      gen:function(){
+        var seen={}, out=[];
+        shuffle(PAIRS).forEach(function(p){ if(!seen[p.g] && out.length<5){ seen[p.g]=1; out.push(p); } });
+        return out;
+      }},
+  b2:{block:'ai', title:'Есть ИИ или нет', total:6, kind:'basket',
+      intro:'На экране появится описание того, что делает программа. Реши, работает здесь ИИ или нет, и нажми на нужную корзину. Всего 6 заданий.',
+      task:'Работает ли здесь искусственный интеллект? Нажми на корзину.',
+      baskets:[{k:'ai', name:'Есть ИИ', sub:'программа училась на примерах', cls:'t-ai'},
+               {k:'no', name:'Нет ИИ', sub:'программа работает по точным правилам', cls:'t-no'}],
+      gen:function(){
+        var A=AI_OR_NOT.filter(function(x){return x.a==='ai';}), N=AI_OR_NOT.filter(function(x){return x.a==='no';});
+        return shuffle(pick(A,3).concat(pick(N,3))).map(function(x){ return {n:x.n, d:'', c:x.c, a:x.a, w:x.w}; });
+      }},
+  b3:{block:'ai', title:'Ситуации', total:4, kind:'choice',
+      intro:'Прочитай ситуацию и выбери лучший ответ. Всего 4 ситуации.',
+      gen:function(){
+        var U=SIT_AI.filter(function(x){return x.k==='use';}), Sf=SIT_AI.filter(function(x){return x.k==='safe';});
+        return shuffle(pick(U,3).concat(pick(Sf,1))).map(function(x){
+          var o=shuffle(x.o.map(function(t,i){ return {t:esc(t), right:i===0}; }));
+          return {q:esc(x.s)+'<br><b>'+esc(x.q)+'</b>', opts:o, c:o.findIndex(function(v){return v.right;}), w:x.w};
+        });
+      }}
+};
+var ORDER = ['a1','a2','a3','b1','b2','b3'];
+var S = {};
+ORDER.forEach(function(id){ S[id]={status:'new', attempts:0, result:null}; });
+
+function box(id){ return $('#ex-'+id); }
+function nameOk(){
+  var f=$('#fio'), k=$('#klass');
+  var okF=f.value.trim().length>=3, okK=k.value.trim().length>=1;
+  f.classList.toggle('need', !okF); k.classList.toggle('need', !okK);
+  if(!okF) f.focus(); else if(!okK) k.focus();
+  return okF && okK;
+}
+
+function headHtml(id, cur, total){
+  var e=EX[id];
+  return '<div class="exhead"><h2>'+e.title+'</h2><span class="prog">Задание '+cur+' из '+total+'</span></div>'+
+         '<div class="bar"><i style="width:'+Math.round((cur-1)/total*100)+'%"></i></div>';
+}
+
+function renderEx(id, warn){
+  var e=EX[id], s=S[id], el=box(id);
+  if(s.status==='run'){ if(e.kind==='pairs') renderPairs(id); else renderQ(id); return; }
+  if(s.status==='done'){ renderDone(id); return; }
+  el.innerHTML='<div class="exhead"><h2>'+e.title+'</h2></div>'+
+    '<p class="task" style="margin-top:10px">'+e.intro+'</p>'+
+    (warn?'<div class="warn">Сначала напиши вверху страницы свою фамилию, имя и класс.</div>':'')+
+    '<div class="rowbtns"><button class="btn" data-act="start" data-ex="'+id+'">Начать</button></div>';
+}
+
+function startEx(id){
+  var e=EX[id], s=S[id];
+  if(!nameOk()){ var keep=s.status; s.status='new'; renderEx(id,true); s.status=keep; return; }
+  s.status='run'; s.attempts++; s.i=0; s.score=0; s.answered=false; s.pick=null; s.ok=false; s.chips={};
+  if(e.kind==='pairs'){
+    s.pairs=e.gen(); s.right=shuffle(s.pairs.map(function(_,i){return i;}));
+    s.sel=null; s.matched={}; s.err={}; s.count=0; s.fb=null;
+  } else { s.qs=e.gen(); }
+  updateStatus(); renderEx(id);
+}
+
+function chipHtml(c){ return '<span class="chip'+(c.ok?'':' miss')+'">'+esc(c.n)+'</span>'; }
+
+function reveal(el){ if(el && el.scrollIntoView) el.scrollIntoView({block:'nearest'}); }
+
+/* Вопрос рисуется целиком из сохранённого состояния: если ответ уже дан,
+   при возвращении к упражнению видны и пояснение, и кнопка «Дальше». */
+function renderQ(id){
+  var e=EX[id], s=S[id], q=s.qs[s.i], el=box(id), h=headHtml(id, s.i+1, s.qs.length);
+  var done=s.answered, dis=done?' disabled':'', text='';
+  if(e.kind==='basket'){
+    h+='<p class="task">'+e.task+'</p>'+
+       '<div class="item'+(done?(s.ok?' ok':' no'):'')+'"><div class="item-n">'+(q.lg?LOGOS[q.lg]:'')+esc(q.n)+'</div>'+(q.d?'<div class="item-d">'+esc(q.d)+'</div>':'')+'</div>'+
+       '<div class="baskets n'+e.baskets.length+'">'+
+       e.baskets.map(function(b){
+         var mark = !done ? '' : (b.k===q.a ? ' right' : (b.k===s.pick ? ' wrong' : ''));
+         return '<button class="basket '+b.cls+mark+'" data-act="ans" data-ex="'+id+'" data-v="'+b.k+'"'+dis+'>'+
+                '<span class="b-name">'+b.name+'</span><span class="b-sub">'+b.sub+'</span>'+
+                '<span class="chips">'+(s.chips[b.k]||[]).map(chipHtml).join('')+'</span></button>';
+       }).join('')+'</div>';
+    if(done){
+      var bk=e.baskets.filter(function(b){return b.k===q.a;})[0];
+      text = s.ok ? '✓ Верно! '+q.w : '✗ Не совсем. Правильная корзина — «'+bk.name+'». '+q.w;
+    }
+  } else {
+    h+='<div class="qtext">'+q.q+'</div><div class="opts '+(q.layout||'')+'">'+
+       q.opts.map(function(o,j){
+         var mark = !done ? '' : (j===q.c ? ' right' : (j===+s.pick ? ' wrong' : ''));
+         return '<button class="opt '+(o.cls||'')+mark+'" data-act="ans" data-ex="'+id+'" data-v="'+j+'"'+dis+'>'+o.t+'</button>';
+       }).join('')+'</div>';
+    if(done) text = s.ok ? '✓ Верно! '+q.w : '✗ Не совсем. '+q.w;
+  }
+  h+='<div class="fb'+(done?(s.ok?' ok':' no'):'')+'">'+esc(text)+'</div>'+
+     '<div class="nextrow"><button class="btn" data-act="nextq" data-ex="'+id+'"'+(done?'':' hidden')+'>'+
+     (s.i===s.qs.length-1?'Завершить':'Дальше →')+'</button></div>';
+  el.innerHTML=h;
+}
+
+function answer(id, v){
+  var e=EX[id], s=S[id];
+  if(s.status!=='run' || s.answered) return;
+  var q=s.qs[s.i];
+  s.answered=true; s.pick=v;
+  s.ok = (e.kind==='basket') ? (v===q.a) : (+v===q.c);
+  if(e.kind==='basket') (s.chips[q.a]=s.chips[q.a]||[]).push({n:q.c, ok:s.ok});
+  if(s.ok) s.score++;
+  renderQ(id);
+  var nb=$('[data-act="nextq"]',box(id));
+  try{ nb.focus({preventScroll:true}); }catch(err){ nb.focus(); }
+  reveal(nb);
+}
+
+function nextQ(id){
+  var s=S[id];
+  if(s.status!=='run' || !s.answered) return;
+  s.i++; s.answered=false; s.pick=null;
+  if(s.i>=s.qs.length) finish(id); else renderQ(id);
+}
+
+function finish(id){
+  var s=S[id];
+  s.status='done'; s.last=s.score;
+  s.result={score:Math.max(s.score, s.result?s.result.score:0), total:EX[id].total, attempts:s.attempts};
+  updateStatus(); renderDone(id);
+}
+
+/* ---------- пары ---------- */
+function renderPairs(id){
+  var s=S[id], el=box(id), n=s.pairs.length;
+  var h=headHtml(id, Math.min(s.count+1,n), n).replace('Задание','Пара');
+  h+='<p class="task">Нажми на программу слева, затем на то, что в ней делает ИИ.</p><div class="pairs">';
+  h+='<div class="pcol"><h3>Программа</h3>'+s.pairs.map(function(p,i){
+      var m=s.matched[i];
+      return '<button class="pbtn l'+(m?' done':'')+(s.sel===i?' sel':'')+'" data-act="pl" data-ex="'+id+'" data-i="'+i+'"'+(m?' disabled':'')+'>'+
+             (m?'<span class="pnum">'+m+'</span>':'')+'<span>'+esc(p.p)+'</span></button>';
+    }).join('')+'</div>';
+  h+='<div class="pcol"><h3>Что делает ИИ</h3>'+s.right.map(function(i){
+      var m=s.matched[i];
+      return '<button class="pbtn r'+(m?' done':'')+'" data-act="pr" data-ex="'+id+'" data-i="'+i+'"'+(m?' disabled':'')+'>'+
+             (m?'<span class="pnum">'+m+'</span>':'')+'<span>'+esc(s.pairs[i].a)+'</span></button>';
+    }).join('')+'</div></div>';
+  h+='<div class="fb'+(s.fb?' '+s.fb.cls:'')+'">'+(s.fb?esc(s.fb.text):'')+'</div>'+
+     '<div class="nextrow"><button class="btn" data-act="finish" data-ex="'+id+'"'+(s.count===n?'':' hidden')+'>Завершить</button></div>';
+  el.innerHTML=h;
+}
+function pairLeft(id,i){
+  var s=S[id]; if(s.status!=='run' || s.matched[i]) return;
+  s.sel=i; s.fb=null; renderPairs(id);
+}
+function pairRight(id,i){
+  var s=S[id]; if(s.status!=='run' || s.matched[i]) return;
+  if(s.sel===null){ s.fb={cls:'tip', text:'Сначала нажми на программу слева.'}; renderPairs(id); return; }
+  var p=s.pairs[s.sel];
+  if(i===s.sel){
+    s.count++; s.matched[i]=s.count;
+    if(!s.err[i]) s.score++;
+    s.fb={cls:'ok', text:'✓ Верно! '+p.p+' — ИИ '+p.a+'.'};
+    s.sel=null;
+  } else {
+    s.err[s.sel]=true;
+    s.fb={cls:'no', text:'✗ Не совсем. Подумай ещё: что умеет «'+p.p+'»?'};
+  }
+  renderPairs(id);
+  if(s.count===s.pairs.length){ var fbn=$('[data-act="finish"]',box(id)); try{ fbn.focus({preventScroll:true}); }catch(err){ fbn.focus(); } reveal(fbn); }
+}
+
+/* ---------- итог упражнения ---------- */
+function renderDone(id){
+  var e=EX[id], s=S[id], r=s.result, el=box(id), part=s.last/r.total, phrase;
+  if(part>=0.9) phrase='Отличная работа!';
+  else if(part>=0.7) phrase='Хорошо! Можно заглянуть в теорию и попробовать ещё раз.';
+  else phrase='Загляни в теорию и попробуй ещё раз — получится лучше.';
+  var idx=ORDER.indexOf(id), nxt=null, nb, k, left=ORDER.filter(function(x){ return !S[x].result; }).length;
+  /* сначала невыполненные упражнения этого же раздела, потом другого */
+  var cand=[]; for(k=1;k<ORDER.length;k++) cand.push(ORDER[(idx+k)%ORDER.length]);
+  cand=cand.filter(function(x){ return EX[x].block===e.block; }).concat(cand.filter(function(x){ return EX[x].block!==e.block; }));
+  for(k=0;k<cand.length;k++){ if(!S[cand[k]].result){ nxt=cand[k]; break; } }
+  if(!nxt) nb='<button class="btn" data-act="tab" data-tab="result">Посмотреть результат →</button>';
+  else nb='<button class="btn" data-act="goto" data-ex="'+nxt+'">'+
+          (EX[nxt].block!==e.block ? (EX[nxt].block==='ai'?'К заданиям по ИИ →':'К заданиям по ПО →') : 'Следующее упражнение: «'+EX[nxt].title+'» →')+'</button>';
+  el.innerHTML='<div class="exhead"><h2>'+e.title+'</h2><span class="prog">'+(left?'Осталось упражнений: '+left+' из '+ORDER.length:'Все упражнения выполнены!')+'</span></div>'+
+    '<div class="done-score">Верно: <b>'+s.last+'</b> из '+r.total+'</div>'+
+    (r.score>s.last?'<p class="task"><b>Лучший результат: '+r.score+' из '+r.total+'</b> — в оценку идёт он.</p>':'')+
+    '<p class="task">'+phrase+'</p>'+
+    '<div class="rowbtns">'+nb+
+    '<button class="btn ghost" data-act="start" data-ex="'+id+'">Ещё раз (новые задания)</button>'+
+    '<button class="btn ghost" data-act="theory" data-part="'+e.block+'">Открыть теорию</button></div>';
+}
+
+function exState(id){ var s=S[id]; return s.result ? 'done' : (s.status==='run' ? 'run' : 'new'); }
+function updateStatus(){
+  $$('.exbtn').forEach(function(b){
+    var id=b.dataset.ex, st=exState(id), r=S[id].result;
+    b.classList.toggle('done', st==='done'); b.classList.toggle('run', st==='run');
+    $('.exstat',b).textContent = st==='done' ? '✓ '+r.score+' из '+r.total : (st==='run' ? 'не закончено' : 'не начато');
+  });
+  ['po','ai'].forEach(function(bl){
+    var ids=ORDER.filter(function(id){ return EX[id].block===bl; });
+    var d=ids.filter(function(id){ return exState(id)==='done'; }).length;
+    var started=ids.some(function(id){ return exState(id)!=='new'; });
+    var el=$('#ts-'+bl);
+    el.textContent=(d===ids.length?'✓ ':'')+d+' из '+ids.length;
+    el.className='tabstat'+(d===ids.length?' all':(started?' part':''));
+  });
+}
+
+function openEx(id){
+  var tab=EX[id].block;
+  $$('#tab-'+tab+' .exbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.ex===id); });
+  $$('#tab-'+tab+' .exbox').forEach(function(b){ b.classList.toggle('on', b.id==='ex-'+id); });
+  renderEx(id);
+}
+
+/* ================== РЕЗУЛЬТАТ ================== */
+function renderResult(){
+  var fio=$('#fio').value.trim(), kl=$('#klass').value.trim();
+  var now=new Date(), pad=function(n){ return (n<10?'0':'')+n; };
+  var when=pad(now.getDate())+'.'+pad(now.getMonth()+1)+'.'+now.getFullYear()+', '+pad(now.getHours())+':'+pad(now.getMinutes());
+  var done=0, sum=0, max=0, todo=[];
+  function blockHtml(block, name){
+    var bs=0, bm=0, rows='';
+    ORDER.filter(function(id){return EX[id].block===block;}).forEach(function(id){
+      var r=S[id].result; bm+=EX[id].total; max+=EX[id].total;
+      if(r){ bs+=r.score; sum+=r.score; done++; } else todo.push(id);
+      rows+='<div class="res-row"><span>'+EX[id].title+'</span><b>'+
+            (r ? (r.attempts>1?'<span class="att">попыток: '+r.attempts+' · </span>':'')+r.score+' из '+r.total : '<span class="att">'+(S[id].status==='run'?'не закончено':'не выполнено')+'</span>')+'</b></div>';
+    });
+    return '<div class="res-block '+block+'"><h3><span>'+name+'</span><span>'+bs+' из '+bm+'</span></h3>'+rows+'</div>';
+  }
+  var po=blockHtml('po','Программное обеспечение'), ai=blockHtml('ai','Искусственный интеллект');
+  var all=(done===ORDER.length);
+  var h='<div class="res-top"><div><div class="res-who">'+(fio?esc(fio):'Фамилия и имя не указаны')+'</div>'+
+        '<div class="res-meta">'+(kl?'Класс: '+esc(kl)+' · ':'')+when+'</div></div>'+
+        '<div class="mark"><div>Оценка<br><small>из 10</small></div><span>'+(done?Math.round(sum/max*10):'—')+'</span></div></div>'+
+        '<div class="res-grid">'+po+ai+'</div>'+
+        '<div class="res-total'+(all?'':' wait')+'"><div class="big">Всего: '+sum+' из '+max+'</div><div>'+
+        (all?'Все упражнения выполнены.':'<b>Не выполнено упражнений: '+todo.length+' из '+ORDER.length+'.</b> Нажми на упражнение, чтобы перейти к нему:'+
+          '<div class="todo">'+todo.map(function(id){ return '<button class="btn" data-act="goto" data-ex="'+id+'">'+(EX[id].block==='po'?'ПО':'ИИ')+': '+EX[id].title+' →</button>'; }).join('')+'</div>')+
+        '</div></div>'+
+        '<div class="rowbtns"><button class="btn ghost" id="resetbtn" data-act="reset">Начать заново</button></div>';
+  $('#result').innerHTML=h;
+}
+
+/* ================== ТЕОРИЯ ================== */
+var TH={part:'po', idx:{po:0, ai:0}};
+function slidesOf(p){ return $$('.slide[data-part="'+p+'"]'); }
+function renderTheory(){
+  var sl=slidesOf(TH.part), i=TH.idx[TH.part];
+  $$('.slide').forEach(function(x){ x.classList.remove('on'); });
+  sl[i].classList.add('on');
+  $$('.partbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.part===TH.part); });
+  $('#tprev').disabled=(i===0);
+  $('#tnext').textContent = (i===sl.length-1) ? (TH.part==='po'?'К заданиям по ПО →':'К заданиям по ИИ →') : 'Далее →';
+  $('#tdots').innerHTML=sl.map(function(_,k){
+    return '<button class="dot'+(k===i?' on':'')+'" data-act="dot" data-i="'+k+'" aria-label="Экран '+(k+1)+'"></button>';
+  }).join('')+'<span class="count">'+(i+1)+' / '+sl.length+'</span>';
+}
+function theoryStep(d){
+  var sl=slidesOf(TH.part), i=TH.idx[TH.part]+d;
+  if(i<0) return;
+  if(i>=sl.length){ showTab(TH.part); return; }
+  TH.idx[TH.part]=i; renderTheory();
+}
+
+/* ================== ВКЛАДКИ И СОБЫТИЯ ================== */
+function showTab(name){
+  $$('.tab').forEach(function(t){ t.classList.toggle('on', t.id==='tab-'+name); });
+  $$('.tabbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab===name); });
+  if(name==='result') renderResult();
+  if(name==='po' || name==='ai'){ var ob=$('#tab-'+name+' .exbtn.on'); if(ob) renderEx(ob.dataset.ex); }
+  window.scrollTo(0,0);
+}
+function currentTab(){ var t=$('.tab.on'); return t ? t.id.replace('tab-','') : ''; }
+
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-act]'); if(!b) return;
+  var act=b.dataset.act, id=b.dataset.ex;
+  if(act!=='reset'){ var rb=$('#resetbtn'); if(rb){ rb.dataset.sure=''; } }
+  switch(act){
+    case 'tab':    showTab(b.dataset.tab); break;
+    case 'part':   TH.part=b.dataset.part; renderTheory(); break;
+    case 'prev':   theoryStep(-1); break;
+    case 'next':   theoryStep(1); break;
+    case 'dot':    TH.idx[TH.part]=+b.dataset.i; renderTheory(); break;
+    case 'theory': TH.part=b.dataset.part; renderTheory(); showTab('theory'); break;
+    case 'open':   openEx(id); break;
+    case 'goto':   showTab(EX[id].block); openEx(id); break;
+    case 'start':  startEx(id); break;
+    case 'ans':    answer(id, b.dataset.v); break;
+    case 'nextq':  nextQ(id); break;
+    case 'pl':     pairLeft(id, +b.dataset.i); break;
+    case 'pr':     pairRight(id, +b.dataset.i); break;
+    case 'finish': if(S[id].status==='run' && S[id].count===S[id].pairs.length) finish(id); break;
+    case 'reset':
+      if(b.dataset.sure==='1'){ resetAll(); }
+      else { b.dataset.sure='1'; b.textContent='Все результаты будут стёрты. Нажми ещё раз, чтобы подтвердить'; }
+      break;
+  }
+});
+
+document.addEventListener('keydown', function(ev){
+  if(currentTab()!=='theory') return;
+  var t=ev.target.tagName; if(t==='INPUT' || t==='TEXTAREA') return;
+  if(ev.key==='ArrowRight' || ev.key==='PageDown'){ ev.preventDefault(); theoryStep(1); }
+  if(ev.key==='ArrowLeft'  || ev.key==='PageUp'){ ev.preventDefault(); theoryStep(-1); }
+});
+
+['fio','klass'].forEach(function(i){
+  $('#'+i).addEventListener('input', function(){ this.classList.remove('need'); });
+});
+
+function resetAll(){
+  $('#fio').value=''; $('#klass').value='';
+  ORDER.forEach(function(id){ S[id]={status:'new', attempts:0, result:null}; });
+  TH.part='po'; TH.idx={po:0, ai:0};
+  updateStatus(); openEx('a1'); openEx('b1'); renderTheory(); showTab('theory');
+}
+
+/* запуск: поля всегда пустые, данные прошлого ученика не сохраняются */
+$$('i[data-lg]').forEach(function(el){ el.outerHTML = LOGOS[el.dataset.lg] || ''; });
+window.addEventListener('pageshow', function(){ $('#fio').value=''; $('#klass').value=''; });
+resetAll();
+})();
+</script>
+</body>
+</html>
