@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Двоичная система счисления — тренажёр</title>
+<style>
+:root{
+  --bg:#f3f6fb; --card:#ffffff; --ink:#1f2937; --muted:#64748b; --line:#e2e8f0;
+  --pri:#2563eb; --pri2:#1e40af; --pri-soft:#e8efff;
+  --ok:#15803d; --ok-soft:#e7f7ec; --bad:#b91c1c; --bad-soft:#fdecec;
+  --acc:#d97706; --acc-soft:#fff4dc;
+  --text:'Times New Roman', Times, serif;
+  --mono:'JetBrains Mono', Consolas, 'Courier New', monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--text);font-size:19px;line-height:1.45}
+.mono,.num{font-family:var(--mono)}
+.num sub{font-size:.62em}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+button{font-family:var(--text);font-size:18px;cursor:pointer}
+input{font-family:var(--text);font-size:19px}
+
+/* ---------- header ---------- */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:12px 24px;background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#fff}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{font-family:var(--mono);font-weight:700;background:#fff;color:var(--pri2);border-radius:10px;padding:6px 10px;font-size:20px}
+.t1{font-size:22px;font-weight:700}
+.t2{font-size:16px;opacity:.9}
+.who{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.who-name{background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:17px}
+nav.tabs{display:flex;gap:6px;padding:10px 24px 0;background:#dbe5f7;flex-wrap:wrap}
+.tab{border:none;background:transparent;padding:10px 20px;border-radius:12px 12px 0 0;font-size:19px;color:#334155}
+.tab.active{background:var(--bg);color:var(--pri2);font-weight:700}
+main{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+.page{display:none}
+.page.active{display:block}
+
+/* ---------- common ---------- */
+.card{background:var(--card);border-radius:16px;padding:20px 24px;box-shadow:0 1px 3px rgba(15,23,42,.08);margin-bottom:18px}
+h2{margin:0 0 12px;font-size:26px;color:var(--pri2)}
+h3{margin:0 0 10px;font-size:22px}
+.btn{border:1.5px solid var(--pri);background:#fff;color:var(--pri);padding:8px 18px;border-radius:10px;transition:.15s}
+.btn:hover{background:var(--pri-soft)}
+.btn.primary{background:var(--pri);color:#fff}
+.btn.primary:hover{background:var(--pri2)}
+.btn.big{font-size:20px;padding:12px 26px}
+.btn.ghost{border-color:rgba(255,255,255,.7);background:transparent;color:#fff}
+.btn.ghost:hover{background:rgba(255,255,255,.15)}
+.btn.small{font-size:16px;padding:5px 12px}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.note{background:var(--pri-soft);border-left:5px solid var(--pri);padding:10px 16px;border-radius:8px;margin:10px 0}
+.warn{background:var(--acc-soft);border-left:5px solid var(--acc);padding:10px 16px;border-radius:8px;margin:10px 0}
+.good{background:var(--ok-soft);border-left:5px solid var(--ok);padding:12px 16px;border-radius:8px;margin:10px 0}
+.bad{background:var(--bad-soft);border-left:5px solid var(--bad);padding:12px 16px;border-radius:8px;margin:10px 0}
+table.t{border-collapse:collapse;margin:8px 0;width:100%}
+table.t th,table.t td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+table.t th{background:#f1f5f9}
+.scroll-x{overflow-x:auto}
+
+/* ---------- overlay / modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{background:#fff;border-radius:18px;padding:28px 32px;max-width:720px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login-box{max-width:440px;text-align:center}
+.login-emoji{font-size:54px}
+.login-box h2{font-size:24px;margin-top:6px}
+.login-box label{display:block;text-align:left;margin:12px 0 0;font-weight:700;font-size:17px}
+.login-box input{display:block;width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:10px}
+.login-box input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+.err{color:var(--bad);min-height:24px;margin:10px 0 4px;font-size:17px}
+
+/* ---------- reference ---------- */
+.ref-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.ref-nav a{background:#fff;border:1px solid var(--line);padding:6px 14px;border-radius:20px;color:var(--pri2);text-decoration:none;font-size:17px}
+.ref-nav a:hover{background:var(--pri-soft)}
+.term{font-weight:700;color:var(--pri2)}
+.def{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+.steps-list li{margin:6px 0}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:820px){.twocol{grid-template-columns:1fr}}
+.demo{border:2px dashed #bfd0f5;border-radius:14px;padding:14px 18px;margin-top:12px;background:#fbfdff}
+.demo input{padding:6px 10px;border:1.5px solid #cbd5e1;border-radius:8px;width:150px;font-family:var(--mono)}
+.flash{animation:flashIn .5s}
+@keyframes flashIn{from{opacity:.2;background:#fff7d6}to{opacity:1}}
+.demo-msg{min-height:30px;margin:10px 0;font-size:19px}
+.powers{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.powers div{border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:#fff;text-align:center;font-family:var(--mono);font-size:16px}
+.pow-strip{margin:4px 0 8px}
+.pow-t{font-size:16px;color:var(--muted)}
+.pow-strip .powers{margin-top:4px}
+.powers b{display:block;font-size:18px;color:var(--pri2)}
+
+/* ---------- staircase division ---------- */
+.stair{display:inline-grid;font-family:var(--mono);font-size:21px;margin:8px 0}
+.sc{padding:3px 10px;text-align:right;min-width:2.1em;white-space:nowrap}
+.sc.dv{border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);text-align:left;color:var(--pri2);font-weight:700}
+.sc.qt{border-left:2px solid var(--ink)}
+.sc.pr{color:var(--muted)}
+.sc.pr span{border-bottom:1.5px solid var(--muted);padding:0 2px}
+.rc{display:inline-block;min-width:1.55em;height:1.55em;line-height:1.45em;text-align:center;border-radius:50%;
+  background:var(--acc-soft);border:2px solid var(--acc);color:#92400e;font-weight:700}
+.ans-bits{white-space:nowrap}
+.ans-bits .b{display:inline-block;background:var(--acc-soft);border:2px solid var(--acc);border-radius:6px;padding:0 6px;margin:0 2px;font-weight:700;color:#92400e}
+
+/* ---------- expansion 2 -> 10 ---------- */
+.digits{display:inline-flex;gap:6px;margin:8px 0;font-family:var(--mono)}
+.digits .dg{display:flex;flex-direction:column;align-items:center}
+.digits .ix{font-size:14px;color:var(--pri);font-weight:700}
+.digits .dd{border:2px solid var(--pri);border-radius:8px;width:40px;height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;background:#fff}
+.digits .dd.hl{background:#fde68a;border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.3)}
+.digits .dd.one{background:var(--pri-soft)}
+.expand{font-family:var(--mono);font-size:19px;line-height:1.9;word-break:break-word}
+.expand sup{font-size:.65em}
+
+/* ---------- solution box ---------- */
+.sol{background:#fff;border:2px solid #c7d7fb;border-radius:12px;padding:12px 16px;margin-top:12px}
+.sol-title{font-weight:700;color:var(--pri2);margin-bottom:4px}
+.sol-grid{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.sol-lines{font-family:var(--mono);font-size:17px;margin:8px 0;padding-left:22px}
+.sol-lines b.r{color:#b45309}
+.sol-ans{margin-top:6px;font-size:19px}
+
+/* ---------- level select ---------- */
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+@media (max-width:720px){.levels{grid-template-columns:1fr}}
+.lvl{border:2.5px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff;text-align:left;font-size:18px;color:var(--ink)}
+.lvl:hover{border-color:#93b4f5}
+.lvl.sel{border-color:var(--pri);background:var(--pri-soft)}
+.lvl .ln{font-size:21px;font-weight:700;color:var(--pri2);margin-bottom:6px}
+.lvl .stars{color:var(--acc);font-size:20px}
+
+/* ---------- quest ---------- */
+.quest{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.quest{grid-template-columns:1fr}}
+.q-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:var(--pri-soft);color:var(--pri2);border-radius:20px;padding:5px 14px;font-weight:700;font-size:17px}
+.pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pill{flex:1;min-width:110px;text-align:center;padding:7px 8px;border-radius:10px;background:#e2e8f0;color:#475569;font-size:16px}
+.pill.cur{background:var(--pri);color:#fff;font-weight:700}
+.pill.done{background:var(--ok);color:#fff}
+.task-h{font-size:18px;color:var(--muted);margin-bottom:6px}
+.task-q{font-size:40px;font-family:var(--mono);font-weight:700;margin:6px 0 10px;color:#0f172a}
+.task-q sub{font-size:.5em}
+.task-q .arrow{color:var(--pri);margin:0 12px}
+.task-q .qm{color:var(--acc)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media (max-width:560px){.opts{grid-template-columns:1fr}}
+.opt{border:2px solid #cbd5e1;border-radius:12px;background:#fff;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:4px;transition:.15s}
+.opt:hover:not(:disabled){border-color:var(--pri);background:var(--pri-soft)}
+.opt .ov{font-family:var(--mono);font-size:25px;font-weight:700;color:#0f172a}
+.opt .ow{font-size:16px;color:var(--muted);letter-spacing:.5px}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);opacity:.75}
+.opt.wrong .ov{text-decoration:line-through;color:var(--bad)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt:disabled{cursor:default}
+.retry{margin-top:12px;padding:12px 16px;border-radius:10px;background:#fff4dc;border:2px solid #d97706;font-size:20px;animation:pulse 1.6s ease-in-out 2}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(217,119,6,.25)}}
+.word-box{font-size:21px;margin-top:6px}
+.word-box .w{font-family:var(--mono);font-weight:700;background:#0f172a;color:#fde047;padding:3px 12px;border-radius:8px;letter-spacing:2px}
+.phrase-in{width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:10px;font-family:var(--mono);font-size:20px;text-transform:uppercase;margin:8px 0}
+.phrase-in:focus{outline:none;border-color:var(--pri)}
+
+/* robot panel */
+.robot-card{position:relative;overflow:hidden;text-align:center}
+.robot-card h3{color:var(--pri2)}
+.robot-wrap{position:relative;display:inline-block}
+svg.robot{width:260px;max-width:100%;height:auto;overflow:visible}
+.slots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.slot{min-width:92px;padding:6px 8px;border-radius:8px;border:2px dashed #cbd5e1;font-family:var(--mono);font-size:16px;color:#94a3b8;letter-spacing:1px}
+.slot.got{border-style:solid;border-color:#0f172a;background:#0f172a;color:#fde047}
+.bubble{position:relative;background:#fff;border:2.5px solid var(--pri);border-radius:14px;padding:10px 14px;margin:0 auto 8px;max-width:300px;font-size:18px;font-weight:700;color:var(--pri2);animation:fadeIn .6s}
+.bubble:after{content:"";position:absolute;bottom:-12px;left:50%;margin-left:-10px;border:10px solid transparent;border-top-color:var(--pri);border-bottom:0}
+
+/* robot parts */
+.robot rect,.robot circle{stroke:#1e3a8a;stroke-width:2.5}
+.robot line{stroke:#1e3a8a;stroke-width:4;stroke-linecap:round}
+.robot .metal{fill:#60a5fa}
+.robot .metal2{fill:#93c5fd}
+.robot .dark{fill:#334155}
+.robot .accent{fill:#f59e0b}
+.robot .panel{fill:#1e293b}
+.robot .visor{fill:#0f172a}
+.robot .eye{fill:#475569}
+.robot .mouth{fill:#475569}
+.robot .light{fill:#475569;stroke-width:1.5}
+.robot .antenna{fill:#94a3b8}
+.robot .part.ghost rect,.robot .part.ghost circle,.robot .part.ghost line{fill:#eef1f6;stroke:#c3cad6;stroke-dasharray:6 5;stroke-width:2}
+.robot .part{transform-box:fill-box;transform-origin:center}
+.robot .part.pop{animation:pop .8s ease-out}
+@keyframes pop{0%{transform:scale(.4);opacity:.2}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.robot.alive{animation:bounce 1.3s ease-in-out infinite}
+.robot.alive .eye{fill:#fde047;filter:drop-shadow(0 0 6px #fde047);transform-box:fill-box;transform-origin:center;animation:blink 3.2s infinite}
+.robot.alive .mouth{fill:#22d3ee}
+.robot.alive .antenna{animation:ant .7s infinite alternate}
+.robot.alive .arm-r{transform-box:fill-box;transform-origin:50% 4%;animation:wave .9s ease-in-out infinite alternate}
+.robot.alive .light{animation:lights 1.2s infinite}
+.robot.alive .l2{animation-delay:.3s}
+.robot.alive .l3{animation-delay:.6s}
+.robot.alive .l4{animation-delay:.9s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes ant{from{fill:#ef4444}to{fill:#fde047}}
+@keyframes wave{from{transform:rotate(-125deg)}to{transform:rotate(-165deg)}}
+@keyframes lights{0%,100%{fill:#475569}50%{fill:#4ade80}}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:10px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(560px) rotate(720deg);opacity:.2}}
+
+/* ---------- control ---------- */
+.cq{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;background:#fff}
+.cq-n{font-weight:700;color:var(--pri2)}
+.cq .pts{float:right;color:var(--muted);font-size:16px}
+.cq input.ans{font-family:var(--mono);font-size:22px;padding:6px 10px;border:2px solid #cbd5e1;border-radius:8px;width:220px;margin-top:6px}
+.cq input.ans:focus{outline:none;border-color:var(--pri)}
+.cq-task{font-family:var(--mono);font-size:26px;font-weight:700;margin:4px 0}
+.cq-task sub{font-size:.55em}
+.cq label.o{display:block;padding:6px 10px;border-radius:8px;margin:3px 0;cursor:pointer}
+.cq label.o:hover{background:#f1f5f9}
+.cq label.o input{margin-right:8px;transform:scale(1.2)}
+.score-big{font-size:48px;font-weight:700;color:var(--pri2);text-align:center}
+.score-sub{text-align:center;color:var(--muted);margin-bottom:10px}
+.ok-mark{color:var(--ok);font-weight:700}
+.bad-mark{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ============ ВХОД ============ -->
+<div id="login" class="overlay">
+  <div class="modal login-box">
+    <div class="login-emoji">🤖</div>
+    <h2>Тренажёр «Двоичная система счисления»</h2>
+    <div class="muted">Перевод чисел 10 → 2 и 2 → 10</div>
+    <label>Фамилия<input id="inSurname" autocomplete="off"></label>
+    <label>Имя<input id="inName" autocomplete="off"></label>
+    <label>Класс<input id="inClass" autocomplete="off"></label>
+    <div id="loginErr" class="err"></div>
+    <button id="btnLogin" class="btn primary big">Начать работу</button>
+  </div>
+</div>
+
+<header class="top">
+  <div class="brand">
+    <span class="logo">01</span>
+    <div><div class="t1">Системы счисления</div><div class="t2">Модуль 1 · Двоичная система (10 ↔ 2)</div></div>
+  </div>
+  <div class="who"><span id="whoName" class="who-name"></span><button id="btnResults" class="btn ghost">📄 Мои результаты</button></div>
+</header>
+<nav class="tabs">
+  <button class="tab active" data-tab="ref">📘 Справочник</button>
+  <button class="tab" data-tab="train">🎯 Обучение · квест</button>
+  <button class="tab" data-tab="ctrl">📝 Контроль</button>
+</nav>
+
+<main>
+<!-- ============ СПРАВОЧНИК ============ -->
+<section id="tab-ref" class="page active">
+  <div class="ref-nav">
+    <a href="#r-basic">Основные понятия</a>
+    <a href="#r-pos">Позиционные и непозиционные</a>
+    <a href="#r-d2b">Алгоритм 10 → 2</a>
+    <a href="#r-b2d">Алгоритм 2 → 10</a>
+  </div>
+
+  <div class="card" id="r-basic">
+    <h2>1. Основные понятия</h2>
+    <div class="def"><span class="term">Система счисления (СС)</span> – это способ записи чисел с помощью определённого набора цифр (алфавита).</div>
+    <div class="def"><span class="term">Алфавит системы счисления</span> – определённый набор цифр, которые используются для записи чисел.</div>
+    <div class="def"><span class="term">Основание системы счисления</span> – количество цифр в алфавите.</div>
+    <div class="scroll-x">
+    <table class="t">
+      <tr><th>Система счисления</th><th>Основание</th><th>Алфавит</th><th>Пример записи</th></tr>
+      <tr><td>Двоичная</td><td class="mono">2</td><td class="mono">0, 1</td><td class="num">101101<sub>2</sub></td></tr>
+      <tr><td>Восьмеричная</td><td class="mono">8</td><td class="mono">0, 1, 2, 3, 4, 5, 6, 7</td><td class="num">55<sub>8</sub></td></tr>
+      <tr><td>Десятичная</td><td class="mono">10</td><td class="mono">0, 1, 2, 3, 4, 5, 6, 7, 8, 9</td><td class="num">45<sub>10</sub></td></tr>
+      <tr><td>Шестнадцатеричная</td><td class="mono">16</td><td class="mono">0–9, A, B, C, D, E, F</td><td class="num">2D<sub>16</sub></td></tr>
+    </table>
+    </div>
+    <div class="note">📌 Основание системы счисления записывают маленьким числом справа внизу — <b>индексом</b>: <span class="num">101<sub>2</sub></span> — число в двоичной системе, <span class="num">101<sub>10</sub></span> — в десятичной. Это разные числа!</div>
+  </div>
+
+  <div class="card" id="r-pos">
+    <h2>2. Позиционные и непозиционные системы счисления</h2>
+    <div class="twocol">
+      <div class="def"><span class="term">Непозиционные</span> – значение цифры <b>не зависит</b> от её положения в записи числа.<br>
+        Пример — римская: <span class="num">XXX = 10 + 10 + 10 = 30</span></div>
+      <div class="def"><span class="term">Позиционные</span> – значение цифры <b>зависит</b> от её положения (разряда) в записи числа.<br>
+        Пример — десятичная: <span class="num">555 = 500 + 50 + 5</span></div>
+    </div>
+  </div>
+
+  <div class="card" id="r-d2b">
+    <h2>3. Алгоритм перевода 10 → 2</h2>
+    <ol class="steps-list">
+      <li>Делим число на 2 и записываем остаток (0 или 1).</li>
+      <li>Частное снова делим на 2 и записываем остаток. Повторяем, пока частное не станет равно 1.</li>
+      <li>Записываем последнее частное и все остатки <b>снизу вверх</b>.</li>
+    </ol>
+    <div class="demo">
+      <b>Попробуй по шагам:</b>
+      <div class="row" style="margin-top:8px">
+        <span>Число:</span><input id="d1n" type="text" inputmode="numeric" value="45">
+        <button class="btn small primary" id="d1start">▶ Начать</button>
+        <button class="btn small" id="d1next">Следующий шаг</button>
+        <button class="btn small" id="d1all">Показать всё</button>
+        <button class="btn small" id="d1rnd">🎲 Другое число</button>
+      </div>
+      <div class="demo-msg" id="d1msg"></div>
+      <div class="scroll-x" id="d1out"></div>
+    </div>
+  </div>
+
+  <div class="card" id="r-b2d">
+    <h2>4. Алгоритм перевода 2 → 10</h2>
+    <ol class="steps-list">
+      <li>Нумеруем разряды двоичного числа <b>справа налево, начиная с 0</b>.</li>
+      <li>Каждую цифру умножаем на 2 в степени номера её разряда.</li>
+      <li>Складываем полученные значения.</li>
+    </ol>
+    <p style="margin-bottom:0"><b>Степени двойки:</b></p>
+    <div class="powers" id="powersTbl"></div>
+    <div class="demo">
+      <b>Попробуй сам:</b>
+      <div class="row" style="margin-top:8px">
+        <span>Двоичное число:</span><input id="d2n" type="text" value="101101" style="width:190px">
+        <button class="btn small primary" id="d2go">▶ Перевести</button>
+        <button class="btn small" id="d2rnd">🎲 Другое число</button>
+      </div>
+      <div class="demo-msg" id="d2msg"></div>
+      <div class="scroll-x" id="d2out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ОБУЧЕНИЕ ============ -->
+<section id="tab-train" class="page"></section>
+
+<!-- ============ КОНТРОЛЬ ============ -->
+<section id="tab-ctrl" class="page"></section>
+</main>
+
+<!-- ============ РЕЗУЛЬТАТЫ ============ -->
+<div id="resModal" class="overlay hidden">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">📄 Мои результаты</h2><button class="btn small" id="resClose">✕ Закрыть</button></div>
+    <div id="resBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" id="expTxt">💾 Сохранить TXT</button>
+      <button class="btn" id="expCsv">💾 Сохранить CSV (Excel)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sub = (v,b) => `<span class="num">${v}<sub>${b}</sub></span>`;
+const rev = s => [...s].reverse().join('');
+const fmt = x => String(x).replace('.',',');
+const fmtTime = d => d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+function uniqueNums(count,min,max){ const s=new Set(); while(s.size<count) s.add(rnd(min,max)); return shuffle([...s]); }
+
+const LEVELS = {
+  1:{name:'Уровень 1 · Базовый', stars:'★', min:6, max:31,
+     range:'числа от 6 до 31 (до 5 двоичных разрядов)', help:'при ошибке показывается подробное решение'},
+  2:{name:'Уровень 2 · Продвинутый', stars:'★★', min:40, max:255,
+     range:'числа от 40 до 255 (6–8 двоичных разрядов)', help:'при ошибке — подсказка о типе ошибки, после второй ошибки — решение'}
+};
+
+const S = {
+  student:null, tab:'ref',
+  train:{selLevel:1, quest:null},
+  ctrl:{selLevel:1, test:null},
+  results:{train:[], control:[]}
+};
+
+/* =====================================================================
+   АЛГОРИТМЫ И ВИЗУАЛИЗАЦИЯ РЕШЕНИЙ
+   ===================================================================== */
+function divSteps(n){ const st=[]; let d=n; while(d>=2){ st.push({d, q:Math.floor(d/2), r:d%2}); d=Math.floor(d/2);} return st; }
+
+// Деление «уголком» (лесенкой). shown — сколько шагов показать.
+function staircase(n, shown=Infinity){
+  const st=divSteps(n), k=st.length, s=Math.min(shown,k), cells=[];
+  const cell=(r,c,html,cls='')=>cells.push(`<div class="sc ${cls}" style="grid-row:${r+1};grid-column:${c+1}">${html}</div>`);
+  if(k===0) return `<div class="stair"><div class="sc"><span class="rc">${n}</span></div></div>`;
+  cell(0,0,n);
+  for(let i=0;i<s;i++){
+    const t=st[i];
+    cell(i,i+1,'2','dv');
+    cell(i+1,i,`<span>${t.q*2}</span>`,'pr');
+    const last = (i===k-1 && s===k);
+    cell(i+1,i+1, last?`<span class="rc">${t.q}</span>`:t.q, 'qt');
+    cell(i+2,i,`<span class="rc">${t.r}</span>`);
+  }
+  return `<div class="stair" style="grid-template-columns:repeat(${k+1},auto)">${cells.join('')}</div>`;
+}
+function bitsHtml(b){ return `<span class="ans-bits mono">${[...b].map(c=>`<span class="b">${c}</span>`).join('')}</span>`; }
+
+function solD2B(n){
+  const b=n.toString(2), st=divSteps(n);
+  return `<div class="sol"><div class="sol-title">Подробное решение: ${sub(n,10)} → двоичная система</div>
+    <div class="sol-grid"><div class="scroll-x">${staircase(n)}</div>
+    <ol class="sol-lines">${st.map(t=>`<li>${t.d} : 2 = ${t.q}, остаток <b class="r">${t.r}</b></li>`).join('')}
+    <li>Частное <b class="r">1</b> меньше 2 — деление закончено.</li></ol></div>
+    <div class="sol-ans">Записываем последнее частное и остатки <b>снизу вверх</b>: ${bitsHtml(b)}<br>
+    <b>Ответ:</b> ${sub(n,10)} = ${sub(b,2)}</div></div>`;
+}
+function expansionHtml(b){
+  const L=b.length;
+  const digits=[...b].map((c,i)=>`<div class="dg"><span class="ix">${L-1-i}</span><span class="dd ${c==='1'?'one':''}">${c}</span></div>`).join('');
+  const terms=[...b].map((c,i)=>`${c}·2<sup>${L-1-i}</sup>`).join(' + ');
+  const vals=[...b].map((c,i)=>+c*2**(L-1-i)).join(' + ');
+  const n=parseInt(b,2);
+  return {n, html:`<div class="muted" style="font-size:16px">номера разрядов ↓</div><div class="digits">${digits}</div>
+    <div class="expand">${sub(b,2)} = ${terms} =<br>= ${vals} = <b>${n}</b></div>`};
+}
+function solB2D(b){
+  const e=expansionHtml(b);
+  return `<div class="sol"><div class="sol-title">Подробное решение: ${sub(b,2)} → десятичная система</div>
+    ${e.html}<div class="sol-ans"><b>Ответ:</b> ${sub(b,2)} = ${sub(e.n,10)}</div></div>`;
+}
+
+/* ---------- неверные варианты = типичные ошибки ---------- */
+const ERR = {
+  reversed:'Похоже, ты записал(а) остатки <b>сверху вниз</b>. Остатки записываются <b>снизу вверх</b> — начиная с последнего частного!',
+  forgotLast:'Похоже, ты забыл(а) записать <b>последнее частное 1</b>. Оно становится первой (старшей) цифрой двоичного числа.',
+  lostZero:'Похоже, потерян <b>ноль</b>. Остаток 0 тоже нужно записывать! Проверь каждый шаг деления.',
+  flip:'Ошибка в одном из разрядов. Проверь деление на каждом шаге: возможно, неверно найден остаток или частное.',
+  extra:'В ответе лишняя цифра. Проверь, сколько раз ты делил(а) на 2.',
+  from1:'Похоже, ты нумеровал(а) разряды <b>с 1</b>. Нумерация начинается <b>с 0</b>: самая правая цифра умножается на 2<sup>0</sup> = 1.',
+  leftToRight:'Похоже, ты нумеровал(а) разряды <b>слева направо</b>. Разряды нумеруются <b>справа налево</b>, начиная с 0.',
+  missed:'Пропущено одно из слагаемых. Проверь, что каждая единица числа учтена в сумме.',
+  mult:'Похоже, ты <b>умножал(а)</b> 2 на номер разряда. Нужно возводить 2 <b>в степень</b>: 2<sup>3</sup> = 2·2·2 = 8, а не 2·3 = 6.',
+  arith:'Ошибка в вычислениях. Проверь значения степеней двойки и сложение.'
+};
+function binDistractors(n){
+  const b=n.toString(2), out=[], seen=new Set([b]);
+  const add=(v,t)=>{ if(v && !seen.has(v) && out.length<3){ seen.add(v); out.push({v,t}); } };
+  add(rev(b),'reversed');
+  const others=[];
+  if(b.length>2) others.push({v:b.slice(1),t:'forgotLast'});
+  const zeros=[...b].map((c,i)=>c==='0'?i:-1).filter(i=>i>=0);
+  if(zeros.length){ const z=pick(zeros); others.push({v:b.slice(0,z)+b.slice(z+1),t:'lostZero'}); }
+  const fi=rnd(1,b.length-1); others.push({v:b.slice(0,fi)+(b[fi]==='0'?'1':'0')+b.slice(fi+1),t:'flip'});
+  shuffle(others).forEach(o=>add(o.v,o.t));
+  let guard=0;
+  while(out.length<3 && guard++<100){
+    const i=rnd(1,b.length-1);
+    if(Math.random()<.5) add(b.slice(0,i)+(b[i]==='0'?'1':'0')+b.slice(i+1),'flip');
+    else add(b.slice(0,i)+'0'+b.slice(i),'extra');
+  }
+  return out;
+}
+function decDistractors(n){
+  const b=n.toString(2), L=b.length, out=[], seen=new Set([n]);
+  const add=(v,t)=>{ if(v>0 && !seen.has(v) && out.length<3){ seen.add(v); out.push({v:String(v),t}); } };
+  const setBits=[...b].map((c,i)=>c==='1'?L-1-i:-1).filter(k=>k>=0);
+  const others=[
+    {v:2*n,t:'from1'},
+    {v:parseInt(rev(b),2),t:'leftToRight'},
+    {v:n-2**pick(setBits.filter(k=>k<L-1).concat([0]).filter(k=>setBits.includes(k))),t:'missed'},
+    {v:setBits.reduce((s,k)=>s+(k===0?1:2*k),0),t:'mult'},
+    {v:n+pick([-2,-1,1,2]),t:'arith'}
+  ];
+  shuffle(others).forEach(o=>add(o.v,o.t));
+  let guard=0; while(out.length<3 && guard++<100) add(n+pick([-4,-3,-2,-1,1,2,3,4]),'arith');
+  return out;
+}
+
+/* =====================================================================
+   ВХОД
+   ===================================================================== */
+function doLogin(){
+  const sn=$('#inSurname').value.trim(), nm=$('#inName').value.trim(), cl=$('#inClass').value.trim();
+  if(!sn||!nm||!cl){ $('#loginErr').textContent='Заполни все поля: фамилию, имя и класс.'; return; }
+  S.student={surname:sn,name:nm,cls:cl};
+  $('#whoName').textContent=`👤 ${sn} ${nm}, ${cl}`;
+  $('#login').classList.add('hidden');
+}
+$('#btnLogin').onclick=doLogin;
+['#inSurname','#inName','#inClass'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); }));
+setTimeout(()=>$('#inSurname').focus(),50);
+
+/* ---------- вкладки (переключение без сброса данных) ---------- */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+function switchTab(t){
+  S.tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='tab-'+t));
+  window.scrollTo(0,0);
+}
+
+/* =====================================================================
+   СПРАВОЧНИК: степени двойки и демонстрации
+   ===================================================================== */
+$('#powersTbl').innerHTML=Array.from({length:11},(_,k)=>`<div>2<sup>${k}</sup><b>${2**k}</b></div>`).join('');
+
+const D1={n:45,s:0};
+function d1render(){
+  const st=divSteps(D1.n), k=st.length;
+  $('#d1out').innerHTML=staircase(D1.n,D1.s); flash('#d1out'); flash('#d1msg');
+  let msg='';
+  if(D1.s===0) msg=`Будем делить число <b>${D1.n}</b> на 2. Нажми «▶ Начать» или «Следующий шаг».`;
+  else if(D1.s<k){ const t=st[D1.s-1]; msg=`Шаг ${D1.s}: ${t.d} : 2 = ${t.q}, остаток <b>${t.r}</b>. Частное ${t.q} ≥ 2 — делим дальше.`; }
+  else { const b=D1.n.toString(2); const t=st[k-1];
+    msg=`Шаг ${k}: ${t.d} : 2 = ${t.q}, остаток <b>${t.r}</b>. Частное 1 < 2 — стоп!<br>Записываем последнее частное и остатки <b>снизу вверх</b>: ${bitsHtml(b)} → ${sub(D1.n,10)} = ${sub(b,2)}`; }
+  $('#d1msg').innerHTML=msg;
+}
+function d1read(){ const v=parseInt($('#d1n').value,10);
+  if(!(v>=2&&v<=1023)){ $('#d1msg').innerHTML='<span class="bad-mark">Введи целое число от 2 до 1023.</span>'; $('#d1out').innerHTML=''; return false; }
+  D1.n=v; return true; }
+$('#d1start').onclick=()=>{ if(d1read()){D1.s=1;d1render();} };
+$('#d1next').onclick=()=>{ if(D1.s===0 && !d1read()) return; const k=divSteps(D1.n).length; if(D1.s<k) D1.s++; d1render(); };
+$('#d1all').onclick=()=>{ if(d1read()){D1.s=Infinity;d1render();} };
+$('#d1rnd').onclick=()=>{ $('#d1n').value=rnd(10,200); d1read(); D1.s=0; d1render(); };
+$('#d1n').addEventListener('input',()=>{ D1.s=0; $('#d1out').innerHTML=''; $('#d1msg').innerHTML='Нажми «▶ Начать».'; });
+$('#d1n').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#d1start').click(); });
+
+function d2render(){
+  const v=$('#d2n').value.trim();
+  if(!/^[01]+$/.test(v)){ $('#d2msg').innerHTML='<span class="bad-mark">В двоичном числе могут быть только цифры 0 и 1!</span>'; $('#d2out').innerHTML=''; return; }
+  if(v.length>11){ $('#d2msg').innerHTML='<span class="bad-mark">Введи не более 11 цифр.</span>'; $('#d2out').innerHTML=''; return; }
+  const e=expansionHtml(v);
+  $('#d2msg').innerHTML=`Ответ: ${sub(v,2)} = ${sub(e.n,10)}`;
+  $('#d2out').innerHTML=e.html; flash('#d2out'); flash('#d2msg');
+}
+function flash(sel){ const el=$(sel); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+$('#d2go').onclick=d2render;
+$('#d2rnd').onclick=()=>{ $('#d2n').value=rnd(9,255).toString(2); d2render(); };
+$('#d2n').addEventListener('keydown',e=>{ if(e.key==='Enter') d2render(); });
+$('#d2n').addEventListener('input',()=>{ $('#d2out').innerHTML=''; $('#d2msg').innerHTML='Нажми «▶ Перевести».'; });
+D1.s=0; d1render(); $('#d2msg').innerHTML='Введи двоичное число и нажми «▶ Перевести».';
+
+/* =====================================================================
+   ОБУЧЕНИЕ — КВЕСТ «ОЖИВИ РОБОТА»
+   ===================================================================== */
+// Кодовые фразы: [прилагательное, существительное, глагол, существительное мн.ч.]
+const PHRASES = [
+  ['ЗЕЛЁНЫЙ','ЁЖИК','ЛЮБИТ','ТРАНЗИСТОРЫ'],
+  ['ТИХИЙ','МАГНИТ','ПОЁТ','БАЙТЫ'],
+  ['КРИВОЙ','ФОНАРЬ','ЕСТ','НОЛИКИ'],
+  ['ПОЛОСАТЫЙ','КЛЮЧ','ГРЕЕТ','ПРОВОДА'],
+  ['ОРАНЖЕВЫЙ','ПИНГВИН','СЧИТАЕТ','ОСТАТКИ'],
+  ['СЕРЕБРЯНЫЙ','ЖУК','ЧИНИТ','ШЕСТЕРЁНКИ'],
+  ['ХОЛОДНЫЙ','ЧАЙНИК','ПОМНИТ','ПАРОЛИ'],
+  ['ЛУННЫЙ','КОТ','ВЯЖЕТ','ЛАМПОЧКИ'],
+  ['СОННЫЙ','ДИВАН','ПРЯЧЕТ','ЕДИНИЦЫ'],
+  ['ХРАБРЫЙ','ТОСТЕР','РИСУЕТ','МОЛНИИ'],
+  ['КВАДРАТНЫЙ','ОГУРЕЦ','ЛОВИТ','СИГНАЛЫ'],
+  ['ПУШИСТЫЙ','ПРОЦЕССОР','ВИДИТ','СНЫ'],
+  ['ЖЕЛЕЗНЫЙ','ВОРОБЕЙ','СТРОИТ','МОСТЫ'],
+  ['ВЕСЁЛЫЙ','КАКТУС','КЛЕИТ','ПИКСЕЛИ']
+];
+const POOLS=[0,1,2,3].map(i=>[...new Set(PHRASES.map(p=>p[i]))]);
+const PARTS=['ноги','корпус','руки','голову'];
+
+function newQuest(level){
+  const L=LEVELS[level];
+  const nums=uniqueNums(4,L.min,L.max);
+  const types=['d2b','d2b','b2d','b2d'];
+  const phrase=pick(PHRASES);
+  const tasks=types.map((type,i)=>{
+    const n=nums[i], bin=n.toString(2);
+    const answer = type==='d2b'? bin : String(n);
+    const dis = type==='d2b'? binDistractors(n) : decDistractors(n);
+    const words = shuffle(POOLS[i].filter(w=>w!==phrase[i])).slice(0,3);
+    const options = shuffle([{v:answer,ok:true,word:phrase[i]}, ...dis.map((d,j)=>({v:d.v,ok:false,err:d.t,word:words[j]}))]);
+    return {type,n,bin,answer,options,attempts:0,wrong:[],errors:[],done:false,helped:false,feedback:''};
+  });
+  const q={level,phrase,tasks,idx:0,start:new Date(),end:null,phraseTries:0,phraseFb:'',showPhrase:false,alive:false,justBuilt:-1};
+  S.results.train.push(q);
+  return q;
+}
+
+function robotSvg(q){
+  const built=i=> q && (q.tasks[i].done) ? (q.justBuilt===i?'pop':'') : 'ghost';
+  return `<svg class="robot ${q&&q.alive?'alive':''}" viewBox="0 0 240 290" aria-label="Робот">
+  <g class="part ${built(0)}">
+    <rect x="84" y="216" width="24" height="46" rx="8" class="metal2"/>
+    <rect x="132" y="216" width="24" height="46" rx="8" class="metal2"/>
+    <rect x="72" y="258" width="44" height="20" rx="10" class="dark"/>
+    <rect x="124" y="258" width="44" height="20" rx="10" class="dark"/>
+  </g>
+  <g class="part ${built(2)}">
+    <g class="arm-l"><rect x="34" y="128" width="24" height="68" rx="11" class="metal2"/><circle cx="46" cy="205" r="12" class="accent"/></g>
+    <g class="arm-r"><rect x="182" y="128" width="24" height="68" rx="11" class="metal2"/><circle cx="194" cy="205" r="12" class="accent"/></g>
+  </g>
+  <g class="part ${built(1)}">
+    <rect x="106" y="108" width="28" height="18" class="dark"/>
+    <rect x="60" y="122" width="120" height="98" rx="16" class="metal"/>
+    <rect x="80" y="138" width="80" height="44" rx="8" class="panel"/>
+    <circle cx="96" cy="160" r="7" class="light l1"/>
+    <circle cx="112" cy="160" r="7" class="light l2"/>
+    <circle cx="128" cy="160" r="7" class="light l3"/>
+    <circle cx="144" cy="160" r="7" class="light l4"/>
+    <rect x="98" y="194" width="44" height="10" rx="5" class="accent"/>
+  </g>
+  <g class="part ${built(3)}">
+    <line x1="120" y1="40" x2="120" y2="20"/>
+    <circle cx="120" cy="15" r="8" class="antenna"/>
+    <rect x="62" y="62" width="12" height="26" rx="5" class="accent"/>
+    <rect x="166" y="62" width="12" height="26" rx="5" class="accent"/>
+    <rect x="72" y="38" width="96" height="74" rx="18" class="metal"/>
+    <rect x="84" y="52" width="72" height="34" rx="10" class="visor"/>
+    <circle cx="102" cy="69" r="9" class="eye"/>
+    <circle cx="138" cy="69" r="9" class="eye"/>
+    <rect x="100" y="94" width="40" height="7" rx="3.5" class="mouth"/>
+  </g>
+</svg>`;
+}
+
+function renderTrain(){
+  const el=$('#tab-train'), q=S.train.quest;
+  if(!q){ el.innerHTML=trainSelectHtml(); bindLevelCards(el,'train'); $('#trStart').onclick=()=>{ S.train.quest=newQuest(S.train.selLevel); renderTrain(); }; return; }
+  const L=LEVELS[q.level];
+  const pills=q.tasks.map((t,i)=>`<div class="pill ${t.done?'done':(i===q.idx?'cur':'')}">${t.done?'✓ ':''}${i+1}. ${t.type==='d2b'?'10 → 2':'2 → 10'}</div>`).join('')
+    + `<div class="pill ${q.alive?'done':(q.idx===4?'cur':'')}">🔋 Запуск</div>`;
+  const slots=q.tasks.map((t,i)=>{
+    if(!t.done) return `<div class="slot">слово ${i+1}</div>`;
+    const w=q.phrase[i];
+    return `<div class="slot got">${q.alive? w : w[0]+'·'.repeat(w.length-1)}</div>`;
+  }).join('');
+  let bubble='';
+  if(q.alive) bubble=`<div class="bubble">Привет, ${esc(S.student?S.student.name:'друг')}! Я — робот Байтик. Системы запущены. Спасибо, что оживил(а) меня! 🎉</div>`;
+
+  el.innerHTML=`
+  <div class="q-top"><span class="chip">${L.name}</span>
+    <div class="row"><button class="btn small" id="trNew">🔄 Новый квест</button><button class="btn small" id="trLevel">⚙ Сменить уровень</button></div></div>
+  <div class="pills">${pills}</div>
+  <div class="quest">
+    <div class="card" id="qMain">${questMainHtml(q)}</div>
+    <div class="card robot-card"><h3>🤖 Собери робота Байтика</h3>
+      ${bubble}
+      <div class="robot-wrap">${robotSvg(q)}</div>
+      <div class="muted" style="font-size:16px;margin-top:6px">Кодовая фраза запуска:</div>
+      <div class="slots">${slots}</div>
+      <div class="confetti" id="confetti"></div>
+    </div>
+  </div>`;
+  q.justBuilt=-1;
+
+  $('#trNew').onclick=()=>{ if(confirm('Начать новый квест с новыми числами?')){ S.train.quest=newQuest(q.level); renderTrain(); } };
+  $('#trLevel').onclick=()=>{ if(q.alive || confirm('Выйти из квеста и выбрать уровень? Текущий квест останется незавершённым.')){ S.train.selLevel=q.level; S.train.quest=null; renderTrain(); } };
+  el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>chooseOpt(+b.dataset.i));
+  const nx=$('#trNext'); if(nx) nx.onclick=()=>{ q.idx++; renderTrain(); if(q.idx===4) setTimeout(()=>{const p=$('#phraseIn'); if(p) p.focus();},50); };
+  const pg=$('#phraseGo'); if(pg){ pg.onclick=checkPhrase; $('#phraseIn').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPhrase(); }); }
+  const ps=$('#phraseShow'); if(ps) ps.onclick=()=>{ q.showPhrase=true; renderTrain(); };
+  const again=$('#trAgain'); if(again) again.onclick=()=>{ S.train.quest=newQuest(q.level); renderTrain(); };
+  const toC=$('#trToCtrl'); if(toC) toC.onclick=()=>switchTab('ctrl');
+  const pw=$('#trPow'); if(pw) pw.onclick=()=>{ q.showPow=!q.showPow; renderTrain(); };
+}
+
+function trainSelectHtml(){
+  const hist=S.results.train.filter(q=>q.alive);
+  return `<div class="card"><h2>🎯 Квест «Оживи робота Байтика»</h2>
+    <p>Переводи числа в тетради, выбирай верные ответы и собирай кодовые слова — в конце робот оживёт!</p>
+    <h3 style="margin-top:16px">Выбери уровень сложности:</h3>
+    ${levelCardsHtml(S.train.selLevel)}
+    <button class="btn primary big" id="trStart">🚀 Начать квест</button>
+    ${hist.length?`<p class="muted" style="margin-top:14px">Пройдено квестов: ${hist.length} (уровень 1: ${hist.filter(q=>q.level===1).length}, уровень 2: ${hist.filter(q=>q.level===2).length})</p>`:''}
+  </div>`;
+}
+function levelCardsHtml(sel){
+  return `<div class="levels">${[1,2].map(l=>`<button class="lvl ${sel===l?'sel':''}" data-l="${l}">
+    <div class="ln">${LEVELS[l].name} <span class="stars">${LEVELS[l].stars}</span></div>
+    <div>📊 ${LEVELS[l].range}</div><div class="muted" style="font-size:16px">💡 ${LEVELS[l].help}</div></button>`).join('')}</div>`;
+}
+function bindLevelCards(el,mode){
+  el.querySelectorAll('.lvl').forEach(b=>b.onclick=()=>{
+    S[mode].selLevel=+b.dataset.l;
+    el.querySelectorAll('.lvl').forEach(x=>x.classList.toggle('sel',x===b));
+  });
+}
+
+/* ---------- таблица степеней для заданий на перевод в 10-ю систему ---------- */
+function powStrip(){ return `<div class="pow-strip"><span class="pow-t">Степени двойки:</span><div class="powers">${Array.from({length:8},(_,i)=>7-i).map(k=>`<div>2<sup>${k}</sup><b>${2**k}</b></div>`).join('')}</div></div>`; }
+function powBlock(q){
+  if(q.level===1) return powStrip();
+  return `<button class="btn small" id="trPow" style="margin-bottom:6px">📋 ${q.showPow?'Скрыть степени':'Степени двойки'}</button>${q.showPow?powStrip():''}`;
+}
+
+function questMainHtml(q){
+  if(q.alive){
+    const first=q.tasks.filter(t=>t.attempts===1).length;
+    return `<h2>🎉 Робот Байтик ожил!</h2>
+      <div class="good">Кодовая фраза: <b class="mono">${q.phrase.join(' ')}</b></div>
+      <p>Заданий решено с первой попытки: <b>${first} из 4</b>.</p>
+      ${first===4?'<p>Отличная работа — ни одной ошибки! Попробуй уровень посложнее. 💪</p>':'<p>Потренируйся ещё — пройди новый квест, чтобы решать без ошибок.</p>'}
+      <div class="row"><button class="btn primary" id="trAgain">🔄 Пройти новый квест</button><button class="btn" id="trToCtrl">📝 Перейти к контролю</button></div>`;
+  }
+  if(q.idx===4){
+    const hint = q.phraseTries>=2 && !q.showPhrase ? `<button class="btn small" id="phraseShow" style="margin-top:8px">👀 Я потерял(а) слова — показать фразу</button>` : '';
+    return `<h2>🔋 Робот собран!</h2>
+      <p>Чтобы запустить робота, введи <b>кодовую фразу</b> — 4 слова из тетради по порядку, через пробел.</p>
+      ${q.showPhrase?`<div class="warn">Кодовая фраза: <b class="mono">${q.phrase.join(' ')}</b></div>`:''}
+      <input id="phraseIn" class="phrase-in" autocomplete="off" placeholder="СЛОВО1 СЛОВО2 СЛОВО3 СЛОВО4">
+      <button class="btn primary big" id="phraseGo">⚡ Запустить робота</button>
+      <div>${q.phraseFb}</div>${hint}`;
+  }
+  const t=q.tasks[q.idx];
+  const question = t.type==='d2b'
+    ? `${t.n}<sub>10</sub><span class="arrow">→</span><span class="qm">?</span><sub>2</sub>`
+    : `${t.bin}<sub>2</sub><span class="arrow">→</span><span class="qm">?</span><sub>10</sub>`;
+  const opts=t.options.map((o,i)=>{
+    const cls = t.wrong.includes(i)?'wrong':(t.done&&o.ok?'right':'');
+    const dis = t.done||t.wrong.includes(i) ? 'disabled':'';
+    return `<button class="opt ${cls}" data-i="${i}" ${dis}><span class="ov">${o.v}<sub style="font-size:.5em">${t.type==='d2b'?2:10}</sub></span><span class="ow">🔑 ${o.word}</span></button>`;
+  }).join('');
+  let bottom='';
+  if(t.done){
+    bottom=`<div class="good">✅ <b>Верно!</b> ${t.type==='d2b'?`${sub(t.n,10)} = ${sub(t.bin,2)}`:`${sub(t.bin,2)} = ${sub(t.n,10)}`}.
+      Робот получает <b>${PARTS[q.idx]}</b>!
+      <div class="word-box">Кодовое слово: <span class="w">${q.phrase[q.idx]}</span> ✍ Запиши его в тетрадь!</div></div>
+      <button class="btn primary big" id="trNext">${q.idx<3?'Следующее задание →':'К запуску робота →'}</button>`;
+  } else {
+    bottom=t.feedback;
+  }
+  return `<div class="task-h">Задание ${q.idx+1} из 4 · Перевод ${t.type==='d2b'?'из десятичной в двоичную (10 → 2)':'из двоичной в десятичную (2 → 10)'}</div>
+    <div class="task-q">${question}</div>
+    ${t.type==='b2d'?powBlock(q):''}
+    ${t.done?'':`<div class="muted">✍ Переведи число <b>в тетради</b>, затем найди свой ответ среди вариантов.</div>`}
+    <div class="opts">${opts}</div>${bottom}`;
+}
+
+function chooseOpt(i){
+  const q=S.train.quest, t=q.tasks[q.idx];
+  if(t.done||t.wrong.includes(i)) return;
+  const o=t.options[i]; t.attempts++;
+  if(o.ok){ t.done=true; t.feedback=''; q.justBuilt=q.idx; renderTrain(); return; }
+  t.wrong.push(i); t.errors.push(o.err);
+  const sol = t.type==='d2b'? solD2B(t.n) : solB2D(t.bin);
+  if(q.level===1){
+    t.helped=true;
+    t.feedback=`<div class="bad">❌ <b>Неверно.</b> Посмотри подробное решение, сравни со своей записью в тетради и найди ошибку. </div>${sol}<div class="retry">👆 Найди ошибку в тетради и <b>выбери другой вариант ответа</b> — квест продолжается!</div>`;
+  } else if(t.wrong.length===1){
+    t.feedback=`<div class="bad">❌ <b>Неверно.</b><br>💡 ${ERR[o.err]}<br></div><div class="retry">👆 Найди ошибку в тетради и <b>выбери другой вариант ответа</b> — квест продолжается!</div>`;
+  } else {
+    t.helped=true;
+    t.feedback=`<div class="bad">❌ <b>Снова неверно.</b><br>💡 ${ERR[o.err]}<br>Посмотри подробное решение.</div>${sol}<div class="retry">👆 Найди ошибку в тетради и <b>выбери другой вариант ответа</b> — квест продолжается!</div>`;
+  }
+  renderTrain();
+  const fb=document.querySelector('#qMain .bad'); if(fb) fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+const normWords = s => s.toUpperCase().replace(/Ё/g,'Е').replace(/[^А-ЯA-Z\s]/g,' ').trim().split(/\s+/).filter(Boolean);
+function checkPhrase(){
+  const q=S.train.quest, inp=$('#phraseIn').value;
+  const got=normWords(inp), need=q.phrase.map(w=>w.replace(/Ё/g,'Е'));
+  if(!got.length) return;
+  q.phraseTries++;
+  const ok = got.length===4 && need.every((w,i)=>got[i]===w);
+  if(ok){
+    q.alive=true; q.end=new Date(); renderTrain(); confetti(); return;
+  }
+  const marks=need.map((w,i)=>`слово ${i+1}: ${got[i]===w?'<span class="ok-mark">✓</span>':'<span class="bad-mark">✗</span>'}`).join(' · ');
+  q.phraseFb=`<div class="bad">Робот не запускается! 🔌 ${got.length!==4?`Нужно ровно 4 слова (сейчас ${got.length}).<br>`:''}${marks}<br>Проверь слова в тетради и их порядок.</div>`;
+  renderTrain();
+  const p=$('#phraseIn'); if(p){ p.value=inp; p.focus(); }
+}
+function confetti(){
+  const box=$('#confetti'); if(!box) return;
+  const cols=['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7','#ec4899','#fde047'];
+  let h='';
+  for(let i=0;i<60;i++) h+=`<i style="left:${rnd(0,100)}%;background:${pick(cols)};animation-duration:${(1.8+Math.random()*2).toFixed(2)}s;animation-delay:${(Math.random()*0.8).toFixed(2)}s"></i>`;
+  box.innerHTML=h;
+}
+
+/* =====================================================================
+   КОНТРОЛЬ
+   ===================================================================== */
+const P_PRACT=1.5, P_THEORY=1;
+function rndBinStr(minLen,maxLen){ const L=rnd(minLen,maxLen); let s='1'; for(let i=1;i<L;i++) s+=rnd(0,1); return s; }
+function badBinStr(len){ const s=[...rndBinStr(len,len)]; const pos=rnd(0,len-1); s[pos]=String(rnd(2,9)); if(Math.random()<.4){ const p2=rnd(0,len-1); s[p2]=String(rnd(2,9)); } return s.join(''); }
+
+// Банк теоретических вопросов. a — индекс верного варианта; fixed — не перемешивать варианты.
+const TH_ALPHABET = ()=>({q:'Выберите алфавит двоичной системы счисления.', opts:['{0, 1}','{1, 2}','{0, 1, 2}','{0, 1, 2, …, 9}'], a:0});
+const TH_BINARY = [
+  ()=>{ const valid=Math.random()<.5; const s=valid?rndBinStr(6,8):badBinStr(rnd(6,8));
+        return {q:`Является ли запись <b class="mono">${s}</b> двоичным числом?`, opts:['Да','Нет'], a:valid?0:1, fixed:true}; },
+  ()=>{ const bad=badBinStr(rnd(5,7)); const goods=new Set(); while(goods.size<3) goods.add(rndBinStr(4,7));
+        return {q:'Какая из записей <b>не может</b> быть числом в двоичной системе счисления?', opts:[bad,...goods].map(x=>`<span class="mono">${x}</span>`), a:0}; }
+];
+const TH_OTHER = [
+  ()=>({q:'Основание двоичной системы счисления равно…', opts:['2','1','10','0'], a:0}),
+  ()=>({q:'Основание позиционной системы счисления — это…', opts:['количество цифр в её алфавите','наибольшая цифра её алфавита','количество разрядов в записи числа','сумма всех цифр числа'], a:0}),
+  ()=>({q:'Какая система счисления является непозиционной?', opts:['Римская','Двоичная','Десятичная','Восьмеричная'], a:0}),
+  ()=>({q:'В позиционной системе счисления значение цифры…', opts:['зависит от её позиции (разряда) в записи числа','не зависит от её позиции в записи числа','всегда равно самой цифре','зависит только от количества цифр в числе'], a:0}),
+  ()=>({q:'Алфавит системы счисления — это…', opts:['набор цифр, которые используются для записи чисел','количество цифр в записи числа','правило перевода чисел из одной системы в другую','наибольшее число, которое можно записать'], a:0}),
+  ()=>({q:'Сколько цифр в алфавите десятичной системы счисления?', opts:['10','9','11','2'], a:0}),
+  ()=>({q:'Наибольшая цифра двоичной системы счисления —', opts:['1','2','0','10'], a:0}),
+  ()=>{ const k=rnd(3,5), L=k+rnd(1,2); const ds=[]; for(let i=0;i<L;i++){ const pos=L-1-i; ds.push(pos===k?1:(i===0?rnd(1,1):rnd(0,1))); } const num=ds.join(''); const vis=`<div class="digits" style="display:flex;width:max-content;margin:10px 0 2px">${ds.map((d,i)=>`<div class="dg"><span class="ix">${L-1-i}</span><span class="dd ${L-1-i===k?'hl':''}">${d}</span></div>`).join('')}<span style="align-self:flex-end;font-size:18px;margin-left:4px"><sub>2</sub></span></div><div class="muted" style="font-size:16px">Над цифрами указаны номера разрядов.</div>`; return {q:`Чему равно значение выделенной цифры <b>1</b> в десятичной системе?${vis}`, txt:`Значение цифры 1 в разряде ${k} числа ${num}(2)`, opts:[2**k,2*k,k,2**(k+1)].map(String), a:0}; },
+  ()=>({q:'Двоичное число, которое оканчивается на 0, является…', opts:['чётным','нечётным','может быть и чётным, и нечётным','степенью двойки'], a:0}),
+  ()=>{ const r=pick([['XIV',14,[16,6,114]],['XIX',19,[21,11,119]],['XL',40,[60,30,10]],['XXIV',24,[26,14,204]],['LXI',61,[59,51,601]]]);
+        return {q:`В непозиционной римской системе запись <b>${r[0]}</b> обозначает число…`, opts:[r[1],...r[2]].map(String), a:0}; },
+  ()=>({q:'Почему в компьютере используется двоичная система счисления?', opts:['электронным элементам легко различать два состояния: есть сигнал / нет сигнала','двоичные числа самые короткие','в двоичной системе нет нуля','людям удобнее считать в двоичной системе'], a:0}),
+  ()=>({q:'Как правильно записать, что число 101 записано в двоичной системе?', opts:['101<sub>2</sub>','101<sub>10</sub>','2<sub>101</sub>','101<sup>2</sup>'], a:0})
+];
+function prepQ(o){ // перемешиваем варианты, запоминаем верный
+  if(o.fixed) return {...o,user:null};
+  const idx=shuffle(o.opts.map((_,i)=>i));
+  return {q:o.q, txt:o.txt, opts:idx.map(i=>o.opts[i]), a:idx.indexOf(o.a), user:null};
+}
+function newTest(level){
+  const L=LEVELS[level], nums=uniqueNums(4,L.min,L.max);
+  const tasks=['d2b','d2b','b2d','b2d'].map((type,i)=>({type,n:nums[i],bin:nums[i].toString(2),user:''}));
+  const theory=[TH_ALPHABET(), pick(TH_BINARY)(), ...shuffle(TH_OTHER).slice(0,2).map(f=>f())].map(prepQ);
+  return {level,tasks,theory,start:new Date(),end:null,submitted:false,score:0,sp:0,st:0};
+}
+function checkTask(t){
+  const u=t.user.trim();
+  if(!u) return false;
+  if(t.type==='d2b') return /^[01]+$/.test(u) && u.replace(/^0+(?=.)/,'')===t.bin;
+  return /^\d+$/.test(u) && parseInt(u,10)===t.n;
+}
+
+function renderCtrl(){
+  const el=$('#tab-ctrl'), T=S.ctrl.test;
+  if(!T){
+    const hist=S.results.control.filter(x=>x.submitted);
+    el.innerHTML=`<div class="card"><h2>📝 Контроль</h2>
+      <div class="note">Работа состоит из <b>4 практических заданий</b> (по ${fmt(P_PRACT)} балла) и <b>4 вопросов по теории</b> (по 1 баллу).
+      Максимум — <b>10 баллов</b>.<br>Числа переводи в тетради, ответ вводи с клавиатуры. Подсказок в контроле нет.</div>
+      <h3 style="margin-top:14px">Выбери уровень сложности:</h3>
+      ${levelCardsHtml(S.ctrl.selLevel).replace(/<div class="muted"[^]*?<\/div>/g,'')}
+      <button class="btn primary big" id="ctStart">▶ Начать контроль</button>
+      ${hist.length?`<h3 style="margin-top:20px">Мои попытки</h3><table class="t"><tr><th>№</th><th>Уровень</th><th>Время</th><th>Баллы</th></tr>
+        ${hist.map((h,i)=>`<tr><td>${i+1}</td><td>${h.level}</td><td>${fmtTime(h.end)}</td><td><b>${Math.round(h.score)}</b> из 10</td></tr>`).join('')}</table>`:''}
+    </div>`;
+    bindLevelCards(el,'ctrl');
+    $('#ctStart').onclick=()=>{ S.ctrl.test=newTest(S.ctrl.selLevel); S.results.control.push(S.ctrl.test); renderCtrl(); };
+    return;
+  }
+  if(!T.submitted){
+    const tasksH=T.tasks.map((t,i)=>`<div class="cq"><span class="pts">${fmt(P_PRACT)} балла</span>
+      <div class="cq-n">Задание ${i+1}. ${t.type==='d2b'?'Переведите число в двоичную систему счисления.':'Переведите число в десятичную систему счисления.'}</div>
+      <div class="cq-task">${t.type==='d2b'?`${t.n}<sub>10</sub> = ?<sub>2</sub>`:`${t.bin}<sub>2</sub> = ?<sub>10</sub>`}</div>
+      ${t.type==='b2d'?powStrip():''}
+      <input class="ans" data-i="${i}" inputmode="numeric" autocomplete="off" value="${esc(t.user)}" placeholder="ответ"></div>`).join('');
+    const thH=T.theory.map((q,i)=>`<div class="cq"><span class="pts">1 балл</span>
+      <div class="cq-n">Вопрос ${i+5}.</div><div>${q.q}</div>
+      ${q.opts.map((o,j)=>`<label class="o"><input type="radio" name="th${i}" data-i="${i}" value="${j}" ${q.user===j?'checked':''}>${o}</label>`).join('')}</div>`).join('');
+    el.innerHTML=`<div class="card"><div class="q-top"><h2 style="margin:0">📝 Контроль</h2><span class="chip">${LEVELS[T.level].name}</span></div>
+      <h3>Часть 1. Практические задания</h3>${tasksH}
+      <h3 style="margin-top:18px">Часть 2. Основные понятия</h3>${thH}
+      <div class="row" style="margin-top:16px"><button class="btn primary big" id="ctSubmit">✅ Завершить работу</button>
+      <button class="btn" id="ctCancel">✕ Отменить</button></div></div>`;
+    el.querySelectorAll('input.ans').forEach(inp=>inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,''); T.tasks[+inp.dataset.i].user=inp.value; });
+    el.querySelectorAll('input[type=radio]').forEach(r=>r.onchange=()=>{ T.theory[+r.dataset.i].user=+r.value; });
+    $('#ctSubmit').onclick=()=>{
+      const empty=T.tasks.filter(t=>!t.user.trim()).length+T.theory.filter(q=>q.user===null).length;
+      if(empty && !confirm(`Есть вопросы без ответа: ${empty}. Всё равно завершить работу?`)) return;
+      submitTest(T);
+    };
+    $('#ctCancel').onclick=()=>{ if(confirm('Отменить контроль? Ответы не сохранятся.')){ S.results.control=S.results.control.filter(x=>x!==T); S.ctrl.test=null; renderCtrl(); } };
+    return;
+  }
+  // результаты
+  const rowsP=T.tasks.map((t,i)=>{ const ok=checkTask(t);
+    return `<tr><td>${i+1}</td><td>${t.type==='d2b'?`${sub(t.n,10)} → ?<sub>2</sub>`:`${sub(t.bin,2)} → ?<sub>10</sub>`}</td>
+      <td class="mono">${esc(t.user)||'—'}</td><td class="mono">${t.type==='d2b'?t.bin:t.n}</td>
+      <td>${ok?'<span class="ok-mark">✓</span>':'<span class="bad-mark">✗</span>'}</td><td>${ok?fmt(P_PRACT):0}</td></tr>`; }).join('');
+  const rowsT=T.theory.map((q,i)=>{ const ok=q.user===q.a;
+    return `<tr><td>${i+5}</td><td>${q.q}</td><td>${q.user===null?'—':q.opts[q.user]}</td><td>${q.opts[q.a]}</td>
+      <td>${ok?'<span class="ok-mark">✓</span>':'<span class="bad-mark">✗</span>'}</td><td>${ok?1:0}</td></tr>`; }).join('');
+  el.innerHTML=`<div class="card"><h2>📝 Результат контроля</h2>
+    <div class="score-big">${Math.round(T.score)} из 10</div>
+    <div class="score-sub">${esc(S.student.surname)} ${esc(S.student.name)}, ${esc(S.student.cls)} · ${LEVELS[T.level].name} · ${fmtTime(T.end)}<br>
+    Практика: ${fmt(T.sp)} из 6 · Теория: ${T.st} из 4</div>
+    <div class="scroll-x"><table class="t"><tr><th>№</th><th>Задание</th><th>Твой ответ</th><th>Верный ответ</th><th></th><th>Баллы</th></tr>${rowsP}${rowsT}<tr><td colspan="5" style="text-align:right"><b>Сумма баллов</b></td><td><b>${fmt(T.score)}</b></td></tr></table></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="ctSave">💾 Сохранить результаты (TXT)</button>
+    <button class="btn" id="ctAgain">🔄 Новая попытка</button></div></div>`;
+  $('#ctSave').onclick=()=>exportTxt();
+  $('#ctAgain').onclick=()=>{ S.ctrl.selLevel=T.level; S.ctrl.test=null; renderCtrl(); };
+}
+function submitTest(T){
+  T.sp=T.tasks.filter(checkTask).length*P_PRACT;
+  T.st=T.theory.filter(q=>q.user===q.a).length*P_THEORY;
+  T.score=T.sp+T.st; T.submitted=true; T.end=new Date();
+  renderCtrl(); window.scrollTo(0,0);
+}
+
+/* =====================================================================
+   РЕЗУЛЬТАТЫ И ЭКСПОРТ
+   ===================================================================== */
+const plain = h => String(h).replace(/<sub>(.*?)<\/sub>/g,'($1)').replace(/<sup>(.*?)<\/sup>/g,'^$1').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
+const taskLabel = t => t.type==='d2b' ? `${t.n}(10) -> ?(2)` : `${t.bin}(2) -> ?(10)`;
+const ERR_SHORT={reversed:'остатки сверху вниз',forgotLast:'забыто последнее частное',lostZero:'потерян ноль',flip:'ошибка в разряде',extra:'лишняя цифра',
+  from1:'разряды с 1',leftToRight:'разряды слева направо',missed:'пропущено слагаемое',mult:'2·k вместо 2^k',arith:'ошибка вычислений'};
+
+function questStatus(q){ return q.alive?'пройден':'не завершён'; }
+function renderResults(){
+  const st=S.student;
+  let h=`<p><b>${esc(st.surname)} ${esc(st.name)}</b>, класс ${esc(st.cls)}</p>`;
+  [1,2].forEach(l=>{
+    const qs=S.results.train.filter(q=>q.level===l && q.tasks.some(t=>t.attempts>0));
+    const cs=S.results.control.filter(c=>c.level===l && c.submitted);
+    h+=`<h3 style="margin-top:14px">${LEVELS[l].name}</h3>`;
+    if(!qs.length && !cs.length){ h+='<p class="muted">Пока нет результатов.</p>'; return; }
+    if(qs.length){
+      h+=`<p><b>Обучение (квест):</b></p><table class="t"><tr><th>№</th><th>Статус</th><th>Решено с 1-й попытки</th><th>Ошибки</th></tr>`+
+        qs.map((q,i)=>`<tr><td>${i+1}</td><td>${questStatus(q)}</td><td>${q.tasks.filter(t=>t.done&&t.attempts===1).length} из 4</td>
+          <td>${[...new Set(q.tasks.flatMap(t=>t.errors))].map(e=>ERR_SHORT[e]).join(', ')||'—'}</td></tr>`).join('')+`</table>`;
+    }
+    if(cs.length){
+      h+=`<p><b>Контроль:</b></p><table class="t"><tr><th>№</th><th>Время</th><th>Практика</th><th>Теория</th><th>Итого</th></tr>`+
+        cs.map((c,i)=>`<tr><td>${i+1}</td><td>${fmtTime(c.end)}</td><td>${fmt(c.sp)} / 6</td><td>${c.st} / 4</td><td><b>${Math.round(c.score)} / 10</b></td></tr>`).join('')+`</table>`;
+    }
+  });
+  $('#resBody').innerHTML=h;
+}
+$('#btnResults').onclick=()=>{ if(!S.student) return; renderResults(); $('#resModal').classList.remove('hidden'); };
+$('#resClose').onclick=()=>$('#resModal').classList.add('hidden');
+
+function fileBase(){ const s=S.student; return `Двоичная_СС_${s.surname}_${s.name}_${s.cls}`.replace(/[\\/:*?"<>|\s]+/g,'_'); }
+function download(name,text,mime){
+  const blob=new Blob(['﻿'+text],{type:mime});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},800);
+}
+function exportTxt(){
+  const s=S.student, L=[];
+  L.push('Тренажёр «Системы счисления» · Модуль 1: двоичная система (10 <-> 2)');
+  L.push(`Ученик: ${s.surname} ${s.name}, класс ${s.cls}`);
+  L.push(`Дата сохранения: ${fmtTime(new Date())}`);
+  L.push('');
+  [1,2].forEach(l=>{
+    const qs=S.results.train.filter(q=>q.level===l && q.tasks.some(t=>t.attempts>0));
+    const cs=S.results.control.filter(c=>c.level===l && c.submitted);
+    if(!qs.length && !cs.length) return;
+    L.push(`==================== ${LEVELS[l].name.toUpperCase()} ====================`);
+    if(qs.length){
+      L.push('--- ОБУЧЕНИЕ (квест) ---');
+      qs.forEach((q,i)=>{
+        L.push(`Квест ${i+1} (${fmtTime(q.start)}) — ${questStatus(q)}`);
+        q.tasks.forEach((t,j)=>{ if(!t.attempts) return;
+          L.push(`  ${j+1}) ${taskLabel(t)} = ${t.answer}: ${t.done?'решено':'не решено'}, попыток: ${t.attempts}${t.errors.length?', ошибки: '+t.errors.map(e=>ERR_SHORT[e]).join('; '):''}${t.helped?' (с подсказкой-решением)':''}`); });
+      });
+    }
+    if(cs.length){
+      L.push('--- КОНТРОЛЬ ---');
+      cs.forEach((c,i)=>{
+        L.push(`Попытка ${i+1} (${fmtTime(c.end)}): ${Math.round(c.score)} из 10 (практика ${fmt(c.sp)}/6, теория ${c.st}/4)`);
+        c.tasks.forEach((t,j)=>L.push(`  ${j+1}) ${taskLabel(t)}  ответ: ${t.user||'—'}  верно: ${t.type==='d2b'?t.bin:t.n}  ${checkTask(t)?'+':'-'}`));
+        c.theory.forEach((q,j)=>L.push(`  ${j+5}) ${(q.txt||plain(q.q))}  ответ: ${q.user===null?'—':plain(q.opts[q.user])}  верно: ${plain(q.opts[q.a])}  ${q.user===q.a?'+':'-'}`));
+      });
+    }
+    L.push('');
+  });
+  download(fileBase()+'.txt', L.join('\r\n'), 'text/plain;charset=utf-8');
+}
+function exportCsv(){
+  const s=S.student, rows=[['Фамилия','Имя','Класс','Режим','Уровень','Дата','№','Задание','Ответ ученика','Верный ответ','Результат','Попыток/Баллы']];
+  const q2=v=>`"${String(v).replace(/"/g,'""')}"`;
+  S.results.train.filter(q=>q.tasks.some(t=>t.attempts>0)).forEach(q=>{
+    q.tasks.forEach((t,j)=>{ if(!t.attempts) return;
+      rows.push([s.surname,s.name,s.cls,'Обучение',q.level,fmtTime(q.start),j+1,taskLabel(t),'',t.answer,t.done?(t.attempts===1?'с 1-й попытки':'с '+t.attempts+'-й попытки'):'не решено',t.attempts]); });
+  });
+  S.results.control.filter(c=>c.submitted).forEach(c=>{
+    c.tasks.forEach((t,j)=>rows.push([s.surname,s.name,s.cls,'Контроль',c.level,fmtTime(c.end),j+1,taskLabel(t),t.user,t.type==='d2b'?t.bin:t.n,checkTask(t)?'верно':'неверно',fmt(checkTask(t)?P_PRACT:0)]));
+    c.theory.forEach((q,j)=>rows.push([s.surname,s.name,s.cls,'Контроль',c.level,fmtTime(c.end),j+5,(q.txt||plain(q.q)),q.user===null?'':plain(q.opts[q.user]),plain(q.opts[q.a]),q.user===q.a?'верно':'неверно',q.user===q.a?1:0]));
+    rows.push([s.surname,s.name,s.cls,'Контроль',c.level,fmtTime(c.end),'ИТОГО','','','','',Math.round(c.score)]);
+  });
+  download(fileBase()+'.csv', rows.map(r=>r.map(q2).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
+}
+$('#expTxt').onclick=exportTxt;
+$('#expCsv').onclick=exportCsv;
+
+window.addEventListener('beforeunload',e=>{
+  if(S.results.train.some(q=>q.tasks.some(t=>t.attempts))||S.results.control.some(c=>c.submitted)){ e.preventDefault(); e.returnValue=''; }
+});
+
+renderTrain(); renderCtrl();
+</script>
+</body>
+</html>
