@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Повторение: DNS и протоколы</title>
+<style>
+:root{
+  --ink:#1e3a5f; --muted:#4a6480; --bg:#eef3f8; --card:#ffffff; --line:#b8c6d6;
+  --acc:#0b5cad; --acc2:#0a7a5c; --warn:#b54708; --bad:#c2410c; --good:#067647;
+  --goodbg:#dcfae6; --badbg:#ffedd5; --accbg:#dbeafe; --yel:#fef3c7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Times New Roman",Times,serif;font-size:21px;line-height:1.45}
+.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+header{background:#dbeafe;color:var(--ink);padding:12px 20px;position:sticky;top:0;z-index:10;border-bottom:3px solid #93c5fd;box-shadow:0 2px 6px rgba(30,58,95,.12)}
+header h1{color:#1d4f91}
+.hrow{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;max-width:1150px;margin:0 auto}
+header h1{font-size:24px;margin:0;flex:1 1 320px}
+header h1 small{display:block;font-size:16px;font-weight:normal;opacity:.85}
+.who{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.who label{font-size:17px}
+.who input{font:inherit;font-size:19px;padding:5px 9px;border-radius:6px;border:2px solid #7aa7d8;width:240px}
+.who input.cls{width:80px}
+.who input.need{border-color:#f59e0b;background:#fffbeb}
+nav{max-width:1150px;margin:16px auto 0;display:flex;gap:10px;padding:0 16px;flex-wrap:wrap}
+nav button{font:inherit;font-size:20px;font-weight:bold;padding:10px 20px;border-radius:10px 10px 0 0;border:2px solid var(--line);border-bottom:none;background:#dfe7f0;color:var(--muted);cursor:pointer}
+nav button.on{background:var(--card);color:var(--acc);border-color:var(--acc)}
+nav button:disabled{opacity:.45;cursor:not-allowed}
+main{max-width:1150px;margin:0 auto 40px;padding:0 16px}
+.panel{background:var(--card);border:2px solid var(--acc);border-radius:0 12px 12px 12px;padding:22px 24px;min-height:300px}
+.hidden{display:none!important}
+h2{margin:0 0 12px;font-size:27px;color:var(--acc)}
+h3{margin:18px 0 8px;font-size:23px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(430px,100%),1fr));gap:16px}
+.card{border:2px solid var(--line);border-radius:12px;padding:14px 18px;background:#fbfdff}
+.card h3{margin-top:0;color:var(--acc2)}
+.key{background:var(--yel);border-left:6px solid #d97706;padding:8px 14px;border-radius:6px;margin:8px 0}
+table.t{border-collapse:collapse;width:100%;font-size:19px}
+table.t td,table.t th{border:1.5px solid var(--line);padding:5px 9px;text-align:left}
+table.t th{background:#e6eef7}
+.url{font-size:19px;display:flex;flex-wrap:nowrap;gap:3px;margin:10px 0;overflow-x:auto}
+.url span{padding:4px 6px;white-space:nowrap;border-radius:6px;text-align:center}
+.url span b{display:block}
+.url span i{display:block;font-size:15px;font-style:normal;color:var(--muted);font-family:"Times New Roman",serif}
+.p1{background:#fde68a}.p2{background:#bfdbfe}.p3{background:#bbf7d0}.p4{background:#fbcfe8}
+.levels{display:flex;flex-wrap:nowrap;gap:3px;font-size:21px;margin:8px 0;overflow-x:auto}
+.levels div{text-align:center;padding:4px 7px;border-radius:6px;white-space:nowrap}
+.levels i{display:block;font-size:15px;font-style:normal;color:var(--muted)}
+.steps{counter-reset:s;list-style:none;padding:0;margin:6px 0}
+.steps li{counter-increment:s;padding:4px 0 4px 40px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:0;top:4px;width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;font-weight:bold;line-height:28px;font-size:17px}
+details{border:2px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0;background:#fff}
+details summary{cursor:pointer;font-weight:bold}
+details[open]{background:#f3f8ff}
+.btn{font:inherit;font-size:20px;font-weight:bold;padding:10px 22px;border-radius:10px;border:none;background:var(--acc);color:#fff;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:#e3e9f1;color:var(--ink);border:2px solid var(--line)}
+.btn.green{background:var(--acc2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.progress{height:14px;background:#dfe7f0;border-radius:7px;overflow:hidden;margin:6px 0 16px}
+.progress div{height:100%;background:var(--acc2);transition:width .3s}
+.q{font-size:23px;margin:6px 0 14px}
+.q .tag{display:inline-block;font-size:15px;background:var(--accbg);color:var(--acc);padding:2px 10px;border-radius:12px;margin-bottom:6px;font-weight:bold}
+.opts{display:grid;gap:10px}
+.opt{font:inherit;font-size:21px;text-align:left;padding:10px 16px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.opt.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+.opt:hover:not(:disabled){border-color:var(--acc);background:#f2f7ff}
+.opt.sel{border-color:var(--acc);background:var(--accbg)}
+.opt.ok{border-color:var(--good);background:var(--goodbg)}
+.opt.no{border-color:var(--bad);background:var(--badbg)}
+.opt:disabled{cursor:default}
+.frag{display:grid;grid-template-columns:repeat(7,minmax(70px,1fr));gap:6px;margin:10px 0;max-width:720px}
+.frag div{border:2px solid var(--line);border-radius:8px;text-align:center;padding:4px}
+.frag b{display:block;color:var(--acc);font-size:20px}
+.frag span{font-size:21px}
+.pool,.slots{display:flex;flex-wrap:wrap;gap:8px;min-height:78px;padding:10px;border-radius:12px;margin:8px 0}
+.pool{background:#f1f5f9;border:2px dashed var(--line)}
+.slots{background:#f0fdf4;border:2px solid #86efac}
+.tile{min-width:78px;border:2px solid var(--acc);border-radius:10px;background:#fff;text-align:center;padding:4px 10px;cursor:grab;user-select:none;box-shadow:0 2px 4px rgba(30,58,95,.15)}
+.tile:active{cursor:grabbing}
+.tile b{display:block;color:var(--acc);font-size:18px}
+.tile span{font-size:23px;font-family:"JetBrains Mono",Consolas,monospace;color:var(--ink)}
+.slot{min-width:84px;min-height:62px;border:2px dashed #86efac;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#86a59a;font-size:16px}
+.slot.over,.pool.over{background:#dcfce7;border-color:var(--acc2)}
+.slot .tile{border-color:var(--acc2)}
+.preview{font-size:22px;margin:6px 0}
+.preview .mono{background:#fff7d6;padding:2px 8px;border-radius:6px}
+.lock .tile{cursor:default}
+input.ans{font:inherit;font-size:24px;padding:8px 12px;border-radius:8px;border:2px solid var(--line);width:260px;letter-spacing:3px}
+.fb{margin-top:14px;padding:12px 16px;border-radius:10px;font-size:20px}
+.fb.ok{background:var(--goodbg);border:2px solid var(--good)}
+.fb.no{background:var(--badbg);border:2px solid var(--bad)}
+.score{font-size:30px;font-weight:bold}
+.mark{display:inline-block;font-size:44px;font-weight:bold;color:#fff;background:var(--acc2);border-radius:14px;padding:4px 22px;margin:6px 0}
+.desc td:last-child{text-align:center;font-weight:bold;width:110px}
+.okc{color:var(--good)}.noc{color:var(--bad)}
+.note{color:var(--muted);font-size:18px}
+.hist{font-size:18px}
+@media print{header,nav,.bar{display:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="hrow">
+  <h1>Повторение: доменная система имён и протоколы</h1>
+  <div class="who">
+   <label for="fio">Фамилия, имя:</label>
+   <input id="fio" type="text" autocomplete="off" spellcheck="false" placeholder="Обязательно">
+   <label for="cls">Класс:</label>
+   <input id="cls" class="cls" type="text" autocomplete="off" placeholder="9">
+  </div>
+ </div>
+</header>
+
+<nav>
+ <button id="tabTheory" class="on" onclick="showTab('theory')">📖 Краткая теория</button>
+ <button id="tabTest" onclick="showTab('test')">✅ Проверь себя (10 заданий)</button>
+</nav>
+
+<main>
+<!-- ===================== ТЕОРИЯ ===================== -->
+<section id="theory" class="panel">
+ <h2>Вспомним главное</h2>
+ <div class="grid">
+  <div class="card">
+   <h3>Сетевой протокол</h3>
+   <p><b>Сетевой протокол</b> — набор правил, позволяющих осуществить соединение и обмен информацией между двумя и более включёнными в сеть устройствами.</p>
+   <table class="t">
+    <tr><th>Протокол</th><th>Назначение</th></tr>
+    <tr><td><b>IP</b></td><td>адресация компьютеров и доставка (маршрутизация) пакетов</td></tr>
+    <tr><td><b>TCP</b></td><td>разбивает данные на пакеты, следит за надёжной доставкой и собирает их</td></tr>
+    <tr><td><b>HTTP</b></td><td>передача веб-страниц</td></tr>
+    <tr><td><b>HTTPS</b></td><td>передача веб-страниц <b>с шифрованием</b></td></tr>
+    <tr><td><b>FTP</b></td><td>передача файлов</td></tr>
+   </table>
+  </div>
+  <div class="card">
+   <h3>IP-адрес</h3>
+   <p>IP-адрес — это <b>4 числа от 0 до 255</b>, разделённые <b>точками</b>.</p>
+   <p class="mono" style="font-size:22px">✔ 85.192.102.111<br>✘ 131,112,45,17 <span class="note">(запятые)</span><br>✘ 34.567.78.207 <span class="note">(567 &gt; 255)</span></p>
+  </div>
+  <div class="card">
+   <h3>DNS — Domain Name System</h3>
+   <p>Доменная система имён: чтобы не запоминать числовые IP-адреса, сайтам дают <b>символьные имена</b>.</p>
+   <p><b>Доменное имя</b> — уникальное символьное имя сайта (компьютера) в Интернете, удобное для человека. Состоит из доменов, разделённых точками.</p>
+   <div class="key"><b>DNS-сервер</b> преобразует доменное имя в IP-адрес.</div>
+   <ol class="steps">
+    <li>Браузер отправляет запрос DNS-серверу, чтобы получить IP-адрес сайта.</li>
+    <li>Ожидает ответа — DNS-сервер сообщает IP-адрес.</li>
+    <li>Запрашивает веб-страницу по полученному IP-адресу.</li>
+   </ol>
+  </div>
+  <div class="card">
+   <h3>Уровни доменов</h3>
+   <p>Уровни считаются <b>справа налево</b>:</p>
+   <div class="levels mono">
+    <div class="p4">www<i>4-й</i></div><div>.</div>
+    <div class="p3">bilim-semey<i>3-й</i></div><div>.</div>
+    <div class="p2">edu<i>2-й</i></div><div>.</div>
+    <div class="p1">kz<i>1-й</i></div>
+   </div>
+   <p>Домен первого уровня всегда стоит <b>в конце</b> имени.</p>
+   <p class="note">Домены 1-го уровня утверждает <b>ICANN</b>; домены 2-го уровня в зоне .kz регистрирует <b>KazNIC</b>; домены 3-го уровня создаёт владелец домена 2-го уровня.</p>
+  </div>
+  <div class="card">
+   <h3>Домены первого уровня</h3>
+   <table class="t">
+    <tr><th>Административные (вид организации)</th><th>Географические (страна)</th></tr>
+    <tr><td>.com — коммерческие</td><td>.kz, .қаз — Казахстан</td></tr>
+    <tr><td>.edu — образование</td><td>.ru, .рф — Россия</td></tr>
+    <tr><td>.gov — правительство</td><td>.by — Беларусь</td></tr>
+    <tr><td>.org — разные организации</td><td>.uk — Великобритания</td></tr>
+    <tr><td>.net — сетевые организации</td><td>.jp — Япония, .cn — Китай</td></tr>
+    <tr><td>.mil — военные, .info — информационные</td><td>.de — Германия, .ca — Канада</td></tr>
+   </table>
+  </div>
+  <div class="card">
+   <h3>URL — адрес ресурса</h3>
+   <p><b>URL</b> (Uniform Resource Locator) — универсальный указатель ресурса.<br><b>URL = протокол + доменное имя + путь к ресурсу</b></p>
+   <div class="url mono">
+    <span class="p1"><b>http://</b><i>протокол</i></span>
+    <span class="p2"><b>www.bilim.kz</b><i>адрес сайта</i></span>
+    <span class="p3"><b>/images/new/</b><i>каталог</i></span>
+    <span class="p4"><b>nn.jpg</b><i>имя файла</i></span>
+   </div>
+   <div class="key">Порядок сборки: <b class="mono">протокол :// сервер / файл</b><br><span class="mono">http://txt.org/ftp.net</span></div>
+  </div>
+ </div>
+
+ <h3>Устный опрос (нажми, чтобы увидеть ответ)</h3>
+ <details><summary>1. Зачем нужна доменная система имён?</summary>Чтобы людям не нужно было запоминать числовые IP-адреса: у сайтов появляются удобные символьные имена.</details>
+ <details><summary>2. Что делает DNS-сервер?</summary>Преобразует доменное имя в IP-адрес.</details>
+ <details><summary>3. Назовите домен второго уровня в имени 1-semey.mektebi.kz</summary>mektebi (уровни считаются справа налево: kz — 1-й, mektebi — 2-й, 1-semey — 3-й).</details>
+ <details><summary>4. Чем отличается HTTPS от HTTP?</summary>HTTPS передаёт веб-страницы с шифрованием данных.</details>
+ <details><summary>5. Какой протокол используют для передачи файлов?</summary>FTP (File Transfer Protocol).</details>
+ <details><summary>6. Почему сайт открывается по имени, даже если его перенесли на сервер с другим IP-адресом?</summary>Владелец меняет запись в DNS: имя осталось прежним, а DNS-сервер теперь выдаёт новый IP-адрес.</details>
+
+ <div class="bar"><button class="btn green" onclick="showTab('test')">Перейти к проверке →</button></div>
+</section>
+
+<!-- ===================== ПРОВЕРКА ===================== -->
+<section id="test" class="panel hidden">
+ <div id="testStart">
+  <h2>Проверь себя: 10 заданий</h2>
+  <p>Каждое задание — 1 балл. После ответа увидишь правильный ответ и пояснение. В конце — оценка по 10-балльной шкале и результаты по дескрипторам.</p>
+  <table class="t desc" style="max-width:820px">
+   <tr><th>Дескриптор. Обучающийся:</th><th>Заданий</th></tr>
+   <tr><td>определяет правильность записи IP-адреса</td><td>2</td></tr>
+   <tr><td>определяет уровни доменного имени и домены первого уровня</td><td>3</td></tr>
+   <tr><td>определяет структуру URL и составляет адрес ресурса</td><td>3</td></tr>
+   <tr><td>описывает назначение DNS и протоколов передачи информации</td><td>2</td></tr>
+  </table>
+  <div class="bar"><button class="btn" onclick="startTest()">Начать</button></div>
+  <div id="histBox" class="hist"></div>
+ </div>
+ <div id="testRun" class="hidden">
+  <div class="bar" style="margin:0;justify-content:space-between"><b id="qNum"></b><span>Баллы: <b id="qScore">0</b></span></div>
+  <div class="progress"><div id="prog" style="width:0"></div></div>
+  <div id="qBox"></div>
+  <div id="fb"></div>
+  <div class="bar"><button id="btnCheck" class="btn" onclick="checkAnswer()">Ответить</button><button id="btnNext" class="btn green hidden" onclick="nextQ()">Дальше →</button></div>
+ </div>
+ <div id="testEnd" class="hidden"></div>
+</section>
+</main>
+
+<script>
+/* ---------- утилиты ---------- */
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const LET=['А','Б','В','Г','Д','Е','Ж'];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* ---------- вкладки ---------- */
+let running=false;
+function showTab(t){
+  if(running&&t==='theory'){return}
+  $('theory').classList.toggle('hidden',t!=='theory');
+  $('test').classList.toggle('hidden',t!=='test');
+  $('tabTheory').classList.toggle('on',t==='theory');
+  $('tabTest').classList.toggle('on',t==='test');
+}
+window.addEventListener('load',()=>{$('fio').value='';$('cls').value='';});
+
+/* ---------- генераторы заданий ---------- */
+const D_IP=0,D_DOM=1,D_URL=2,D_PROT=3;
+const DESCR=['определяет правильность записи IP-адреса','определяет уровни доменного имени и домены первого уровня','определяет структуру URL и составляет адрес ресурса','описывает назначение DNS и протоколов передачи информации'];
+
+function goodIP(){return [rnd(1,223),rnd(0,255),rnd(0,255),rnd(1,254)].join('.')}
+function badIP(){
+  const k=rnd(0,3);const p=[rnd(1,223),rnd(0,255),rnd(0,255),rnd(1,254)];
+  if(k===0){p[rnd(0,3)]=rnd(256,999);return {s:p.join('.'),why:'есть число больше 255'}}
+  if(k===1){return {s:p.join(','),why:'числа разделены запятыми, а не точками'}}
+  if(k===2){return {s:p.slice(0,3).join('.'),why:'только 3 числа, а нужно 4'}}
+  return {s:p.concat([rnd(1,200)]).join('.'),why:'5 чисел, а нужно 4'};
+}
+function genIP(){
+  if(Math.random()<.5){
+    const b=badIP();const opts=shuffle([b.s,goodIP(),goodIP(),goodIP()]);
+    return {d:D_IP,type:'choice',tag:'IP-адрес',text:'Какой IP-адрес записан <b>неправильно</b>?',opts,ans:opts.indexOf(b.s),mono:true,
+      expl:`Неправильный адрес <b class="mono">${b.s}</b>: ${b.why}. IP-адрес — это 4 числа от 0 до 255, разделённые точками.`};
+  }else{
+    const g=goodIP();const bs=[];const whys={};
+    while(bs.length<3){const b=badIP();if(!bs.includes(b.s)){bs.push(b.s);whys[b.s]=b.why}}
+    const opts=shuffle([g,...bs]);
+    return {d:D_IP,type:'choice',tag:'IP-адрес',text:'Какой IP-адрес записан <b>правильно</b>?',opts,ans:opts.indexOf(g),mono:true,
+      expl:`Правильный адрес <b class="mono">${g}</b>: 4 числа от 0 до 255 через точку. Остальные: `+bs.map(s=>`<span class="mono">${s}</span> — ${whys[s]}`).join('; ')+'.'};
+  }
+}
+const DOMAINS=['www.bilim-semey.edu.kz','1-semey.mektebi.kz','site.nic.kz','mail.google.com','nis.edu.kz','school.astana.gov.kz','www.videouroki.net','lib.kbtu.kz','www.petr.unibel.by','dop-obrazovanie.com','online.kaspi.kz','news.bbc.co.uk','ru.wikipedia.org','www.school21.edu.kz','docs.python.org','sdu.edu.kz'];
+const ORD=['первого','второго','третьего','четвёртого'];
+function genLevel(){
+  const dom=pick(DOMAINS.filter(d=>d.split('.').length>=3));
+  const parts=dom.split('.');const rev=parts.slice().reverse();
+  const lv=rnd(0,Math.min(rev.length,4)-1);
+  if(Math.random()<.25){
+    const n=parts.length;const opts=shuffle([...new Set([n,n-1,n+1,2])].slice(0,4).map(String));
+    return {d:D_DOM,type:'choice',tag:'Доменное имя',text:`Сколько уровней в доменном имени <b class="mono">${dom}</b>?`,opts,ans:opts.indexOf(String(n)),
+      expl:`Доменов ${n}: `+rev.map((p,i)=>`${p} — ${i+1}-й`).join(', ')+'. Уровни считаются справа налево.'};
+  }
+  const opts=shuffle(parts.slice(0,4));
+  return {d:D_DOM,type:'choice',tag:'Доменное имя',text:`Какой домен <b>${ORD[lv]}</b> уровня в имени <b class="mono">${dom}</b>?`,opts,ans:opts.indexOf(rev[lv]),mono:true,
+    expl:'Уровни считаются справа налево: '+rev.map((p,i)=>`<b class="mono">${p}</b> — ${i+1}-й`).join(', ')+'.'};
+}
+const TLD=[['.kz','Казахстан'],['.ru','Россия'],['.by','Беларусь'],['.uk','Великобритания'],['.jp','Япония'],['.cn','Китай'],['.de','Германия'],['.ca','Канада'],['.it','Италия'],['.ua','Украина'],
+ ['.com','коммерческие организации'],['.edu','образовательные организации'],['.gov','правительственные организации'],['.mil','военные ведомства'],['.net','сетевые организации'],['.org','некоммерческие (разные) организации'],['.info','информационные сайты'],['.museum','музеи']];
+function genTLD(){
+  const k=rnd(0,2);
+  const t=pick(TLD);const geo=TLD.indexOf(t)<10;
+  if(k===2){
+    const opts=['административный (вид организации)','географический (страна)'];
+    return {d:D_DOM,type:'choice',tag:'Домены первого уровня',text:`Домен первого уровня <b class="mono">${t[0]}</b> — какой это вид домена?`,opts,ans:geo?1:0,
+      expl:`<b class="mono">${t[0]}</b> — ${t[1]}, поэтому домен ${geo?'географический':'административный'}.`};
+  }
+  const pool=TLD.filter(x=>(TLD.indexOf(x)<10)===geo&&x!==t);const d=shuffle(pool).slice(0,3);
+  if(k===0){
+    const opts=shuffle([t[1],...d.map(x=>x[1])]);
+    return {d:D_DOM,type:'choice',tag:'Домены первого уровня',text:`Что обозначает домен первого уровня <b class="mono">${t[0]}</b>?`,opts,ans:opts.indexOf(t[1]),expl:`<b class="mono">${t[0]}</b> — ${t[1]}.`};
+  }
+  const opts=shuffle([t[0],...d.map(x=>x[0])]);
+  return {d:D_DOM,type:'choice',tag:'Домены первого уровня',text:`Какой домен первого уровня соответствует: <b>${t[1]}</b>?`,opts,ans:opts.indexOf(t[0]),mono:true,expl:`${t[1]} — <b class="mono">${t[0]}</b>.`};
+}
+function genBadDomain(){
+  const good=shuffle(['www.school.ru','www.petr.unibel.by','www.son76.com.pl','nis.edu.kz','www.bilim.kz','mail.google.com','lib.kbtu.kz','ru.wikipedia.org','1-semey.mektebi.kz','www.museum.astana.kz']).slice(0,3);
+  const bad=pick([['www.ru.gov.ministerstvo','домен первого уровня должен стоять в конце, а «ministerstvo» — не домен первого уровня'],['kz.edu.nis','домен первого уровня (kz) должен стоять в конце имени'],['www,school,kz','части домена разделяются точками, а не запятыми'],['www.bilim kz','в доменном имени не бывает пробелов'],['kz.mektebi.1-semey','уровни записаны в обратном порядке: первый уровень (kz) должен быть справа']]);
+  const opts=shuffle([bad[0],...good]);
+  return {d:D_DOM,type:'choice',tag:'Доменное имя',text:'Какое доменное имя записано <b>неправильно</b>?',opts,ans:opts.indexOf(bad[0]),mono:true,expl:`<b class="mono">${bad[0]}</b>: ${bad[1]}.`};
+}
+const SERV=[['txt','.org'],['test','.edu'],['info','.edu'],['data','.net'],['files','.kz'],['doc','.com'],['home','.ru'],['web','.org'],['rus','.com'],['edu','.kz']];
+const FILES=[['ftp','.net'],['demo','.net'],['exam','.net'],['index','.html'],['list','.txt'],['photo','.jpg'],['http','.doc'],['www','.org'],['test','.htm'],['rus','.doc'],['book','.pdf']];
+function genURL(){
+  let s,f,prot;do{s=pick(SERV);f=pick(FILES);prot=pick(['http','http','ftp','https'])}while(s[0]===f[0]||s[1]===f[1]||prot===f[0]||prot===s[0]);
+  const seq=[prot,'://',s[0],s[1],'/',f[0],f[1]];
+  const order=shuffle([0,1,2,3,4,5,6]); // order[i] = индекс фрагмента в таблице i
+  const table=order.map(i=>seq[i]);
+  const ans=seq.map((_,i)=>LET[order.indexOf(i)]).join('');
+  return {d:D_URL,type:'letters',tag:'Адрес файла (URL)',text:`На сервере <b class="mono">${s[0]}${s[1]}</b> находится файл <b class="mono">${f[0]}${f[1]}</b>, доступ к которому осуществляется по протоколу <b class="mono">${prot}</b>. Собери адрес этого файла из фрагментов.`,
+    table,ans,url:seq.join(''),expl:`Адрес: <b class="mono">${seq.join('')}</b>. Порядок: протокол, ://, имя сервера, /, имя файла.`};
+}
+const URLS=[['https','www.bilim.kz','/images/new/','nn.jpg'],['http','school.edu.kz','/docs/','plan.doc'],['ftp','files.bilim.kz','/pub/download/','mm.zip'],['https','mektebi.kz','/news/2026/','day.html'],['http','www.videouroki.net','/razrabotki/','test.pdf'],['ftp','ftp.kaznet.kz','/soft/','setup.exe'],['https','nis.edu.kz','/ru/about/','index.html']];
+function genURLpart(){
+  const u=pick(URLS);const full=`${u[0]}://${u[1]}${u[2]}${u[3]}`;
+  const ask=rnd(0,3);
+  const names=['протокол','доменное имя (адрес сайта)','каталог (путь к файлу)','имя файла'];
+  const right=[u[0],u[1],u[2],u[3]][ask];
+  const opts=shuffle([u[0],u[1],u[2],u[3]]);
+  return {d:D_URL,type:'choice',tag:'Структура URL',text:`Дан адрес: <b class="mono">${full}</b><br>Что в нём является: <b>${names[ask]}</b>?`,opts,ans:opts.indexOf(right),mono:true,
+    expl:`URL = протокол + доменное имя + путь. Протокол — <b class="mono">${u[0]}</b>, доменное имя — <b class="mono">${u[1]}</b>, каталог — <b class="mono">${u[2]}</b>, имя файла — <b class="mono">${u[3]}</b>.`};
+}
+function genURLprot(){
+  const it=pick([['Ученик скачивает с файлового сервера архив с заданиями. Какой протокол будет указан в начале URL?','ftp'],['Пользователь открывает страницу интернет-банка, данные должны передаваться в зашифрованном виде. Какой протокол будет в начале URL?','https'],['Какой протокол указан в адресе <b class="mono">ftp://files.bilim.kz/pub/mm.zip</b>?','ftp'],['Адрес начинается с <b class="mono">https://</b>. Что это означает?','веб-страница передаётся с шифрованием']]);
+  let opts;
+  if(it[1].length>6)opts=shuffle([it[1],'передаётся файл по протоколу FTP','страница передаётся без шифрования','сайт находится в зоне .kz']);
+  else opts=shuffle(['http','https','ftp','dns']);
+  return {d:D_URL,type:'choice',tag:'Протокол в URL',text:it[0],opts,ans:opts.indexOf(it[1]),mono:it[1].length<=6,
+    expl:'Протокол в начале URL показывает, как передаётся ресурс: http/https — веб-страницы (https — с шифрованием), ftp — файлы.'};
+}
+const FACTS=[
+ ['Как расшифровывается DNS?','Domain Name System — доменная система имён',['Data Network Service — сервис сетевых данных','Digital Name Server — цифровой сервер имён','Domain Network Security — защита доменной сети'],'DNS — Domain Name System, доменная система имён.'],
+ ['Что делает DNS-сервер?','преобразует доменное имя в IP-адрес',['шифрует передаваемые веб-страницы','передаёт файлы между компьютерами','разбивает данные на пакеты'],'DNS-сервер по доменному имени находит IP-адрес компьютера.'],
+ ['Сетевой протокол — это…','набор правил для соединения и обмена информацией между устройствами в сети',['программа для просмотра веб-страниц','уникальный числовой адрес компьютера в сети','символьное имя сайта в Интернете'],'Протокол — набор правил, позволяющих устройствам соединяться и обмениваться информацией.'],
+ ['Какой протокол предназначен для передачи файлов?','FTP',['HTTPS','IP','DNS'],'FTP (File Transfer Protocol) — протокол передачи файлов.'],
+ ['Какой протокол передаёт веб-страницы с шифрованием?','HTTPS',['HTTP','FTP','TCP'],'HTTPS — защищённая (шифрованная) версия HTTP.'],
+ ['Какой протокол отвечает за адресацию компьютеров и доставку пакетов по адресу?','IP',['FTP','HTTP','HTTPS'],'IP — протокол адресации и маршрутизации пакетов.'],
+ ['Какой протокол разбивает данные на пакеты и следит, чтобы все они дошли без потерь?','TCP',['IP','FTP','DNS'],'TCP обеспечивает надёжную доставку: разбивает данные на пакеты и собирает их у получателя.'],
+ ['Расставь шаги: что происходит, когда вводишь в браузере www.google.com?','запрос к DNS-серверу → получение IP-адреса → запрос страницы по IP-адресу',['запрос страницы по имени → запрос к DNS-серверу → получение IP-адреса','получение IP-адреса → запрос к DNS-серверу → запрос страницы','запрос страницы по IP-адресу → запрос к DNS-серверу → ожидание ответа'],'Сначала DNS переводит имя в IP-адрес, затем браузер запрашивает страницу по этому IP-адресу.'],
+ ['Кто регистрирует домены второго уровня в зоне .kz?','KazNIC (Казахстанский центр сетевой информации)',['ICANN','владелец домена третьего уровня','любой пользователь сети'],'Домены 1-го уровня утверждает ICANN, домены 2-го уровня в зоне .kz регистрирует KazNIC через регистраторов.'],
+ ['Кто утверждает домены первого уровня?','международная организация ICANN',['KazNIC','интернет-провайдер','владелец сайта'],'Домены первого уровня утверждает ICANN.'],
+ ['Какой командой в командной строке можно узнать IP-адрес сайта по его имени?','nslookup',['ping -n','ipconfig /all','dir'],'Команда nslookup bilimland.kz отправляет запрос DNS-серверу и показывает IP-адрес.'],
+ ['Сайт перенесли на сервер с другим IP-адресом, но он всё равно открывается по старому имени. Почему?','в DNS записали новый IP-адрес для того же имени',['IP-адрес сайта никогда не меняется','браузер запоминает все сайты навсегда','доменное имя тоже изменилось автоматически'],'Имя осталось прежним, а DNS-сервер теперь выдаёт новый IP-адрес.'],
+ ['Как расшифровывается URL?','Uniform Resource Locator — универсальный указатель ресурса',['Universal Remote Link — удалённая ссылка','User Request Line — строка запроса','Unique Router List — список маршрутизаторов'],'URL — Uniform Resource Locator, универсальный указатель ресурса.']
+];
+function genFact(used){
+  let f;do{f=pick(FACTS)}while(used.has(f[0])&&used.size<FACTS.length);used.add(f[0]);
+  const opts=shuffle([f[1],...f[2]]);
+  return {d:D_PROT,type:'choice',tag:'DNS и протоколы',text:f[0],opts,ans:opts.indexOf(f[1]),mono:/^[A-Za-z]+$/.test(f[1])||f[1]==='nslookup',expl:f[3]};
+}
+function buildSet(){
+  const used=new Set();
+  const set=[genIP(),genIP(),genLevel(),pick([genTLD,genBadDomain])(),genTLD(),genURL(),genURLpart(),pick([genURLprot,genURL])(),genFact(used),genFact(used)];
+  return set;
+}
+
+/* ---------- прохождение ---------- */
+let Q=[],cur=0,score=0,picked=null,answered=false,results=[],history=[];
+function needName(){
+  const f=$('fio');
+  if(f.value.trim().split(/\s+/).filter(Boolean).length<2){f.classList.add('need');f.focus();alert('Введите фамилию и имя (два слова) в поле вверху страницы.');return true}
+  f.classList.remove('need');return false;
+}
+function startTest(){
+  if(needName())return;
+  Q=buildSet();cur=0;score=0;results=[];running=true;
+  $('tabTheory').disabled=true;
+  $('testStart').classList.add('hidden');$('testEnd').classList.add('hidden');$('testRun').classList.remove('hidden');
+  renderQ();
+}
+function renderQ(){
+  const q=Q[cur];picked=null;answered=false;dndLock=false;$('qBox').classList.remove('lock');
+  $('qNum').textContent=`Задание ${cur+1} из ${Q.length}`;$('qScore').textContent=score;
+  $('prog').style.width=(cur/Q.length*100)+'%';
+  let h=`<div class="q"><span class="tag">${q.tag}</span><br>${q.text}</div>`;
+  if(q.type==='choice'){
+    h+='<div class="opts">'+q.opts.map((o,i)=>`<button class="opt ${q.mono?'mono':''}" onclick="sel(${i})" id="o${i}">${LET[i]})&nbsp; ${esc(o)}</button>`).join('')+'</div>';
+  }else{
+    h+='<p class="note">Перетащи фрагменты мышкой в нужном порядке (или просто нажимай на них по очереди). Чтобы убрать фрагмент — нажми на него ещё раз.</p>';
+    h+='<div class="pool" id="pool"></div><div class="slots" id="slots"></div>';
+    h+='<div class="preview">Адрес: <span class="mono" id="urlPrev">…</span></div>';
+    h+='<div class="bar" style="margin:4px 0"><button class="btn sec" onclick="dndReset()">Очистить</button></div>';
+  }
+  $('qBox').innerHTML=h;$('fb').innerHTML='';
+  $('btnCheck').classList.remove('hidden');$('btnNext').classList.add('hidden');
+  if(q.type==='letters'){placed=Array(7).fill(null);dndDraw()}
+}
+function sel(i){if(answered)return;picked=i;document.querySelectorAll('.opt').forEach((b,j)=>b.classList.toggle('sel',j===i))}
+/* ---------- перетаскивание фрагментов URL ---------- */
+let placed=[],dndLock=false,dragFrom=null;
+function tileHTML(i,from){const q=Q[cur];return `<div class="tile" draggable="${!dndLock}" data-i="${i}" data-from="${from}"><span>${esc(q.table[i])}</span></div>`}
+function dndDraw(){
+  const q=Q[cur];
+  $('pool').innerHTML=q.table.map((_,i)=>placed.includes(i)?'':tileHTML(i,'pool')).join('')||'<span class="note">все фрагменты расставлены</span>';
+  $('slots').innerHTML=placed.map((p,k)=>`<div class="slot" data-s="${k}">${p===null?(k+1):tileHTML(p,k)}</div>`).join('');
+  $('urlPrev').textContent=placed.some(p=>p!==null)?placed.map(p=>p===null?'_':q.table[p]).join(''):'…';
+  document.querySelectorAll('#qBox .tile').forEach(t=>{
+    t.addEventListener('dragstart',e=>{if(dndLock){e.preventDefault();return}dragFrom={i:+t.dataset.i,from:t.dataset.from};e.dataTransfer.setData('text/plain',t.dataset.i);e.dataTransfer.effectAllowed='move'});
+    t.addEventListener('click',e=>{e.stopPropagation();if(dndLock)return;const i=+t.dataset.i;
+      if(t.dataset.from==='pool'){const k=placed.indexOf(null);if(k>=0)placed[k]=i}else placed[+t.dataset.from]=null;dndDraw()});
+  });
+  const zones=[...document.querySelectorAll('#qBox .slot'),$('pool')];
+  zones.forEach(z=>{
+    z.addEventListener('dragover',e=>{if(dndLock)return;e.preventDefault();z.classList.add('over')});
+    z.addEventListener('dragleave',()=>z.classList.remove('over'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');if(dndLock||!dragFrom)return;
+      const i=dragFrom.i,from=dragFrom.from;dragFrom=null;
+      if(z.id==='pool'){if(from!=='pool')placed[+from]=null}
+      else{const k=+z.dataset.s,old=placed[k];
+        if(from==='pool'){placed[k]=i}
+        else{placed[+from]=old;placed[k]=i}}
+      dndDraw()});
+  });
+}
+function dndReset(){if(dndLock)return;placed=Array(7).fill(null);dndDraw()}
+function normLetters(s){
+  const lat={A:'А',B:'В',E:'Е',a:'А',b:'В',e:'Е'};
+  return s.replace(/[\s,.\-;]/g,'').split('').map(c=>lat[c]||c).join('').toUpperCase();
+}
+function checkAnswer(){
+  if(answered)return;const q=Q[cur];let ok,given;
+  if(q.type==='choice'){
+    if(picked===null){alert('Выберите вариант ответа.');return}
+    ok=picked===q.ans;given=q.opts[picked];
+    document.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(j===q.ans)b.classList.add('ok');else if(j===picked)b.classList.add('no')});
+  }else{
+    if(placed.includes(null)){alert('Расставь все 7 фрагментов.');return}
+    const v=placed.map(i=>q.table[i]).join('');
+    ok=v===q.url;given=v;dndLock=true;$('qBox').classList.add('lock');
+    $('slots').style.borderColor=ok?'var(--good)':'var(--bad)';$('slots').style.background=ok?'var(--goodbg)':'var(--badbg)';
+  }
+  answered=true;if(ok)score++;
+  results.push({d:q.d,ok,tag:q.tag,text:q.text.replace(/<[^>]+>/g,''),given,right:q.type==='choice'?q.opts[q.ans]:q.url});
+  $('qScore').textContent=score;
+  $('fb').innerHTML=`<div class="fb ${ok?'ok':'no'}"><b>${ok?'✔ Верно!':'✘ Неверно.'}</b> ${q.expl}</div>`;
+  $('btnCheck').classList.add('hidden');$('btnNext').classList.remove('hidden');
+  $('btnNext').textContent=cur===Q.length-1?'Завершить':'Дальше →';$('btnNext').focus();
+}
+function nextQ(){cur++;if(cur<Q.length)renderQ();else finish()}
+function finish(){
+  running=false;$('tabTheory').disabled=false;
+  $('testRun').classList.add('hidden');
+  const per=[0,1,2,3].map(d=>({all:results.filter(r=>r.d===d).length,ok:results.filter(r=>r.d===d&&r.ok).length}));
+  const now=new Date();
+  const rec={fio:$('fio').value.trim(),cls:$('cls').value.trim(),score,time:now.toLocaleString('ru-RU'),per,results};
+  history.push(rec);
+  let h=`<h2>Результат</h2><div class="score">${esc(rec.fio)}${rec.cls?', '+esc(rec.cls):''}</div>
+  <div>Правильных ответов: <b>${score} из 10</b></div><div class="mark">${score} / 10</div>
+  <h3>Дескрипторы</h3><table class="t desc"><tr><th>Обучающийся:</th><th>Результат</th></tr>`+
+  per.map((p,d)=>`<tr><td>${DESCR[d]}</td><td class="${p.ok===p.all?'okc':'noc'}">${p.ok} из ${p.all} ${p.ok===p.all?'✔':(p.ok?'◐':'✘')}</td></tr>`).join('')+`</table>
+  <p class="note">${score>=8?'Отлично! Тема усвоена.':score>=5?'Хорошо, но повтори темы, где есть ошибки (см. теорию).':'Вернись к теории и пройди проверку ещё раз.'}</p>
+  <div class="bar"><button class="btn" onclick="exportTxt()">💾 Сохранить результат (.txt)</button><button class="btn sec" onclick="again()">Пройти ещё раз (новые задания)</button><button class="btn sec" onclick="showTab('theory')">К теории</button></div>
+  <details><summary>Мои ответы</summary><table class="t">`+results.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.text)}</td><td class="${r.ok?'okc':'noc'}">${esc(r.given)}${r.ok?' ✔':' ✘<br>верно: '+esc(r.right)}</td></tr>`).join('')+`</table></details>`;
+  $('testEnd').innerHTML=h;$('testEnd').classList.remove('hidden');
+  $('prog').style.width='100%';
+}
+function again(){$('testEnd').classList.add('hidden');$('testStart').classList.remove('hidden');renderHist();}
+function renderHist(){
+  if(!history.length){$('histBox').innerHTML='';return}
+  $('histBox').innerHTML='<h3>Мои попытки</h3>'+history.map((r,i)=>`<div>${i+1}) ${r.time} — <b>${r.score}/10</b></div>`).join('');
+}
+function exportTxt(){
+  const r=history[history.length-1];if(!r)return;
+  let t=`ФОРМАТИВНОЕ ОЦЕНИВАНИЕ: Доменная система имён и протоколы передачи информации\r\n`;
+  t+=`Ученик: ${r.fio}\r\nКласс: ${r.cls||'-'}\r\nДата: ${r.time}\r\n`;
+  t+=`Попыток в этом сеансе: ${history.length}\r\nБаллы последней попытки: ${r.score} из 10\r\n\r\nДЕСКРИПТОРЫ:\r\n`;
+  r.per.forEach((p,d)=>t+=`- ${DESCR[d]}: ${p.ok} из ${p.all}\r\n`);
+  t+=`\r\nОТВЕТЫ:\r\n`;
+  r.results.forEach((x,i)=>t+=`${i+1}. [${x.ok?'+':'-'}] ${x.text}\r\n   Ответ ученика: ${x.given}${x.ok?'':'  | Верно: '+x.right}\r\n`);
+  if(history.length>1){t+=`\r\nВСЕ ПОПЫТКИ:\r\n`;history.forEach((h,i)=>t+=`${i+1}) ${h.time} — ${h.score}/10\r\n`)}
+  const blob=new Blob(['﻿'+t],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`DNS_${(r.fio||'ученик').replace(/[^\wА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі-]+/g,'_')}${r.cls?'_'+r.cls.replace(/\s+/g,''):''}.txt`;
+  document.body.appendChild(a);a.click();a.remove();
+}
+</script>
+</body>
+</html>

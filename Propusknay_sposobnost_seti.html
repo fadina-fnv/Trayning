@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пропускная способность сети</title>
+<style>
+:root{
+  --ink:#1e3a5f; --muted:#4a6480; --bg:#eef3f8; --card:#fff; --line:#b8c6d6;
+  --acc:#0b5cad; --acc2:#0a7a5c; --ctrl:#0f766e; --bad:#c2410c; --good:#067647;
+  --goodbg:#dcfae6; --badbg:#ffedd5; --accbg:#dbeafe; --yel:#fef3c7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Times New Roman",Times,serif;font-size:21px;line-height:1.45}
+.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+header{background:#dbeafe;color:var(--ink);padding:10px 20px;position:sticky;top:0;z-index:20;border-bottom:3px solid #93c5fd;box-shadow:0 2px 6px rgba(30,58,95,.12)}
+header h1{color:#1d4f91}
+body.ctrl header{background:#d5f5ea;border-bottom-color:#5eead4}
+body.ctrl header h1{color:var(--ctrl)}
+.hrow{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;max-width:1180px;margin:0 auto}
+header h1{font-size:23px;margin:0;flex:1 1 230px;white-space:nowrap}
+header h1 small{display:block;font-size:16px;font-weight:normal;opacity:.85}
+.who{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.who label{font-size:17px}
+.who input{font:inherit;font-size:19px;padding:5px 9px;border-radius:6px;border:2px solid #7aa7d8;width:210px}
+.who input.cls{width:70px}
+.who input.need{border-color:#f59e0b;background:#fffbeb}
+.modes{display:flex;border-radius:10px;overflow:hidden;border:2px solid var(--acc);background:#fff}
+.modes button{font:inherit;font-size:18px;font-weight:bold;padding:6px 14px;border:none;background:transparent;color:var(--acc);cursor:pointer}
+.modes button.on{background:var(--acc);color:#fff}
+body.ctrl .modes{border-color:var(--ctrl)}
+body.ctrl .modes button{color:var(--ctrl)}
+body.ctrl .modes button.on{background:var(--ctrl);color:#fff}
+.modes button:disabled{opacity:.5;cursor:not-allowed}
+.modes.lvl{border-color:#16a34a}
+.modes.lvl button{color:#15803d}
+.modes.lvl button.on{background:#16a34a;color:#fff}
+body.adv .modes.lvl{border-color:#4f46e5}
+body.adv .modes.lvl button{color:#4338ca}
+body.adv .modes.lvl button.on{background:#4f46e5;color:#fff}
+.lvlnote{font-size:18px;background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:6px 14px;margin:0 0 10px}
+body.adv .lvlnote{background:#eef2ff;border-color:#a5b4fc}
+.hbtn.calcH{font-size:18px;padding:7px 14px;background:#e8f8f0;border-color:var(--acc2);color:var(--acc2)}
+.hbtn{font:inherit;font-size:16px;font-weight:bold;padding:6px 12px;border-radius:8px;border:2px solid var(--acc);background:#fff;color:var(--acc);cursor:pointer}
+nav{max-width:1180px;margin:14px auto 0;display:flex;gap:6px;padding:0 16px;flex-wrap:wrap}
+nav button{font:inherit;font-size:19px;font-weight:bold;padding:9px 16px;border-radius:10px 10px 0 0;border:2px solid var(--line);border-bottom:none;background:#dfe7f0;color:var(--muted);cursor:pointer}
+nav button.on{background:var(--card);color:var(--acc);border-color:var(--acc)}
+#tabs button[data-t=theory]{background:#fdecc8;color:#92400e;border-color:#f3c77a}
+#tabs button[data-t=theory].on{background:#fffaf0;color:#b45309;border-color:#d97706}
+#p_theory{border-color:#d97706;background:#fffaf0}
+#p_theory .card{background:#fff}
+/* кружочки прогресса */
+.goal{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 6px;font-size:19px}
+.dots{display:flex;gap:7px;flex-wrap:wrap}
+.dots i{width:26px;height:26px;border-radius:50%;border:3px solid #93c5fd;background:#fff;display:inline-block;transition:background .3s}
+.dots i.f{background:var(--acc2);border-color:var(--acc2)}
+#p_theory .dots i{border-color:#f3c77a}#p_theory .dots i.f{background:#d97706;border-color:#d97706}
+.goal .done{color:var(--good);font-weight:bold}
+nav button .cnt.done{color:var(--good);font-weight:bold}
+nav button .cnt{font-size:15px;font-weight:normal;margin-left:4px}
+main{max-width:1180px;margin:0 auto 40px;padding:0 16px}
+.panel{background:var(--card);border:2px solid var(--acc);border-radius:0 12px 12px 12px;padding:20px 24px;min-height:360px}
+body.ctrl .panel.cp{border-color:var(--ctrl);border-radius:12px;margin-top:16px}
+.hidden{display:none!important}
+h2{margin:0 0 12px;font-size:27px;color:var(--acc)}
+body.ctrl h2{color:var(--ctrl)}
+h3{margin:16px 0 8px;font-size:23px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr));gap:16px}
+.card{border:2px solid var(--line);border-radius:12px;padding:14px 18px;background:#fbfdff}
+.card h3{margin-top:0;color:var(--acc2)}
+.formula{font-size:46px;font-weight:bold;text-align:center;color:var(--acc);margin:4px 0;font-family:"Times New Roman",serif;font-style:italic}
+.nb{background:var(--yel);border:2px dashed #d97706;border-radius:12px;padding:12px 18px;margin:12px 0;font-size:21px}
+.nb b.t{font-size:23px}
+.nb label{display:block;margin:4px 0;cursor:pointer}
+.nb input{transform:scale(1.5);margin-right:10px}
+table.t{border-collapse:collapse;width:100%;font-size:20px}
+table.t td,table.t th{border:1.5px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+table.t th{background:#e6eef7}
+.ladder{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:21px;margin:6px 0}
+.ladder .u{background:var(--accbg);border:2px solid var(--acc);border-radius:8px;padding:2px 10px;font-weight:bold}
+.ladder .a{color:var(--acc2);font-weight:bold;font-size:18px;text-align:center;line-height:1.1}
+.tri{display:block;margin:0 auto}
+.btn{font:inherit;font-size:20px;font-weight:bold;padding:9px 20px;border-radius:10px;border:none;background:var(--acc);color:#fff;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:#e3e9f1;color:var(--ink);border:2px solid var(--line)}
+.btn.green{background:var(--acc2)}
+.btn.ctrlb{background:var(--ctrl)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.lv{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lv button{font:inherit;font-size:18px;padding:5px 14px;border-radius:20px;border:2px solid var(--line);background:#fff;cursor:pointer}
+.lv button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stat{margin-left:auto;font-size:19px;background:#f1f5f9;border-radius:8px;padding:4px 12px}
+.task{font-size:23px;margin:8px 0 12px;padding:12px 16px;background:#f6f9fc;border-left:6px solid var(--acc);border-radius:6px}
+.task .tag{display:inline-block;font-size:15px;background:var(--accbg);color:var(--acc);padding:2px 10px;border-radius:12px;margin-bottom:4px;font-weight:bold}
+.big{font-size:30px}
+input.num{font:inherit;font-size:26px;padding:6px 12px;border-radius:8px;border:2px solid var(--line);width:240px;font-family:"JetBrains Mono",Consolas,monospace}
+input.num.ok{border-color:var(--good);background:var(--goodbg)}
+input.num.no{border-color:var(--bad);background:var(--badbg)}
+.unit{font-size:24px;font-weight:bold;margin-left:6px}
+select{font:inherit;font-size:21px;padding:4px 8px;border-radius:8px;border:2px solid var(--line);background:#fff}
+select.ok{border-color:var(--good);background:var(--goodbg)}
+select.no{border-color:var(--bad);background:var(--badbg)}
+.dano{display:grid;grid-template-columns:auto auto;gap:8px 14px;align-items:center;justify-content:start;font-size:22px}
+.convs{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:20px}
+.convs label{cursor:pointer;padding:3px 8px;border-radius:8px;border:2px solid transparent}
+.convs label.ok{border-color:var(--good);background:var(--goodbg)}
+.convs label.no{border-color:var(--bad);background:var(--badbg)}
+.convs input{transform:scale(1.4);margin-right:8px}
+.chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+.chain div{background:#eef4ff;border:2px solid #93c5fd;border-radius:10px;padding:6px 14px;text-align:center}
+.chain div b{display:block}
+.chain div span{font-size:17px;color:var(--muted)}
+.chain div.now{background:#dcfae6;border-color:var(--acc2)}
+.chain i{font-style:normal;font-size:28px;color:var(--acc)}
+.key{background:var(--yel);border-left:6px solid #d97706;padding:8px 14px;border-radius:6px;margin:8px 0}
+.dano .v{font-weight:bold;background:#fff7d6;padding:2px 10px;border-radius:6px}
+.opts{display:grid;gap:10px}
+.opt{font:inherit;font-size:22px;text-align:left;padding:9px 16px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.opt.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+.opt:hover:not(:disabled){border-color:var(--acc);background:#f2f7ff}
+.opt.sel{border-color:var(--acc);background:var(--accbg)}
+.opt.ok{border-color:var(--good);background:var(--goodbg)}
+.opt.no{border-color:var(--bad);background:var(--badbg)}
+.fb{margin-top:12px;padding:12px 16px;border-radius:10px;font-size:21px}
+.fb.ok{background:var(--goodbg);border:2px solid var(--good)}
+.fb.no{background:var(--badbg);border:2px solid var(--bad)}
+.fb.info{background:#eef4ff;border:2px solid var(--acc)}
+/* оформление задачи как в тетради */
+.sol{display:grid;grid-template-columns:minmax(220px,auto) 1fr;border:2px solid var(--line);border-radius:10px;background:#fff;margin:10px 0;font-size:22px}
+.sol .sg{padding:10px 16px;border-right:2px solid var(--ink)}
+.sol .ss{padding:10px 16px}
+.sol .h{font-weight:bold;color:var(--acc);font-size:20px}
+.sol .fl{border-top:2px solid var(--ink);margin-top:6px;padding-top:4px}
+.sol .ln{padding:2px 0;font-family:"JetBrains Mono",Consolas,monospace;font-size:20px}
+.sol .ans{grid-column:1/3;border-top:2px solid var(--line);padding:8px 16px;font-weight:bold;font-size:22px;background:#f0fdf4}
+.sol .ln.cur{background:#fff3b0;border-radius:4px}
+.sol .ln.hid,.sol .h.hid,.sol .ans.hid{visibility:hidden}
+.stepnote{min-height:56px;font-size:21px;background:#eef4ff;border-radius:10px;padding:10px 16px;border-left:6px solid var(--acc)}
+.exsel{display:flex;gap:6px;flex-wrap:wrap}
+.score{font-size:28px;font-weight:bold}
+.mark{display:inline-block;font-size:44px;font-weight:bold;color:#fff;background:var(--acc2);border-radius:14px;padding:4px 22px;margin:6px 0}
+.okc{color:var(--good)}.noc{color:var(--bad)}
+.note{color:var(--muted);font-size:18px}
+.progress{height:14px;background:#dfe7f0;border-radius:7px;overflow:hidden;margin:6px 0 14px}
+.progress div{height:100%;background:var(--ctrl);transition:width .3s}
+details{border:2px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0;background:#fff}
+details summary{cursor:pointer;font-weight:bold}
+@media (max-width:700px){.sol{grid-template-columns:1fr}.sol .sg{border-right:none;border-bottom:2px solid var(--ink)}.sol .ans{grid-column:1}}
+
+/* калькулятор */
+#calc{position:fixed;right:18px;top:96px;z-index:30;width:310px;background:#f8fbff;border:2px solid var(--acc);border-radius:14px;padding:12px;box-shadow:0 8px 24px rgba(30,58,95,.3)}
+#calc .ttl{display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:var(--acc);margin-bottom:6px}
+#calc .ttl button{font:inherit;border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted)}
+#cExpr{width:100%;font-family:"JetBrains Mono",Consolas,monospace;font-size:22px;padding:6px 8px;border:2px solid var(--line);border-radius:8px;text-align:right;color:var(--ink)}
+#cRes{font-family:"JetBrains Mono",Consolas,monospace;font-size:26px;font-weight:bold;text-align:right;min-height:38px;color:var(--acc2);margin:4px 2px;word-break:break-all}
+#calc .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#calc .keys button{font-family:"JetBrains Mono",Consolas,monospace;font-size:22px;padding:8px 0;border-radius:8px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+#calc .keys button.op{background:#e0edff;color:var(--acc);font-weight:bold}
+#calc .keys button.eq{background:var(--acc2);color:#fff;border-color:var(--acc2)}
+#calc .keys button:active{transform:scale(.96)}
+#calc .toAns{width:100%;margin-top:8px;font:inherit;font-size:18px;font-weight:bold;padding:7px;border-radius:8px;border:2px solid var(--acc2);background:#fff;color:var(--acc2);cursor:pointer}
+@media print{#calc{display:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="hrow">
+  <h1>Пропускная способность сети</h1>
+  <div class="who">
+   <label for="fio">Фамилия, имя:</label><input id="fio" type="text" autocomplete="off" spellcheck="false" placeholder="Обязательно">
+   <label for="cls">Класс:</label><input id="cls" class="cls" type="text" autocomplete="off" placeholder="9">
+  </div>
+  <div class="modes lvl" title="Уровень сложности"><button id="lBase" class="on" onclick="setLvl('base')">🟢 Базовый</button><button id="lAdv" onclick="setLvl('adv')">🔷 Продвинутый</button></div>
+  <div class="modes"><button id="mLearn" class="on" onclick="setMode('learn')">📘 Обучение</button><button id="mCtrl" onclick="setMode('ctrl')">📝 Контроль</button></div>
+  <button class="hbtn calcH" onclick="calcToggle()" title="Калькулятор">🧮 Калькулятор</button>
+  <button class="hbtn" onclick="exportTxt()" title="Сохранить результаты в текстовый файл">💾 .txt</button>
+ </div>
+</header>
+
+<!-- ============ ОБУЧЕНИЕ ============ -->
+<div id="learn">
+<div style="max-width:1180px;margin:12px auto 0;padding:0 16px"><div class="lvlnote" id="lvlNote"></div></div>
+<nav id="tabs" style="margin-top:0">
+ <button data-t="theory" class="on">1. Теория и примеры<span class="cnt" id="c_theory"></span></button>
+ <button data-t="conv">2. Перевод единиц<span class="cnt" id="c_conv"></span></button>
+ <button data-t="dano">3. Дано / Найти<span class="cnt" id="c_dano"></span></button>
+ <button data-t="form">4. Формула<span class="cnt" id="c_form"></span></button>
+ <button data-t="prob">5. Задачи в тетради<span class="cnt" id="c_prob"></span></button>
+</nav>
+<main>
+<!-- Теория -->
+<section id="p_theory" class="panel">
+ <div class="grid">
+  <div class="card why" style="grid-column:1/-1">
+   <h3>От DNS — к скорости: зачем нам пропускная способность?</h3>
+   <div class="chain">
+    <div><b>IP-адрес и DNS</b><span>КУДА отправить данные</span></div><i>→</i>
+    <div><b>Протоколы</b><span>ПО КАКИМ ПРАВИЛАМ передавать</span></div><i>→</i>
+    <div class="now"><b>Пропускная способность</b><span>КАК БЫСТРО данные дойдут</span></div>
+   </div>
+   <p>На прошлых уроках мы узнали, как данные находят дорогу: DNS превращает имя сайта в IP-адрес, а протоколы задают правила передачи. Но даже когда адрес найден, остаётся вопрос — <b>сколько времени</b> займёт передача? Это зависит от пропускной способности канала. Если адрес — это «куда ехать», а протокол — «правила дорожного движения», то пропускная способность — это <b>ширина дороги</b>: сколько бит проезжает за одну секунду.</p>
+   <p><b>Уметь её определять нужно, чтобы:</b> рассчитать, сколько скачивается фильм или загружается домашняя работа на Padlet; сравнить тарифы интернета и выбрать подходящий; понять, почему «тормозит» видео на онлайн-уроке, когда весь класс смотрит одновременно; прикинуть, сколько мобильного трафика уйдёт за видеозвонок.</p>
+  </div>
+  <div class="card">
+   <h3>Что такое пропускная способность</h3>
+   <p><b>Пропускная способность канала связи</b> — скорость передачи данных: какой объём информации передаётся за 1 секунду. Она всегда ограничена и зависит от свойств устройств и кабелей, используемых в сети.</p>
+   <div class="formula">Q = q · t</div>
+   <table class="t">
+    <tr><td><b>Q</b></td><td>объём передаваемой информации (бит)</td></tr>
+    <tr><td><b>q</b></td><td>пропускная способность сети — скорость передачи данных (бит/с)</td></tr>
+    <tr><td><b>t</b></td><td>время передачи (с)</td></tr>
+   </table>
+  </div>
+  <div class="card">
+   <h3>Как выразить нужную величину</h3>
+   <svg class="tri" width="300" height="210" viewBox="0 0 300 210" aria-label="Треугольник формулы">
+    <polygon points="150,8 292,200 8,200" fill="#dbeafe" stroke="#0b5cad" stroke-width="4"/>
+    <line x1="68" y1="118" x2="232" y2="118" stroke="#0b5cad" stroke-width="4"/>
+    <line x1="150" y1="118" x2="150" y2="200" stroke="#0b5cad" stroke-width="4"/>
+    <text x="150" y="98" text-anchor="middle" font-size="48" font-style="italic" font-weight="bold" fill="#0d1b2a" font-family="Times New Roman">Q</text>
+    <text x="100" y="178" text-anchor="middle" font-size="44" font-style="italic" font-weight="bold" fill="#0d1b2a" font-family="Times New Roman">q</text>
+    <text x="200" y="178" text-anchor="middle" font-size="44" font-style="italic" font-weight="bold" fill="#0d1b2a" font-family="Times New Roman">t</text>
+   </svg>
+   <p style="text-align:center;font-size:24px;margin:6px 0"><i><b>Q = q · t &nbsp;&nbsp; q = Q : t &nbsp;&nbsp; t = Q : q</b></i></p>
+   <p class="note">Закрой пальцем ту величину, которую ищешь: то, что осталось, и есть формула. Q сверху — делим; q и t рядом — умножаем.</p>
+  </div>
+  <div class="card">
+   <h3>Единицы измерения</h3>
+   <p><b>1 байт = 8 бит<br>1 Кбайт = 1024 байт<br>1 Мбайт = 1024 Кбайт</b><br>1 Кбит = 1024 бит, 1 Мбит = 1024 Кбит</p>
+   <div class="ladder"><span class="u">Мбайт</span><span class="a">· 1024<br>→</span><span class="u">Кбайт</span><span class="a">· 1024<br>→</span><span class="u">байт</span><span class="a">· 8<br>→</span><span class="u">бит</span></div>
+   <div class="ladder"><span class="u">Мбит</span><span class="a">· 1024<br>→</span><span class="u">Кбит</span><span class="a">· 1024<br>→</span><span class="u">бит</span></div>
+   <div class="ladder"><span class="u">Кбайт</span><span class="a">· 8<br>→</span><span class="u">Кбит</span>&nbsp;&nbsp;<span class="u">Мбайт</span><span class="a">· 8<br>→</span><span class="u">Мбит</span></div>
+   <p class="note">К меньшей единице — <b>умножаем</b>, к большей — <b>делим</b>. Со скоростями так же: Кбайт/с → бит/с.</p>
+  </div>
+  <div class="card">
+   <h3>Примеры перевода</h3>
+   <table class="t mono" style="font-size:16px">
+    <tr><td>2 байт/с = 2 · 8 = 16 бит/с</td></tr>
+    <tr><td>3 Кбит/с = 3 · 1024 = 3 072 бит/с</td></tr>
+    <tr><td>3 Кбайт/с = 3 · 1024 · 8 = 24 576 бит/с</td></tr>
+    <tr><td>7 Мбит/с = 7 · 1024 · 1024 = 7 340 032 бит/с</td></tr>
+    <tr><td>90 112 бит/с = 90 112 : 1024 : 8 = 11 Кбайт/с</td></tr>
+    <tr><td>14 336 бит/с = 14 336 : 1024 = 14 Кбит/с</td></tr>
+   </table>
+  </div>
+ </div>
+
+ <div class="nb">
+  <div class="goal"><b class="t">📓 Запиши в тетрадь:</b><span class="dots" id="d_theory"></span><span id="gd_theory"></span></div>
+  <label><input type="checkbox" class="nbc"> формулу <b>Q = q · t</b> и что означает каждая буква (с единицами измерения);</label>
+  <label><input type="checkbox" class="nbc"> формулы <b>q = Q : t</b> и <b>t = Q : q</b>;</label>
+  <label><input type="checkbox" class="nbc"> соотношения единиц: 1 байт = 8 бит, 1 Кбайт = 1024 байт, 1 Мбайт = 1024 Кбайт;</label>
+  <label><input type="checkbox" class="nbc"> <b>хотя бы одну задачу полностью</b> (ниже) — с оформлением: Дано, Найти, Решение, Ответ.</label>
+ </div>
+
+ <h3>Разбор задач по шагам</h3>
+ <div class="exsel" id="exsel"></div>
+ <div id="exText" class="task"></div>
+ <div id="exSol"></div>
+ <div id="exNote" class="stepnote"></div>
+ <div class="bar">
+  <button class="btn sec" onclick="exStep(-1)">← Шаг назад</button>
+  <button class="btn" id="exNext" onclick="exStep(1)">Следующий шаг →</button>
+  <button class="btn sec" onclick="exAll()">Показать всё решение</button>
+ </div>
+</section>
+
+<!-- Перевод -->
+<section id="p_conv" class="panel hidden">
+ <h2>Перевод единиц измерения</h2>
+ <div class="goal"><span id="gt_conv"></span><span class="dots" id="d_conv"></span><span id="gd_conv"></span></div>
+ <div class="bar"><div class="lv" id="lv_conv"></div><span class="stat" id="s_conv"></span></div>
+ <div id="w_conv"></div>
+</section>
+<!-- Дано -->
+<section id="p_dano" class="panel hidden">
+ <h2>Краткая запись условия: Дано / Найти</h2>
+ <div class="goal"><span id="gt_dano"></span><span class="dots" id="d_dano"></span><span id="gd_dano"></span></div>
+ <p class="note">Задачу решать не нужно — определи, какая величина какой буквой обозначается, что нужно найти, по какой формуле и нужно ли переводить единицы измерения.</p>
+ <div class="bar"><span class="stat" id="s_dano"></span></div>
+ <div id="w_dano"></div>
+</section>
+<!-- Формула -->
+<section id="p_form" class="panel hidden">
+ <h2>Применяем формулу</h2>
+ <div class="goal"><span id="gt_form"></span><span class="dots" id="d_form"></span><span id="gd_form"></span></div>
+ <p class="note">Выбор формулы, вычисления без перевода единиц и вопросы «как изменится».</p>
+ <div class="bar"><span class="stat" id="s_form"></span></div>
+ <div id="w_form"></div>
+</section>
+<!-- Задачи -->
+<section id="p_prob" class="panel hidden">
+ <h2>Задачи: решаем в тетради</h2>
+ <div class="goal"><span id="gt_prob"></span><span class="dots" id="d_prob"></span><span id="gd_prob"></span></div>
+ <div class="nb" style="margin-top:0">📓 Реши задачу <b>в тетради</b> с полным оформлением: <b>Дано, Найти, Решение, Ответ</b>. В тренажёр введи только число — ответ. После проверки сравни своё оформление с образцом.<span id="decNote"><br>Ответ может быть <b>дробным</b> — пиши через запятую, например <b>2,5</b>.</span></div>
+ <div class="bar"><div class="lv" id="lv_prob"></div><span class="stat" id="s_prob"></span></div>
+ <div id="w_prob"></div>
+</section>
+</main>
+</div>
+
+<!-- ============ КОНТРОЛЬ ============ -->
+<div id="ctrl" class="hidden">
+<main>
+<section class="panel cp">
+ <div id="cStart">
+  <h2 id="cTitle">Контроль: 10 заданий</h2>
+  <p><span id="cPts">Каждое задание — 1 балл.</span> Подсказок нет, у каждого задания одна попытка. Задачи решай в тетради с оформлением, в тренажёр вводи только число (единицы уже указаны). Дробный ответ пиши через запятую, например 2,5. Пока идёт контроль, режим «Обучение» недоступен.</p>
+  <table class="t" style="max-width:860px" id="cDesc"></table>
+  <div class="bar"><button class="btn ctrlb" onclick="startCtrl()">Начать контроль</button></div>
+  <div id="cHist"></div>
+ </div>
+ <div id="cRun" class="hidden">
+  <div class="bar" style="margin:0;justify-content:space-between"><b id="cNum"></b></div>
+  <div class="progress"><div id="cProg" style="width:0"></div></div>
+  <div id="cBox"></div>
+ </div>
+ <div id="cEnd" class="hidden"></div>
+</section>
+</main>
+</div>
+
+<!-- ============ КАЛЬКУЛЯТОР ============ -->
+
+<div id="calc" class="hidden">
+ <div class="ttl"><span>🧮 Калькулятор</span><button onclick="calcToggle()" title="Закрыть">✕</button></div>
+ <input id="cExpr" autocomplete="off" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault();calcEval()}" oninput="calcLive()">
+ <div id="cRes"></div>
+ <div class="keys">
+  <button class="op" onclick="calcClear()">C</button><button class="op" onclick="calcBack()">⌫</button><button class="op" onclick="calcIn('(')">(</button><button class="op" onclick="calcIn(')')">)</button>
+  <button onclick="calcIn('7')">7</button><button onclick="calcIn('8')">8</button><button onclick="calcIn('9')">9</button><button class="op" onclick="calcIn(':')">:</button>
+  <button onclick="calcIn('4')">4</button><button onclick="calcIn('5')">5</button><button onclick="calcIn('6')">6</button><button class="op" onclick="calcIn('·')">·</button>
+  <button onclick="calcIn('1')">1</button><button onclick="calcIn('2')">2</button><button onclick="calcIn('3')">3</button><button class="op" onclick="calcIn('−')">−</button>
+  <button onclick="calcIn('0')">0</button><button onclick="calcIn(',')">,</button><button class="eq" onclick="calcEval()">=</button><button class="op" onclick="calcIn('+')">+</button>
+ </div>
+ <button class="toAns" onclick="calcToAnswer()">↓ Вставить результат в поле ответа</button>
+</div>
+<script>
+/* ================= УТИЛИТЫ ================= */
+const $=id=>document.getElementById(id);
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const fmt=n=>Number(n).toLocaleString('ru-RU').replace(/ /g,' ');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const strip=s=>String(s).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ');
+function plural(n,f){if(!Number.isInteger(n))return f[1];n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return f[2];if(n1>1&&n1<5)return f[1];if(n1===1)return f[0];return f[2]}
+function parseNum(s){s=String(s).replace(/[\s  ]/g,'').replace(',','.');if(s===''||isNaN(+s))return null;return +s}
+const LET=['А','Б','В','Г','Д','Е'];
+
+/* ================= ЕДИНИЦЫ ================= */
+const UN={'бит':{f:1,p:0,b:0},'байт':{f:8,p:0,b:1},'Кбит':{f:1024,p:1,b:0},'Кбайт':{f:8192,p:1,b:1},'Мбит':{f:1048576,p:2,b:0},'Мбайт':{f:8388608,p:2,b:1}};
+const LOC={'бит':'битах','байт':'байтах','Кбит':'Кбитах','Кбайт':'Кбайтах','Мбит':'Мбитах','Мбайт':'Мбайтах'};
+const conv=(v,a,b)=>v*UN[a].f/UN[b].f;
+function ops(a,b){
+  const dp=UN[a].p-UN[b].p,db=UN[a].b-UN[b].b,m=[],d=[];
+  for(let i=0;i<dp;i++)m.push('· 1024');
+  if(db>0)m.push('· 8');
+  for(let i=0;i<-dp;i++)d.push(': 1024');
+  if(db<0)d.push(': 8');
+  return m.concat(d).join(' ');
+}
+const chain=(v,a,b)=>`${fmt(v)} ${ops(a,b)} = ${fmt(conv(v,a,b))}`;
+const minU=(a,b)=>UN[a].f<=UN[b].f?a:b;
+const isInt=x=>Math.abs(x-Math.round(x))<1e-9;
+
+const QPOOL={'бит':[64,128,256,512,768,1000,1024,1200,1536,2048,2400,3000,4096,4800,9600],'байт':[16,32,64,100,128,200,256,512,1024],'Кбит':[2,4,8,10,16,24,32,48,56,64,100,128,256,512],'Кбайт':[1,2,4,8,16,32,64,128,256],'Мбит':[1,2,4,8,10,16,100],'Мбайт':[1,2,4,8]};
+const TPOOL=[2,4,5,8,10,12,15,16,20,25,30,32,40,45,50,60,64,80,90,120,128,180,240,256,300,600];
+const tWord=t=>t.u==='с'?`${fmt(t.v)} ${plural(t.v,['секунду','секунды','секунд'])}`:`${fmt(t.v)} ${plural(t.v,['минуту','минуты','минут'])}`;
+const F_Q='Q = q · t',F_q='q = Q : t',F_t='t = Q : q';
+
+/* ================= ПОСТРОЕНИЕ ЗАДАЧ (с решением по шагам) ================= */
+// шаг: {w:'g'|'f'|'s'|'a', h:html, n:пояснение}
+function solFindq(o){ // o:{QV,QU,t:{v,u,s},ansU,text?}
+  const W=minU(o.QU,o.ansU),QW=conv(o.QV,o.QU,W),qW=QW/o.t.s,ans=conv(qW,W,o.ansU);
+  const st=[];
+  st.push({w:'g',h:`Q = ${fmt(o.QV)} ${o.QU}`,n:'Выписываем из условия объём переданной информации — это <b>Q</b>.'});
+  st.push({w:'g',h:`t = ${o.t.v} ${o.t.u}`,n:'Время передачи — это <b>t</b>.'});
+  st.push({w:'f',h:`q — ? (${o.ansU}/с)`,n:'Нужно найти пропускную способность <b>q</b>; в скобках — в каких единицах записать ответ.'});
+  if(o.t.u==='мин')st.push({w:'s',h:`t = ${o.t.v} · 60 = ${o.t.s} с`,n:'Переводим минуты в секунды: 1 мин = 60 с.'});
+  if(W!==o.QU)st.push({w:'s',h:`Q = ${chain(o.QV,o.QU,W)} ${W}`,n:`Переводим объём в <b>${W}</b>, чтобы единицы были согласованы.`});
+  st.push({w:'s',h:`Q = q · t &nbsp;⇒&nbsp; q = Q : t`,n:'Записываем формулу и выражаем из неё <b>q</b>.'});
+  st.push({w:'s',h:`q = ${fmt(QW)} ${W} : ${o.t.s} с = ${fmt(qW)} ${W}/с`,n:'Подставляем числа и вычисляем.'});
+  if(W!==o.ansU)st.push({w:'s',h:`q = ${chain(qW,W,o.ansU)} ${o.ansU}/с`,n:`Переводим в единицы, которые требуются в вопросе: <b>${o.ansU}/с</b>.`});
+  st.push({w:'a',h:`${fmt(ans)} ${o.ansU}/с`,n:'Записываем ответ.'});
+  const text=o.text||pick([
+    `По каналу связи за ${tWord(o.t)} был передан файл объёмом ${fmt(o.QV)} ${o.QU}. Определи пропускную способность канала связи. Ответ запиши в ${o.ansU}/с.`,
+    `Файл размером ${fmt(o.QV)} ${o.QU} передан по сети за ${tWord(o.t)}. С какой скоростью передавались данные? Ответ запиши в ${o.ansU}/с.`,
+    `За ${tWord(o.t)} по сети передали ${fmt(o.QV)} ${o.QU} информации. Найди пропускную способность канала в ${o.ansU}/с.`]);
+  const convs=[...(o.t.u==='мин'?['min']:[]),...(W!==o.QU?['Q']:[]),...(W!==o.ansU?['ans']:[])];
+  return {kind:'q',text,ans,unit:o.ansU+'/с',steps:st,find:'q',formula:F_q,convs,
+    givens:[{sym:'Q',txt:`${fmt(o.QV)} ${o.QU}`},{sym:'t',txt:o.t.u==='с'?`${o.t.v} с`:`${o.t.v} мин`}]};
+}
+function solFindQ(o){ // o:{qv,qU,t,ansU}
+  const X=o.qv*o.t.s,ans=conv(X,o.qU,o.ansU),st=[];
+  st.push({w:'g',h:`q = ${fmt(o.qv)} ${o.qU}/с`,n:'Скорость передачи данных — это пропускная способность <b>q</b>.'});
+  st.push({w:'g',h:`t = ${o.t.v} ${o.t.u}`,n:'Время передачи — <b>t</b>.'});
+  st.push({w:'f',h:`Q — ? (${o.ansU})`,n:'Нужно найти объём информации <b>Q</b>.'});
+  if(o.t.u==='мин')st.push({w:'s',h:`t = ${o.t.v} · 60 = ${o.t.s} с`,n:'Переводим минуты в секунды.'});
+  st.push({w:'s',h:`Q = q · t`,n:'Записываем формулу.'});
+  st.push({w:'s',h:`Q = ${fmt(o.qv)} ${o.qU}/с · ${o.t.s} с = ${fmt(X)} ${o.qU}`,n:'Подставляем и вычисляем. Секунды сокращаются, остаются единицы объёма.'});
+  if(o.qU!==o.ansU)st.push({w:'s',h:`Q = ${chain(X,o.qU,o.ansU)} ${o.ansU}`,n:`Переводим в единицы из вопроса: <b>${o.ansU}</b>.`});
+  st.push({w:'a',h:`${fmt(ans)} ${o.ansU}`,n:'Записываем ответ.'});
+  const text=o.text||pick([
+    `Какой объём информации можно передать за ${tWord(o.t)} по каналу связи с пропускной способностью ${fmt(o.qv)} ${o.qU}/с? Ответ запиши в ${LOC[o.ansU]}.`,
+    `Скорость передачи данных по сети равна ${fmt(o.qv)} ${o.qU}/с. Сколько информации будет передано за ${tWord(o.t)}? Ответ запиши в ${LOC[o.ansU]}.`,
+    `Канал связи передаёт данные со скоростью ${fmt(o.qv)} ${o.qU}/с. Определи объём файла, который был передан за ${tWord(o.t)}. Ответ дай в ${LOC[o.ansU]}.`]);
+  const convs=[...(o.t.u==='мин'?['min']:[]),...(o.qU!==o.ansU?['ans']:[])];
+  return {kind:'Q',text,ans,unit:o.ansU,steps:st,find:'Q',formula:F_Q,convs,
+    givens:[{sym:'q',txt:`${fmt(o.qv)} ${o.qU}/с`},{sym:'t',txt:o.t.u==='с'?`${o.t.v} с`:`${o.t.v} мин`}]};
+}
+function solFindt(o){ // o:{QV,QU,qv,qU,ts,inMin}
+  const W=minU(o.QU,o.qU),QW=conv(o.QV,o.QU,W),qW=conv(o.qv,o.qU,W),ts=QW/qW,st=[];
+  const ans=o.inMin?ts/60:ts,unit=o.inMin?'мин':'с';
+  st.push({w:'g',h:`Q = ${fmt(o.QV)} ${o.QU}`,n:'Размер файла — объём информации <b>Q</b>.'});
+  st.push({w:'g',h:`q = ${fmt(o.qv)} ${o.qU}/с`,n:'Скорость передачи — пропускная способность <b>q</b>.'});
+  st.push({w:'f',h:`t — ? (${unit})`,n:'Нужно найти время передачи <b>t</b>.'});
+  if(W!==o.QU)st.push({w:'s',h:`Q = ${chain(o.QV,o.QU,W)} ${W}`,n:`Переводим объём в <b>${W}</b> — в те же единицы, что и у скорости.`});
+  if(W!==o.qU)st.push({w:'s',h:`q = ${chain(o.qv,o.qU,W)} ${W}/с`,n:`Переводим скорость в <b>${W}/с</b>.`});
+  st.push({w:'s',h:`Q = q · t &nbsp;⇒&nbsp; t = Q : q`,n:'Записываем формулу и выражаем <b>t</b>.'});
+  st.push({w:'s',h:`t = ${fmt(QW)} ${W} : ${fmt(qW)} ${W}/с = ${fmt(ts)} с`,n:'Подставляем и вычисляем.'});
+  if(o.inMin)st.push({w:'s',h:`t = ${fmt(ts)} : 60 = ${fmt(ans)} мин`,n:'Переводим секунды в минуты.'});
+  st.push({w:'a',h:`${fmt(ans)} ${o.inMin?plural(ans,['минута','минуты','минут']):plural(ans,['секунда','секунды','секунд'])}`,n:'Записываем ответ.'});
+  const tail=o.inMin?'Ответ запиши в минутах.':'Ответ запиши в секундах.';
+  const text=o.text||pick([
+    `Скорость передачи данных равна ${fmt(o.qv)} ${o.qU}/с. Передают файл размером ${fmt(o.QV)} ${o.QU}. Определи время передачи файла. ${tail}`,
+    `Сколько времени потребуется, чтобы передать файл размером ${fmt(o.QV)} ${o.QU} по каналу с пропускной способностью ${fmt(o.qv)} ${o.qU}/с? ${tail}`,
+    `Файл объёмом ${fmt(o.QV)} ${o.QU} передают по сети со скоростью ${fmt(o.qv)} ${o.qU}/с. За какое время будет передан файл? ${tail}`]);
+  const convs=[...(W!==o.QU?['Q']:[]),...(W!==o.qU?['q']:[]),...(o.inMin?['ans']:[])];
+  return {kind:'t',text,ans,unit,steps:st,find:'t',formula:F_t,convs,
+    givens:[{sym:'Q',txt:`${fmt(o.QV)} ${o.QU}`},{sym:'q',txt:`${fmt(o.qv)} ${o.qU}/с`}]};
+}
+function solText(o){ // o:{P,L,C,i,q}
+  const B=o.P*o.L*o.C*o.i,bits=B*8,t=bits/o.q,st=[];
+  st.push({w:'g',h:`Q = ${o.P} · ${o.L} · ${o.C} · ${o.i} байт = ${fmt(B)} байт`,n:'Объём текста: страницы × строки × символы × байты на символ.'});
+  st.push({w:'g',h:`q = ${fmt(o.q)} бит/с`,n:'Скорость модема — <b>q</b>.'});
+  st.push({w:'f',h:`t — ? (с)`,n:'Нужно найти время <b>t</b>.'});
+  st.push({w:'s',h:`Q = ${fmt(B)} · 8 = ${fmt(bits)} бит`,n:'Скорость дана в бит/с, поэтому переводим объём в биты.'});
+  st.push({w:'s',h:`Q = q · t &nbsp;⇒&nbsp; t = Q : q`,n:'Записываем формулу и выражаем <b>t</b>.'});
+  st.push({w:'s',h:`t = ${fmt(bits)} бит : ${fmt(o.q)} бит/с = ${fmt(t)} с`,n:'Подставляем и вычисляем.'});
+  st.push({w:'a',h:`${fmt(t)} ${plural(t,['секунда','секунды','секунд'])}`,n:'Записываем ответ.'});
+  const text=o.text||`Сколько секунд потребуется модему, передающему сообщения со скоростью ${fmt(o.q)} бит/с, чтобы передать ${o.P} ${plural(o.P,['страницу','страницы','страниц'])} текста в ${o.L} строк по ${o.C} символов каждая, если каждый символ кодируется ${o.i===1?'1 байтом':'2 байтами'}?`;
+  return {kind:'text',text,ans:t,unit:'с',steps:st,find:'t',formula:F_t};
+}
+function solPages(o){ // o:{P,L,C,i,q,t}
+  const S=o.L*o.C*o.i,bits=o.q*o.t,B=bits/8,st=[];
+  st.push({w:'g',h:`q = ${fmt(o.q)} бит/с`,n:'Скорость передачи — <b>q</b>.'});
+  st.push({w:'g',h:`t = ${o.t} с`,n:'Время — <b>t</b>.'});
+  st.push({w:'g',h:`1 стр. = ${o.L} · ${o.C} · ${o.i} байт = ${fmt(S)} байт`,n:'Объём одной страницы: строки × символы × байты на символ.'});
+  st.push({w:'f',h:`N — ? (страниц)`,n:'Нужно найти число страниц <b>N</b>.'});
+  st.push({w:'s',h:`Q = q · t = ${fmt(o.q)} · ${o.t} = ${fmt(bits)} бит`,n:'Сначала находим весь переданный объём.'});
+  st.push({w:'s',h:`Q = ${fmt(bits)} : 8 = ${fmt(B)} байт`,n:'Переводим в байты — в тех же единицах объём страницы.'});
+  st.push({w:'s',h:`N = ${fmt(B)} : ${fmt(S)} = ${fmt(o.P)}`,n:'Делим весь объём на объём одной страницы.'});
+  st.push({w:'a',h:`${fmt(o.P)} ${plural(o.P,['страница','страницы','страниц'])}`,n:'Записываем ответ.'});
+  const text=`Модем передаёт данные со скоростью ${fmt(o.q)} бит/с. Сколько страниц текста он передаст за ${o.t} ${plural(o.t,['секунду','секунды','секунд'])}, если на странице ${o.L} строк по ${o.C} символов, а каждый символ кодируется ${o.i===1?'1 байтом':'2 байтами'}?`;
+  return {kind:'pages',text,ans:o.P,unit:'стр.',steps:st,find:'N',formula:''};
+}
+
+/* ---------- случайные генераторы задач ---------- */
+function tFrom(ts,allowMin){if(allowMin&&ts%60===0&&Math.random()<.65)return {v:ts/60,u:'мин',s:ts};return {v:ts,u:'с',s:ts}}
+function genFindq(lv){
+  for(let k=0;k<2000;k++){
+    const base=lv===1?['бит','байт','Кбит','Кбайт']:lv===2?['бит','байт','Кбит','Кбайт']:['Кбит','Кбайт','Мбит','Мбайт','бит'];
+    const ansU=pick(base);
+    let QU=lv===1?ansU:pick(lv===2?['бит','байт','Кбит','Кбайт']:['Кбайт','Мбайт','Мбит','Кбит']);
+    if(lv>1&&QU===ansU)continue;
+    const q=pick(QPOOL[ansU]),ts=pick(TPOOL.filter(x=>lv===1?x<=120:true));
+    const QV=conv(q*ts,ansU,QU);
+    if(!isInt(QV)||QV<1||QV>(UN[QU].f<1024?150000:20000))continue;
+    return solFindq({QV,QU,t:tFrom(ts,lv>1),ansU});
+  }
+}
+function genFindQ(lv){
+  for(let k=0;k<2000;k++){
+    const qU=pick(lv===3?['Кбит','Кбайт','Мбит','бит']:['бит','байт','Кбит','Кбайт']);
+    let ansU=lv===1?qU:pick(lv===2?['бит','байт','Кбит','Кбайт']:['Кбайт','Мбайт','Кбит','байт']);
+    if(lv>1&&ansU===qU)continue;
+    const qv=pick(QPOOL[qU]),ts=pick(TPOOL.filter(x=>lv===1?x<=120:true));
+    const ans=conv(qv*ts,qU,ansU);
+    if(!isInt(ans)||ans<1||ans>(UN[ansU].f<1024?5e6:50000))continue;
+    return solFindQ({qv,qU,t:tFrom(ts,lv>1),ansU});
+  }
+}
+function genFindt(lv){
+  for(let k=0;k<2000;k++){
+    const qU=pick(lv===3?['бит','Кбит','Кбайт','Мбит']:['бит','байт','Кбит','Кбайт']);
+    let QU=lv===1?qU:pick(lv===2?['бит','байт','Кбит','Кбайт']:['Кбайт','Мбайт','Кбит']);
+    if(lv>1&&QU===qU)continue;
+    const inMin=lv===3&&Math.random()<.45;
+    const ts=inMin?60*R(1,10):pick(TPOOL.filter(x=>lv===1?x<=120:true));
+    const qv=pick(QPOOL[qU]);
+    const QV=conv(qv*ts,qU,QU);
+    if(!isInt(QV)||QV<1||QV>(UN[QU].f<1024?150000:20000))continue;
+    return solFindt({QV,QU,qv,qU,ts,inMin});
+  }
+}
+const QMODEM=[1200,2400,4800,9600,14400,19200,28000,28800,33600,56000,7000,8000,16000,32000,24000,12000];
+function genText(){
+  for(let k=0;k<5000;k++){
+    const P=R(2,60),L=pick([25,30,35,40,45,50,60]),C=pick([40,50,60,70,80]),i=Math.random()<.75?1:2,q=pick(QMODEM);
+    const t=P*L*C*i*8/q;
+    if(isInt(t)&&t>=2&&t<=900)return solText({P,L,C,i,q});
+  }
+}
+function genPages(){
+  for(let k=0;k<5000;k++){
+    const P=R(2,40),L=pick([25,30,35,40,45,50,60]),C=pick([40,50,60,70,80]),i=Math.random()<.75?1:2,q=pick(QMODEM);
+    const t=P*L*C*i*8/q;
+    if(isInt(t)&&t>=2&&t<=900)return solPages({P,L,C,i,q,t});
+  }
+}
+/* ---------- задачи с дробным ответом ---------- */
+const dec2=x=>Math.abs(Math.round(x*100)/100-x)<1e-9&&!isInt(x);
+function genDecimal(){
+  for(let k=0;k<5000;k++){
+    const type=R(0,2);
+    if(type===0){ // найти t — дробное
+      const ts=pick([0.5,1.5,2.5,3.5,4.5,5.5,7.5,12.5,0.25,0.75,1.25,2.25,6.25]);
+      const qU=pick(['Кбит','Кбайт','Мбит','бит']),QU=pick(['Кбайт','Мбайт','Кбит','байт','Мбит']);
+      const qv=pick(QPOOL[qU]),QV=conv(qv*ts,qU,QU);
+      if(!isInt(QV)||QV<1||QV>(UN[QU].f<1024?150000:20000))continue;
+      return solFindt({QV,QU,qv,qU,ts,inMin:false});
+    }
+    if(type===1){ // найти q — дробное
+      const ansU=pick(['Мбит','Мбайт','Кбайт','Кбит']),qa=pick([0.5,1.5,2.5,3.5,1.25,0.75,4.5,12.5]);
+      const ts=pick(TPOOL),QU=pick(['Кбайт','Мбайт','Кбит','Мбит']);
+      const QV=conv(qa*ts,ansU,QU);
+      if(!isInt(QV)||QV<1||QV>20000)continue;
+      const p=solFindq({QV,QU,t:tFrom(ts,true),ansU});if(dec2(p.ans))return p;continue;
+    }
+    // найти Q — дробное
+    const qU=pick(['Кбит','Мбит','Кбайт']),ansU=pick(['Мбайт','Кбайт','Мбит']);
+    if(UN[ansU].f<=UN[qU].f)continue;
+    const qv=pick(QPOOL[qU]),ts=pick(TPOOL);
+    const a=conv(qv*ts,qU,ansU);
+    if(!dec2(a))continue;
+    return solFindQ({qv,qU,t:tFrom(ts,true),ansU});
+  }
+}
+/* ---------- задачи из жизни ---------- */
+function lifeSol(given,find,sol,ans){return [...given.map(h=>({w:'g',h,n:'Выписываем данные из условия.'})),{w:'f',h:find,n:'Записываем, что нужно найти.'},...sol.map(x=>({w:'s',h:x[0],n:x[1]})),{w:'a',h:ans,n:'Записываем ответ.'}]}
+function genLife(){
+  for(let k=0;k<5000;k++){
+    const type=R(0,5);
+    if(type===0||type===1){ // фильм / загрузка на Padlet: найти t
+      const N=type===0?pick([350,512,700,1024,1400,1536,2048,4096]):pick([12,16,24,30,40,48,60,64]);
+      const q=type===0?pick([8,10,16,20,25,32,50,64,100]):pick([2,4,5,6,8,10,16]);
+      const bits=N*8,t=bits/q;if(!isInt(t)||t<5||t>3600)continue;
+      const inMin=t%60===0&&t>=120&&Math.random()<.5,ans=inMin?t/60:t;
+      const what=type===0?`Фильм размером ${fmt(N)} Мбайт скачивают по домашнему интернету со скоростью ${q} Мбит/с.`:`Ученик загружает на Padlet видео-презентацию размером ${N} Мбайт. Скорость отправки данных — ${q} Мбит/с.`;
+      const text=`${what} Сколько ${inMin?'минут':'секунд'} займёт ${type===0?'скачивание':'загрузка'}?`;
+      const sol=[[`Q = ${fmt(N)} · 8 = ${fmt(bits)} Мбит`,'Скорость в Мбит/с, поэтому переводим Мбайт в Мбит (· 8).'],[`t = Q : q`,'Выражаем время из формулы Q = q · t.'],[`t = ${fmt(bits)} : ${q} = ${fmt(t)} с`,'Вычисляем.']];
+      if(inMin)sol.push([`t = ${fmt(t)} : 60 = ${fmt(ans)} мин`,'Переводим секунды в минуты.']);
+      return {kind:'life',text,ans,unit:inMin?'мин':'с',steps:lifeSol([`Q = ${fmt(N)} Мбайт`,`q = ${q} Мбит/с`],`t — ? (${inMin?'мин':'с'})`,sol,`${fmt(ans)} ${inMin?'мин':'с'}`)};
+    }
+    if(type===2){ // фото в мессенджере
+      const n=R(3,30),sz=pick([256,512,768,1024,1536,2048]),q=pick([512,1024,2048,4096,8192]);
+      const QK=n*sz,bits=QK*8,t=bits/q;if(!isInt(t)||t<2||t>600)continue;
+      const text=`Ты отправляешь другу в мессенджере ${n} ${plural(n,['фотографию','фотографии','фотографий'])} по ${fmt(sz)} Кбайт каждая. Скорость мобильного интернета — ${fmt(q)} Кбит/с. Сколько секунд займёт отправка?`;
+      return {kind:'life',text,ans:t,unit:'с',steps:lifeSol([`Q = ${n} · ${fmt(sz)} Кбайт = ${fmt(QK)} Кбайт`,`q = ${fmt(q)} Кбит/с`],'t — ? (с)',
+        [[`Q = ${fmt(QK)} · 8 = ${fmt(bits)} Кбит`,'Переводим Кбайт в Кбит, как у скорости.'],['t = Q : q','Выражаем время.'],[`t = ${fmt(bits)} : ${fmt(q)} = ${fmt(t)} с`,'Вычисляем.']],`${fmt(t)} с`)};
+    }
+    if(type===3){ // сравнение тарифов
+      const N=pick([512,1024,1536,2048,3072,4096,6144,8192]),q1=pick([8,10,16,20,25,32]),q2=pick([32,50,64,100,128]);
+      if(q2<=q1)continue;const bits=N*8,t1=bits/q1,t2=bits/q2;if(!isInt(t1)||!isInt(t2)||t1>7200)continue;
+      const d=t1-t2;
+      const text=`Игра весит ${fmt(N)} Мбайт. Тариф «Старт» даёт скорость ${q1} Мбит/с, тариф «Турбо» — ${q2} Мбит/с. На сколько секунд быстрее игра скачается на тарифе «Турбо»?`;
+      return {kind:'life',text,ans:d,unit:'с',steps:lifeSol([`Q = ${fmt(N)} Мбайт`,`q₁ = ${q1} Мбит/с`,`q₂ = ${q2} Мбит/с`],'t₁ − t₂ — ? (с)',
+        [[`Q = ${fmt(N)} · 8 = ${fmt(bits)} Мбит`,'Переводим объём в Мбит.'],[`t₁ = ${fmt(bits)} : ${q1} = ${fmt(t1)} с`,'Время на тарифе «Старт».'],[`t₂ = ${fmt(bits)} : ${q2} = ${fmt(t2)} с`,'Время на тарифе «Турбо».'],[`t₁ − t₂ = ${fmt(t1)} − ${fmt(t2)} = ${fmt(d)} с`,'Находим разницу.']],`на ${fmt(d)} с`)};
+    }
+    if(type===4){ // трафик видеоурока / видеозвонка
+      const q=pick([1,2,3,4,5,6,8]),m=pick([10,15,20,30,40,45,60,90]);
+      const ts=m*60,Mbit=q*ts,MB=Mbit/8;if(!isInt(MB))continue;
+      const what=pick([`Онлайн-урок длится ${m} минут, видео передаётся со скоростью ${q} Мбит/с.`,`Видеозвонок с бабушкой длился ${m} минут, скорость видеопотока — ${q} Мбит/с.`]);
+      const text=`${what} Сколько мегабайт мобильного трафика будет израсходовано?`;
+      return {kind:'life',text,ans:MB,unit:'Мбайт',steps:lifeSol([`q = ${q} Мбит/с`,`t = ${m} мин`],'Q — ? (Мбайт)',
+        [[`t = ${m} · 60 = ${fmt(ts)} с`,'Переводим минуты в секунды.'],['Q = q · t','Записываем формулу.'],[`Q = ${q} · ${fmt(ts)} = ${fmt(Mbit)} Мбит`,'Вычисляем объём в Мбит.'],[`Q = ${fmt(Mbit)} : 8 = ${fmt(MB)} Мбайт`,'Переводим Мбит в Мбайт (: 8).']],`${fmt(MB)} Мбайт`)};
+    }
+    // песни
+    const sz=pick([4,5,6,8,10,12]),q=pick([4,8,10,16,20,32]),m=pick([1,2,3,5]);
+    const ts=m*60,bits=q*ts,MB=bits/8,n=MB/sz;if(!isInt(MB)||!isInt(n)||n<2)continue;
+    const text=`Сколько песен по ${sz} Мбайт можно скачать за ${m} ${plural(m,['минуту','минуты','минут'])}, если скорость интернета ${q} Мбит/с?`;
+    return {kind:'life',text,ans:n,unit:'песен',steps:lifeSol([`1 песня = ${sz} Мбайт`,`q = ${q} Мбит/с`,`t = ${m} мин`],'N — ? (песен)',
+      [[`t = ${m} · 60 = ${ts} с`,'Переводим минуты в секунды.'],[`Q = q · t = ${q} · ${ts} = ${fmt(bits)} Мбит`,'Сколько всего можно скачать.'],[`Q = ${fmt(bits)} : 8 = ${fmt(MB)} Мбайт`,'Переводим в Мбайт.'],[`N = ${fmt(MB)} : ${sz} = ${fmt(n)}`,'Делим на размер одной песни.']],`${fmt(n)} песен`)};
+  }
+}
+function genProblem(lv){
+  if(lv===1)return pick([genFindq,genFindQ,genFindt])(1);
+  if(lv===2)return pick([()=>genFindq(2),()=>genFindQ(2),()=>genFindt(2),genText,genLife]);
+  if(lv===3)return pick([()=>genFindq(3),()=>genFindQ(3),()=>genFindt(3),genText,genPages,genDecimal,genDecimal,genLife]);
+  return Math.random()<.8?genLife:genDecimal;
+}
+function genProblemFix(lv){const g=genProblem(lv);return typeof g==='function'?g():g}
+
+/* ---------- готовые примеры (из презентации) ---------- */
+const EXAMPLES=[
+ ()=>solFindq({QV:480,QU:'Кбайт',t:{v:1,u:'мин',s:60},ansU:'Кбит',text:'Пример 1. По каналу связи за 1 минуту был передан файл объёмом 480 Кбайт. Определи пропускную способность канала связи. Ответ запиши в Кбит/с.'}),
+ ()=>solFindQ({qv:30,qU:'Кбит',t:{v:10,u:'с',s:10},ansU:'бит',text:'Пример 2. Какой объём информации нужно передать за 10 секунд с пропускной способностью 30 Кбит в секунду? Ответ запишите в битах.'}),
+ ()=>solFindt({QV:3,QU:'Кбайт',qv:768,qU:'бит',ts:32,inMin:false,text:'Пример 3. Скорость передачи данных равна 768 бит/с. Передают файл размером 3 Кбайт. Определи время передачи файла в секундах.'}),
+ ()=>solText({P:50,L:35,C:60,i:1,q:28000,text:'Пример 4. Сколько секунд потребуется модему, передающему сообщения со скоростью 28 000 бит/с, чтобы передать 50 страниц текста в 35 строк по 60 символов каждая, при условии, что каждый символ кодируется 1 байтом?'})
+];
+
+/* ---------- отображение решения ---------- */
+function solHTML(steps,shown){ // shown: число видимых шагов (undefined = все)
+  const n=shown===undefined?steps.length:shown;
+  let g='',f='',s='',a='',hasS=false;
+  steps.forEach((st,i)=>{
+    const cls='ln'+(i>=n?' hid':'')+(i===n-1&&shown!==undefined?' cur':'');
+    if(st.w==='g')g+=`<div class="${cls}">${st.h}</div>`;
+    else if(st.w==='f')f+=`<div class="${cls}">${st.h}</div>`;
+    else if(st.w==='s'){s+=`<div class="${cls}">${st.h}</div>`;hasS=true}
+    else a=`<div class="ans${i>=n?' hid':''}">Ответ: ${st.h}</div>`;
+  });
+  const fi=steps.findIndex(x=>x.w==='f'),si=steps.findIndex(x=>x.w==='s');
+  return `<div class="sol"><div class="sg"><div class="h">Дано:</div>${g}<div class="fl"><div class="h${fi>=n?' hid':''}">Найти:</div>${f}</div></div>
+  <div class="ss"><div class="h${si>=n?' hid':''}">Решение:</div>${s}</div>${a}</div>`;
+}
+
+/* ================= ПЕРЕВОД ЕДИНИЦ ================= */
+const CONV_LV={
+ 1:[['байт','бит'],['бит','байт'],['Кбайт','Кбит'],['Кбит','Кбайт'],['Мбайт','Мбит']],
+ 2:[['Кбит','бит'],['Кбайт','бит'],['бит','Кбит'],['бит','Кбайт'],['Кбайт','байт'],['байт','Кбайт'],['Мбайт','Кбайт']],
+ 3:[['Мбит','бит'],['Мбит','Кбит'],['Мбайт','Кбит'],['Мбит','Кбайт'],['Кбит','Мбит'],['Мбайт','байт'],['Кбит','байт'],['бит','Мбайт']]
+};
+function genConv(lv){
+  for(let k=0;k<500;k++){
+    const [a,b]=pick(CONV_LV[lv]);const speed=Math.random()<.7;
+    let v,r;
+    if(UN[a].f>=UN[b].f){v=lv===1?R(2,99):R(2,lv===2?50:12);r=conv(v,a,b)}
+    else{r=lv===1?R(2,99):R(2,lv===2?40:16);v=conv(r,b,a)}
+    if(!isInt(v)||!isInt(r)||r>2e8)continue;
+    const s=speed?'/с':'';
+    return {type:'num',d:0,tag:speed?'Скорость передачи':'Объём информации',
+      text:`Переведи: <span class="big mono">${fmt(v)} ${a}${s} = ? ${b}${s}</span>`,
+      ans:r,unit:b+s,hint:`${fmt(v)} ${a}${s} = ${fmt(v)} ${ops(a,b)} = ? ${b}${s}`,
+      sol:`<span class="mono">${chain(v,a,b)} ${b}${s}</span>`};
+  }
+}
+
+/* ================= ФОРМУЛА ================= */
+const NAMES={Q:'объём переданной информации Q',q:'пропускную способность канала q',t:'время передачи t'};
+const ALLF=[F_Q,F_q,F_t,'q = Q · t','t = q : Q','Q = q : t'];
+function genFormChoice(){
+  const x=pick(['Q','q','t']);const right={Q:F_Q,q:F_q,t:F_t}[x];
+  const opts=shuffle([right,...shuffle(ALLF.filter(f=>f!==right)).slice(0,3)]);
+  return {type:'choice',d:1,tag:'Выбор формулы',text:`По какой формуле можно найти ${NAMES[x]}?`,opts,ans:opts.indexOf(right),mono:true,
+    expl:`Из формулы <b>Q = q · t</b>: ${x==='Q'?'объём равен скорости, умноженной на время':x==='q'?'чтобы найти скорость, объём делим на время: <b>q = Q : t</b>':'чтобы найти время, объём делим на скорость: <b>t = Q : q</b>'}.`};
+}
+function genFormNum(){
+  const u=pick(['бит','Кбит','Кбайт','байт','Мбит']);
+  const q=pick(QPOOL[u].filter(x=>x<=2048)),t=pick([2,3,4,5,6,8,10,12,15,20,25,30,40,50,60]);
+  const Q=q*t,x=pick(['Q','q','t']);
+  const d={Q:`Q = ${fmt(Q)} ${u}`,q:`q = ${fmt(q)} ${u}/с`,t:`t = ${t} с`};
+  const given=['Q','q','t'].filter(k=>k!==x).map(k=>d[k]).join(', &nbsp;');
+  const ans={Q,q,t}[x],unit={Q:u,q:u+'/с',t:'с'}[x];
+  const f={Q:F_Q,q:F_q,t:F_t}[x];
+  const calc={Q:`Q = ${fmt(q)} · ${t} = ${fmt(Q)} ${u}`,q:`q = ${fmt(Q)} : ${t} = ${fmt(q)} ${u}/с`,t:`t = ${fmt(Q)} : ${fmt(q)} = ${t} с`}[x];
+  return {type:'num',d:1,tag:'Вычисли по формуле',text:`Дано: <span class="mono">${given}</span>.<br>Найди <b>${x}</b> (${unit}).`,ans,unit,
+    hint:`Формула: <b class="mono">${f}</b>`,sol:`<span class="mono">${f}<br>${calc}</span>`};
+}
+function genFormChange(){
+  const k=pick([2,3,4,5]);
+  const cases=[
+   [`Пропускную способность канала увеличили в ${k} раза, а объём файла не изменился. Как изменится время передачи?`,`уменьшится в ${k} раза`,`t = Q : q — при увеличении делителя q в ${k} раза частное t уменьшается в ${k} раза.`],
+   [`Объём файла увеличился в ${k} раза, скорость передачи та же. Как изменится время передачи?`,`увеличится в ${k} раза`,`t = Q : q — делимое Q выросло в ${k} раза, значит и t выросло в ${k} раза.`],
+   [`Время передачи увеличили в ${k} раза при той же пропускной способности. Как изменится объём переданной информации?`,`увеличится в ${k} раза`,`Q = q · t — если t больше в ${k} раза, то и Q больше в ${k} раза.`],
+   [`Тот же файл нужно передать в ${k} раза быстрее. Как должна измениться пропускная способность канала?`,`увеличится в ${k} раза`,`q = Q : t — время меньше в ${k} раза, значит q должна быть больше в ${k} раза.`],
+   [`Пропускную способность уменьшили в ${k} раза, а время передачи увеличили в ${k} раза. Как изменится объём переданной информации?`,`не изменится`,`Q = q · t — один множитель уменьшился в ${k} раза, другой увеличился в ${k} раза, произведение не изменилось.`]
+  ].map(c=>{c[0]=c[0].replace(/(\d) раза/g,(m,n)=>n+' '+plural(+n,['раз','раза','раз']));c[1]=c[1].replace(/(\d) раза/g,(m,n)=>n+' '+plural(+n,['раз','раза','раз']));c[2]=c[2].replace(/(\d) раза/g,(m,n)=>n+' '+plural(+n,['раз','раза','раз']));return c});
+  const c=pick(cases);const rz=plural(k,['раз','раза','раз']),rz2=plural(k*k,['раз','раза','раз']);
+  const pool=[`увеличится в ${k} ${rz}`,`уменьшится в ${k} ${rz}`,'не изменится',`увеличится в ${k*k} ${rz2}`,`уменьшится в ${k*k} ${rz2}`];
+  const opts=shuffle([c[1],...shuffle(pool.filter(p=>p!==c[1])).slice(0,3)]);
+  return {type:'choice',d:1,tag:'Как изменится?',text:c[0],opts,ans:opts.indexOf(c[1]),expl:c[2]};
+}
+function genForm(){const r=Math.random();return r<.3?genFormChoice():r<.72?genFormNum():genFormChange()}
+
+/* ================= ДАНО / НАЙТИ ================= */
+
+function genDano(){
+  const lv=LVL==='base'?pick([1,2]):pick([1,2,2,3]);const p=pick([genFindq,genFindQ,genFindt])(lv);
+  return {type:'dano',d:1,tag:'Краткая запись',prob:p,rows:shuffle(p.givens)};
+}
+
+/* ================= ОБЩИЙ ДВИЖОК ЗАДАНИЙ ================= */
+// ctx: {learn:true/false, done(ok,given,right)}
+function renderTask(box,task,ctx){
+  const q=id=>box.querySelector('#'+id);
+  let h=`<div class="task"><span class="tag">${task.tag}</span><br>${task.type==='dano'?task.prob.text:task.text}</div>`;
+  if(task.type==='num'){
+    h+=`<div class="bar"><span>Ответ:</span><input class="num" id="tIn" autocomplete="off" inputmode="decimal"><span class="unit">${task.unit}</span>
+      <button class="btn" id="tChk">Проверить</button><button class="btn sec" type="button" onclick="calcOpen()">🧮 Калькулятор</button>${ctx.learn&&task.hint?'<button class="btn sec" id="tHint">Подсказка</button>':''}${ctx.learn&&task.steps?'<button class="btn sec" id="tShow">Показать решение</button>':''}</div>`;
+  }else if(task.type==='choice'){
+    h+='<div class="opts">'+task.opts.map((o,i)=>`<button class="opt ${task.mono?'mono':''}" data-i="${i}">${LET[i]})&nbsp; ${esc(o)}</button>`).join('')+'</div><div class="bar"><button class="btn" id="tChk">Ответить</button></div>';
+  }else{
+    const sel=(id,opts)=>`<select id="${id}"><option value="">— выбери —</option>${opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    h+='<div class="dano">'+task.rows.map((r,i)=>`<span class="v mono">${r.txt}</span><span>это ${sel('dr'+i,['Q','q','t'])}</span>`).join('')+
+      `<b>Найти:</b><span>${sel('dfind',['Q','q','t'])}</span><b>Формула:</b><span>${sel('dform',shuffle(ALLF))}</span>
+      <b>Перевод единиц:</b><span>${sel('dconv',['нужен','не нужен'])}</span></div>
+      <div class="bar"><button class="btn" id="tChk">Проверить</button></div>`;
+  }
+  h+='<div id="tFb"></div>';
+  box.innerHTML=h;
+  let picked=null,tries=0,finished=false;
+  const fb=q('tFb');
+  if(task.type==='choice')box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(finished)return;picked=+b.dataset.i;box.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b))});
+  if(task.type==='num'){const inp=q('tIn');inp.focus();inp.onkeydown=e=>{if(e.key==='Enter')q('tChk').click()}}
+  const end=(ok,given,right,html)=>{
+    finished=true;q('tChk').disabled=true;
+    if(q('tHint'))q('tHint').disabled=true;if(q('tShow'))q('tShow').disabled=true;
+    if(ctx.learn)fb.innerHTML=html;
+    ctx.done(ok,given,right);
+  };
+  if(q('tHint'))q('tHint').onclick=()=>{fb.innerHTML=`<div class="fb info">💡 ${task.hint}</div>`};
+  if(q('tShow'))q('tShow').onclick=()=>{end(false,'(посмотрел решение)',task.ans,`<div class="fb info">Образец оформления:</div>${solHTML(task.steps)}`);if(q('tIn'))q('tIn').disabled=true};
+  q('tChk').onclick=()=>{
+    if(finished)return;
+    if(task.type==='num'){
+      const inp=q('tIn'),v=parseNum(inp.value);
+      if(v===null){alert('Введите число.');return}
+      const ok=Math.abs(v-task.ans)<1e-6;
+      if(ok){inp.classList.add('ok');inp.disabled=true;
+        end(true,v,task.ans,`<div class="fb ok"><b>✔ Верно!</b> ${task.steps?'Сравни своё оформление в тетради с образцом:':task.sol}</div>${task.steps?solHTML(task.steps):''}`);return}
+      tries++;inp.classList.add('no');
+      if(!ctx.learn){inp.disabled=true;end(false,v,task.ans,'');return}
+      if(tries<2){fb.innerHTML=`<div class="fb no"><b>✘ Неверно.</b> Проверь перевод единиц и вычисления — попробуй ещё раз.${task.hint?'<br>💡 '+task.hint:''}</div>`;
+        setTimeout(()=>{inp.classList.remove('no');inp.select()},700);return}
+      inp.disabled=true;
+      end(false,v,task.ans,`<div class="fb no"><b>✘ Неверно.</b> Правильный ответ: <b>${fmt(task.ans)} ${task.unit}</b>. ${task.steps?'Разбери решение:':task.sol}</div>${task.steps?solHTML(task.steps):''}`);
+    }else if(task.type==='choice'){
+      if(picked===null){alert('Выберите вариант ответа.');return}
+      const ok=picked===task.ans;
+      box.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(ctx.learn){if(j===task.ans)b.classList.add('ok');else if(j===picked)b.classList.add('no')}});
+      end(ok,task.opts[picked],task.opts[task.ans],`<div class="fb ${ok?'ok':'no'}"><b>${ok?'✔ Верно!':'✘ Неверно.'}</b> ${task.expl}</div>`);
+    }else{
+      const vals=task.rows.map((r,i)=>q('dr'+i).value),vf=q('dfind').value,vfo=q('dform').value;
+      const vc=q('dconv').value;
+      if(vals.includes('')||!vf||!vfo||!vc){alert('Заполните все поля.');return}
+      const needC=task.prob.convs.length>0,rightC=needC?'нужен':'не нужен';
+      const okC=vc===rightC;let ok=okC;
+      if(ctx.learn)q('dconv').classList.add(okC?'ok':'no');
+      task.rows.forEach((r,i)=>{const g=vals[i]===r.sym;ok=ok&&g;if(ctx.learn)q('dr'+i).classList.add(g?'ok':'no')});
+      const gf=vf===task.prob.find,gfo=vfo===task.prob.formula;ok=ok&&gf&&gfo;
+      if(ctx.learn){q('dfind').classList.add(gf?'ok':'no');q('dform').classList.add(gfo?'ok':'no')}
+      box.querySelectorAll('select').forEach(s=>s.disabled=true);
+      const given=task.rows.map((r,i)=>`${r.txt}→${vals[i]}`).join('; ')+`; найти ${vf}; ${vfo}; перевод ${vc}`;
+      const right=task.rows.map(r=>`${r.txt}→${r.sym}`).join('; ')+`; найти ${task.prob.find}; ${task.prob.formula}; перевод ${rightC}`;
+      const ex=task.prob.steps.filter(x=>x.w==='s'&&/^Переводим/.test(x.n)).map(x=>`<span class="mono">${x.h}</span>`);
+      const why=needC?`Перевод <b>нужен</b>: единицы в условии и в вопросе не совпадают. Например: ${ex.join('; ')}.`:'Перевод <b>не нужен</b>: все единицы уже согласованы.';
+      const short=task.prob.steps.filter(s=>s.w!=='s'&&s.w!=='a');
+      end(ok,given,right,`<div class="fb ${ok?'ok':'no'}"><b>${ok?'✔ Верно!':'✘ Есть ошибки.'}</b> Формула: <b class="mono">${task.prob.formula}</b>. ${why}</div>${solHTML(short)}
+        <div class="bar"><button class="btn sec" onclick="this.parentNode.nextElementSibling.classList.toggle('hidden')">Показать полное решение</button></div><div class="hidden">${solHTML(task.prob.steps)}</div>`);
+    }
+  };
+}
+
+/* ================= ОБУЧЕНИЕ: МОДУЛИ ================= */
+const MOD={
+  conv:{lv:1,gen:lv=>genConv(lv),ok:0,all:0,levels:['1: байт ↔ бит','2: Кбайт, Кбит → бит','3: Мбайт, Мбит']},
+  dano:{gen:()=>genDano(),ok:0,all:0},
+  form:{gen:()=>genForm(),ok:0,all:0},
+  prob:{lv:1,gen:lv=>{const p=genProblemFix(lv);return {type:'num',d:2,tag:'Задача (реши в тетради)',text:p.text,ans:p.ans,unit:p.unit,steps:p.steps}},ok:0,all:0,levels:['1: без перевода','2: с переводом единиц','3: сложнее, дробные ответы','4: 🌍 из жизни']}
+};
+/* ---------- уровни сложности: базовый / продвинутый ---------- */
+let LVL='base';
+const LV_ALLOWED={base:{conv:[1,2],prob:[1,2]},adv:{conv:[1,2,3],prob:[1,2,3,4]}};
+const STATS={base:{},adv:{}};
+['base','adv'].forEach(l=>['conv','dano','form','prob'].forEach(m=>STATS[l][m]={ok:0,all:0,lv:1}));
+const ST=m=>STATS[LVL][m];
+const GOALS={base:{conv:4,dano:2,form:3,prob:3,theory:4},adv:{conv:8,dano:4,form:6,prob:4,theory:4}};
+function setLvl(l){
+  if(ctrlRunning)return;
+  LVL=l; // переключение только визуальное — результаты каждого уровня хранятся отдельно
+  $('lBase').classList.toggle('on',l==='base');$('lAdv').classList.toggle('on',l==='adv');
+  document.body.classList.toggle('adv',l==='adv');
+  buildLevels('conv');buildLevels('prob');updStats();updCtrlStart();
+  if(curTab!=='theory')newTask(curTab);
+}
+function newTask(m){
+  const M=MOD[m],S=ST(m);M.lv=S.lv;const task=M.gen(M.lv);
+  const w=$('w_'+m);
+  renderTask(w,task,{learn:true,done:(ok)=>{S.all++;if(ok)S.ok++;updStats();
+    const b=document.createElement('div');b.className='bar';b.innerHTML='<button class="btn green">Следующее задание →</button>';
+    b.firstChild.onclick=()=>newTask(m);w.appendChild(b);setTimeout(()=>b.firstChild.focus(),30)}});
+}
+const GOAL=new Proxy({},{get:(_,k)=>GOALS[LVL][k]});
+function drawGoal(m,ok){
+  const g=GOAL[m];$('d_'+m).innerHTML=Array.from({length:g},(_,i)=>`<i class="${i<ok?'f':''}"></i>`).join('');
+  $('gd_'+m).innerHTML=ok>=g?'<span class="done">✔ Раздел выполнен!'+(ok>g?` (+${ok-g})`:'')+'</span>':'';
+  const c=$('c_'+m);c.textContent=ok>=g?' ✔':` ${Math.min(ok,g)}/${g}`;c.classList.toggle('done',ok>=g);
+}
+function updStats(){
+  for(const m of ['conv','dano','form','prob']){const M=ST(m);
+    $('s_'+m).innerHTML=`Верно: <b>${M.ok}</b> из <b>${M.all}</b>`;
+    $('gt_'+m).innerHTML=`Реши верно <b>${GOAL[m]}</b>:`;
+    drawGoal(m,M.ok)}
+  drawGoal('theory',[...document.querySelectorAll('.nbc')].filter(c=>c.checked).length);
+}
+document.addEventListener('change',e=>{if(e.target.classList&&e.target.classList.contains('nbc'))updStats()});
+function buildLevels(m){
+  const M=MOD[m],S=ST(m);if(!M.levels)return;
+  const allowed=LV_ALLOWED[LVL][m];if(!allowed.includes(S.lv))S.lv=1;
+  $('lv_'+m).innerHTML='<b>Сложность:</b> '+M.levels.map((l,i)=>allowed.includes(i+1)?`<button class="${S.lv===i+1?'on':''}" data-l="${i+1}">${l}</button>`:'').join('');
+  $('lv_'+m).querySelectorAll('button').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.l;buildLevels(m);newTask(m)});
+}
+let curTab='theory';
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  curTab=b.dataset.t;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  ['theory','conv','dano','form','prob'].forEach(t=>$('p_'+t).classList.toggle('hidden',t!==curTab));
+  if(curTab!=='theory')newTask(curTab); // вход в модуль — всегда новые задания
+});
+
+/* ---------- примеры по шагам ---------- */
+let exI=0,exK=0,exP=null;
+function exLoad(i){exI=i;exP=EXAMPLES[i]();exK=0;
+  $('exsel').innerHTML=EXAMPLES.map((_,j)=>`<button class="btn ${j===i?'':'sec'}" onclick="exLoad(${j})">Пример ${j+1}</button>`).join('');
+  $('exText').innerHTML=exP.text;exDraw()}
+function exDraw(){
+  $('exSol').innerHTML=solHTML(exP.steps,exK);
+  $('exNote').innerHTML=exK===0?'Прочитай условие. Нажимай «Следующий шаг» — решение будет появляться по строкам, как его записывают в тетради.':
+    `<b>Шаг ${exK} из ${exP.steps.length}.</b> ${exP.steps[exK-1].n}`+(exK===exP.steps.length?'<br>📓 <b>Запиши эту задачу в тетрадь полностью: Дано, Найти, Решение, Ответ.</b>':'');
+  $('exNext').disabled=exK>=exP.steps.length;
+}
+function exStep(d){exK=Math.max(0,Math.min(exP.steps.length,exK+d));exDraw()}
+function exAll(){exK=exP.steps.length;exDraw()}
+
+/* ================= РЕЖИМЫ ================= */
+let mode='learn',ctrlRunning=false;
+function setMode(m){
+  if(ctrlRunning&&m==='learn')return;
+  mode=m; // переключение только визуальное — данные не сбрасываются
+  $('learn').classList.toggle('hidden',m!=='learn');$('ctrl').classList.toggle('hidden',m!=='ctrl');
+  $('mLearn').classList.toggle('on',m==='learn');$('mCtrl').classList.toggle('on',m==='ctrl');
+  document.body.classList.toggle('ctrl',m==='ctrl');
+}
+function needName(){
+  const f=$('fio');
+  if(f.value.trim().split(/\s+/).filter(Boolean).length<2){f.classList.add('need');f.focus();alert('Введите фамилию и имя (два слова) в поле вверху страницы.');return true}
+  f.classList.remove('need');return false;
+}
+
+/* ================= КОНТРОЛЬ ================= */
+const CDESC=['переводит единицы измерения скорости передачи данных','записывает краткое условие задачи и выбирает формулу','вычисляет пропускную способность, объём информации и время передачи'];
+let CT=[],cI=0,cRes=[],cHist=[];
+const CTRL_INFO={
+  base:{n:5,pts:2,title:'Контроль (базовый уровень): 5 заданий',ptsTxt:'Каждое задание — 2 балла, всего 10 баллов.',desc:[['1–2'],['3'],['4–5']]},
+  adv:{n:10,pts:1,title:'Контроль (продвинутый уровень): 10 заданий',ptsTxt:'Каждое задание — 1 балл.',desc:[['1–3'],['4–6'],['7–10']]}
+};
+const LVL_NOTE={base:'🟢 <b>Базовый уровень</b> — меньше заданий: успеешь пройти обучение (можно и два раза) и сделать контроль за один урок.',adv:'🔷 <b>Продвинутый уровень</b> — больше заданий и задачи посложнее: дробные ответы, задачи из жизни, Мбайт и Мбит.'};
+function updCtrlStart(){
+  $('lvlNote').innerHTML=LVL_NOTE[LVL];
+  $('decNote').classList.toggle('hidden',LVL==='base');
+  const I=CTRL_INFO[LVL];$('cTitle').textContent=I.title;$('cPts').textContent=I.ptsTxt;
+  $('cDesc').innerHTML='<tr><th>Дескриптор. Обучающийся:</th><th>Задания</th></tr>'+CDESC.map((d,i)=>`<tr><td>${d}</td><td>${I.desc[i]}</td></tr>`).join('');
+}
+function buildCtrl(){
+  const p=(t,d)=>Object.assign(t,{d});
+  const toNum=(pr,lv)=>({type:'num',d:2,tag:'Задача (реши в тетради)',text:pr.text,ans:pr.ans,unit:pr.unit,steps:pr.steps});
+  if(LVL==='base')return [
+    p(genConv(1),0),p(genConv(2),0),
+    p(genDano(),1),
+    toNum(pick([genFindq,genFindQ,genFindt])(1)),toNum(pick([genFindq,genFindQ,genFindt])(2))
+  ];
+  return [
+    p(genConv(2),0),p(genConv(2),0),p(genConv(3),0),
+    p(genFormChoice(),1),p(genDano(),1),p(Math.random()<.5?genFormChange():genFormNum(),1),
+    toNum(genFindQ(pick([1,2]))),toNum(genFindq(2)),toNum(genFindt(2)),toNum(pick([()=>genText(),()=>genPages(),()=>genFindq(3),()=>genFindt(3),()=>genDecimal(),()=>genLife(),()=>genLife()])())
+  ];
+}
+function startCtrl(){
+  if(needName())return;
+  CT=buildCtrl();cI=0;cRes=[];ctrlRunning=true;$('mLearn').disabled=true;$('lBase').disabled=true;$('lAdv').disabled=true;
+  $('cStart').classList.add('hidden');$('cEnd').classList.add('hidden');$('cRun').classList.remove('hidden');
+  cShow();
+}
+function cShow(){
+  $('cNum').textContent=`Задание ${cI+1} из ${CT.length}`;$('cProg').style.width=(cI/CT.length*100)+'%';
+  const t=CT[cI];
+  renderTask($('cBox'),t,{learn:false,done:(ok,given,right)=>{
+    cRes.push({d:t.d,ok,text:strip(t.type==='dano'?t.prob.text:t.text),given,right,unit:t.unit||''});
+    const b=document.createElement('div');b.className='bar';
+    b.innerHTML=`<span class="note">Ответ принят.</span><button class="btn ctrlb">${cI===CT.length-1?'Завершить':'Дальше →'}</button>`;
+    b.lastChild.onclick=()=>{cI++;cI<CT.length?cShow():cFinish()};$('cBox').appendChild(b);setTimeout(()=>b.lastChild.focus(),30);
+  }});
+}
+function cFinish(){
+  ctrlRunning=false;$('mLearn').disabled=false;$('lBase').disabled=false;$('lAdv').disabled=false;$('cRun').classList.add('hidden');
+  const I=CTRL_INFO[LVL],nOk=cRes.filter(r=>r.ok).length,score=nOk*I.pts;
+  const per=[0,1,2].map(d=>({all:cRes.filter(r=>r.d===d).length,ok:cRes.filter(r=>r.d===d&&r.ok).length}));
+  const rec={fio:$('fio').value.trim(),cls:$('cls').value.trim(),score,nOk,n:cRes.length,lvl:LVL,time:new Date().toLocaleString('ru-RU'),per,res:cRes};
+  cHist.push(rec);
+  $('cEnd').innerHTML=`<h2>Результат контроля (${LVL==='base'?'базовый':'продвинутый'} уровень)</h2><div class="score">${esc(rec.fio)}${rec.cls?', '+esc(rec.cls):''}</div>
+   <div>Верно: <b>${nOk} из ${cRes.length}</b> заданий</div><div class="mark" style="background:var(--ctrl)">${score} / 10</div>
+   <h3>Дескрипторы</h3><table class="t"><tr><th>Обучающийся:</th><th>Результат</th></tr>${per.map((p,d)=>`<tr><td>${CDESC[d]}</td><td class="${p.ok===p.all?'okc':'noc'}"><b>${p.ok} из ${p.all}</b></td></tr>`).join('')}</table>
+   <div class="bar"><button class="btn ctrlb" onclick="exportTxt()">💾 Сохранить результат (.txt)</button><button class="btn sec" onclick="cAgain()">Новый вариант</button></div>
+   <details><summary>Мои ответы и правильные ответы</summary><table class="t">${cRes.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.text)}</td><td class="${r.ok?'okc':'noc'}">${esc(typeof r.given==='number'?fmt(r.given)+' '+r.unit:r.given)}${r.ok?' ✔':'<br>✘ верно: '+esc(typeof r.right==='number'?fmt(r.right)+' '+r.unit:r.right)}</td></tr>`).join('')}</table></details>`;
+  $('cEnd').classList.remove('hidden');
+}
+function cAgain(){$('cEnd').classList.add('hidden');$('cStart').classList.remove('hidden');
+  $('cHist').innerHTML='<h3>Мои попытки</h3>'+cHist.map((r,i)=>`<div>${i+1}) ${r.time} — ${r.lvl==='base'?'базовый':'продвинутый'} — <b>${r.score}/10</b></div>`).join('')}
+
+/* ================= ЭКСПОРТ ================= */
+function exportTxt(){
+  if(needName())return;
+  const fio=$('fio').value.trim(),cls=$('cls').value.trim();
+  let t=`ПРОПУСКНАЯ СПОСОБНОСТЬ СЕТИ\r\nУченик: ${fio}\r\nКласс: ${cls||'-'}\r\nДата: ${new Date().toLocaleString('ru-RU')}\r\n\r\n`;
+  const nb=[...document.querySelectorAll('.nbc')].filter(c=>c.checked).length;
+  t+=`РЕЖИМ ОБУЧЕНИЯ\r\n- Записи в тетради (отмечено учеником): ${nb} из 4\r\n`;
+  ['base','adv'].forEach(l=>{const used=['conv','dano','form','prob'].some(m=>STATS[l][m].all>0);if(!used)return;
+    t+=`  ${l==='base'?'Базовый':'Продвинутый'} уровень:\r\n`;
+    [['conv','Перевод единиц'],['dano','Дано / Найти'],['form','Формула'],['prob','Задачи в тетради']].forEach(([m,n])=>{const S=STATS[l][m],g=GOALS[l][m];t+=`  - ${n}: верно ${S.ok} из ${S.all} (цель — ${g} верных${S.ok>=g?', выполнено':''})\r\n`})});
+  t+=`\r\nРЕЖИМ КОНТРОЛЯ\r\n`;
+  if(!cHist.length)t+='Контроль не проходил(а).\r\n';
+  cHist.forEach((r,k)=>{
+    t+=`Попытка ${k+1} (${r.time}), ${r.lvl==='base'?'базовый':'продвинутый'} уровень: верно ${r.nOk} из ${r.n} заданий, оценка ${r.score} из 10\r\n`;
+    r.per.forEach((p,d)=>t+=`   ${CDESC[d]}: ${p.ok} из ${p.all}\r\n`);
+    r.res.forEach((x,i)=>{const g=typeof x.given==='number'?fmt(x.given)+' '+x.unit:x.given,rr=typeof x.right==='number'?fmt(x.right)+' '+x.unit:x.right;
+      t+=`   ${i+1}. [${x.ok?'+':'-'}] ${x.text}\r\n      Ответ: ${g}${x.ok?'':'  | Верно: '+rr}\r\n`});
+  });
+  t=t.replace(/ /g,' ');
+  const blob=new Blob(['﻿'+t],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`Пропускная_способность_${fio.replace(/[^\wА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі-]+/g,'_')}${cls?'_'+cls.replace(/\s+/g,''):''}.txt`;
+  document.body.appendChild(a);a.click();a.remove();
+}
+
+
+/* ================= КАЛЬКУЛЯТОР ================= */
+let calcVal=null;
+function calcOpen(){$('calc').classList.remove('hidden');$('cExpr').focus()}
+function calcToggle(){$('calc').classList.toggle('hidden');if(!$('calc').classList.contains('hidden'))$('cExpr').focus()}
+function calcIn(c){const e=$('cExpr');e.value+=c;calcLive();e.focus()}
+function calcClear(){$('cExpr').value='';$('cRes').textContent='';calcVal=null;$('cExpr').focus()}
+function calcBack(){const e=$('cExpr');e.value=e.value.slice(0,-1);calcLive();e.focus()}
+function calcCompute(str){
+  let e=str.replace(/[\s\u00a0]/g,'').replace(/[·×*xх]/gi,'*').replace(/[:÷/]/g,'/').replace(/[−–]/g,'-').replace(/,/g,'.');
+  if(!e||!/^[0-9+\-*/().]+$/.test(e))return null;
+  try{const v=Function('"use strict";return ('+e+')')();if(typeof v!=='number'||!isFinite(v))return null;return Math.round(v*1e9)/1e9}catch(err){return null}
+}
+const calcFmt=v=>Number.isInteger(v)?fmt(v):v.toLocaleString('ru-RU',{maximumFractionDigits:6}).replace(/\u202f/g,'\u00a0');
+function calcLive(){const v=calcCompute($('cExpr').value);calcVal=v;$('cRes').textContent=v===null?'':'= '+calcFmt(v)}
+function calcEval(){const v=calcCompute($('cExpr').value);if(v===null){$('cRes').textContent='ошибка в записи';calcVal=null;return}calcVal=v;$('cRes').textContent='= '+calcFmt(v)}
+function calcToAnswer(){
+  if(calcVal===null){calcEval();if(calcVal===null)return}
+  const inp=[...document.querySelectorAll('input.num')].find(i=>!i.disabled&&i.offsetParent!==null);
+  if(!inp){alert('Сейчас нет открытого поля для ответа.');return}
+  inp.value=String(calcVal).replace('.',',');inp.focus();
+}
+
+/* ================= СТАРТ ================= */
+window.addEventListener('load',()=>{$('fio').value='';$('cls').value='';});
+buildLevels('conv');buildLevels('prob');updStats();updCtrlStart();exLoad(0);
+</script>
+</body>
+</html>
