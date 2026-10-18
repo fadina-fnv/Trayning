@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>СОР «Системы счисления»</title>
+<style>
+:root{
+  --ink:#1b2b4a; --muted:#56657f; --bg:#eef3fa; --card:#ffffff; --line:#c3cfe2;
+  --head:#dde8fb; --blue:#2457c5; --blue-soft:#e3ecff; --blue-mid:#9db8ee;
+  --ok:#1f7a45; --ok-soft:#dcf3e5; --part:#8a5a00; --part-soft:#fff0c9;
+  --err:#c4561b; --err-soft:#ffe6d6; --warn-soft:#fff4d1;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Times New Roman",Times,serif;font-size:21px;line-height:1.4;color:var(--ink);background:var(--bg);
+  -webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 16px 40px}
+
+header.top{background:var(--head);border:2px solid var(--blue-mid);border-radius:14px;padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;justify-content:space-between}
+header.top h1{margin:0;font-size:27px;line-height:1.15;color:var(--blue)}
+header.top .sub{font-size:18px;color:var(--muted)}
+.who{font-size:19px;text-align:right}
+.who b{font-size:21px}
+.timer{font-size:19px;color:var(--muted)}
+
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:20px 24px;margin-top:14px}
+.card h2{margin:0 0 12px;font-size:26px}
+.btn{border:2px solid var(--blue);background:#fff;color:var(--blue);border-radius:10px;padding:9px 20px;font-weight:bold}
+.btn:hover{background:var(--blue-soft)}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.primary:hover{background:#1c47a6}
+.btn.ghost{border-color:var(--line);color:var(--muted);font-weight:normal}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.note{font-size:18px;color:var(--muted)}
+
+/* вход */
+.form{display:grid;grid-template-columns:220px 1fr;gap:14px 16px;align-items:center;max-width:720px}
+.form input[type=text]{font-size:22px;padding:8px 12px;border:2px solid var(--line);border-radius:8px;width:100%}
+.form input[type=text]:focus{outline:3px solid #ffd666;border-color:var(--blue)}
+.form input.need{border-color:var(--err);background:var(--err-soft)}
+.vars{display:flex;gap:10px;flex-wrap:wrap}
+.vars button{width:74px;height:62px;font-size:28px;font-weight:bold;border:2px solid var(--line);border-radius:10px;background:#fff}
+.vars button.on{border-color:var(--blue);background:var(--blue);color:#fff}
+.vars.need button{border-color:var(--err)}
+.rules{margin:16px 0 0;padding:12px 18px;background:var(--warn-soft);border-radius:10px;font-size:19px}
+.rules ul{margin:6px 0 0;padding-left:22px}
+.plan{border-collapse:collapse;margin:8px 0 4px;font-size:19px}
+.plan td{padding:4px 12px;border-bottom:1px solid var(--line)}
+.plan td:last-child{text-align:right;white-space:nowrap}
+
+/* навигация */
+.nav{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;align-items:flex-end}
+.nav .grp{display:flex;flex-direction:column;gap:3px}
+.nav .lbl{font-size:15px;color:var(--muted)}
+.nav .dots{display:flex;gap:5px}
+.dot{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:#fff;font-size:19px;font-weight:bold;color:var(--muted);padding:0}
+.dot.ans{background:var(--blue-soft);border-color:var(--blue-mid);color:var(--blue)}
+.dot.cur{border-color:var(--blue);box-shadow:0 0 0 3px #ffd666;color:var(--blue)}
+
+/* вопрос */
+.qhead{font-size:17px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.qtext{font-size:24px;margin:0 0 14px;font-weight:bold;line-height:1.3}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff;text-align:left;font-size:21px;line-height:1.3}
+.opt .mk{flex:0 0 28px;height:28px;border:2px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:19px;margin-top:1px;color:#fff}
+.opt.radio .mk{border-radius:50%}
+.opt.check .mk{border-radius:6px}
+.opt:hover{background:#f6f9ff}
+.opt.on{border-color:var(--blue);background:var(--blue-soft)}
+.opt.on .mk{background:var(--blue);border-color:var(--blue)}
+.hint{font-size:18px;color:var(--muted);margin:-6px 0 12px}
+.mt{border-collapse:separate;border-spacing:0 8px;width:100%}
+.mt td{vertical-align:middle;font-size:21px}
+.mt td.term{font-weight:bold;width:34%;padding-right:12px}
+.mt select{width:100%;font-size:19px;padding:8px;border:2px solid var(--line);border-radius:8px;background:#fff;white-space:normal}
+.mt select.on{border-color:var(--blue);background:var(--blue-soft)}
+.cls td.name{font-weight:bold;padding-right:14px}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:7px 16px;font-size:19px}
+.seg button+button{border-left:2px solid var(--line)}
+.seg button.on{background:var(--blue);color:#fff}
+
+/* практическая часть */
+.prac{width:100%;border-collapse:collapse}
+.prac td{padding:9px 6px;border-bottom:1px dashed var(--line);font-size:23px;vertical-align:middle}
+.prac td.n{width:52px;font-weight:bold;color:var(--muted)}
+.prac td.task{white-space:nowrap}
+.num{font-family:"JetBrains Mono",Consolas,"Courier New",monospace;font-weight:bold;font-size:25px}
+sub{font-size:.62em}
+.ansbox{display:inline-flex;align-items:flex-end;gap:2px}
+.ansbox input{width:260px;font-family:"JetBrains Mono",Consolas,"Courier New",monospace;font-size:25px;font-weight:bold;padding:6px 10px;border:2px solid var(--blue-mid);border-radius:8px;text-transform:uppercase;background:#fff}
+.ansbox input:focus{outline:3px solid #ffd666;border-color:var(--blue)}
+.ansbox input.filled{background:var(--blue-soft)}
+.ansbox input.badch{border-color:var(--err);background:var(--err-soft)}
+.chw{font-size:16px;color:var(--err);display:block;margin-top:3px;min-height:0}
+.hexline{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.hexline span{border:1px solid var(--line);border-radius:8px;padding:1px 10px;background:#f7f9fd;font-size:19px}
+
+.pw{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.pw .prac td.task{white-space:nowrap}
+.pw .ansbox input{width:200px}
+.grh td{padding:14px 6px 4px!important;border-bottom:2px solid var(--line)!important;font-size:19px!important;font-weight:bold;color:var(--blue)}
+.side{display:flex;flex-direction:column;gap:12px}
+.panel{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#f8fafe}
+.panel h4{margin:0 0 6px;font-size:18px;color:var(--muted);font-weight:bold}
+.hx{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.hx span{background:#fff;border:1px solid var(--line);border-radius:6px;text-align:center;font-size:19px;padding:1px 0}
+.hx b{color:var(--blue)}
+table.pw2{border-collapse:collapse;width:100%;font-size:17px}
+table.pw2 td{border:1px solid var(--line);text-align:center;padding:1px 3px;background:#fff;font-size:17px}
+table.pw2 td.h{background:var(--blue-soft);font-weight:bold}
+.calc .cd{background:#fff;border:2px solid var(--blue-mid);border-radius:8px;padding:4px 10px;text-align:right;min-height:64px}
+.calc .ce{font-size:15px;color:var(--muted);min-height:20px;word-break:break-all}
+.calc .cr{font-size:27px;font-weight:bold;word-break:break-all;line-height:1.2}
+.calc .ck{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.calc .ck button{height:42px;border:2px solid var(--line);border-radius:8px;background:#fff;font-size:21px;font-weight:bold;padding:0}
+.calc .ck button:hover{background:var(--blue-soft)}
+.calc .ck button.o{color:var(--blue);border-color:var(--blue-mid)}
+.calc .ck button.w{grid-column:span 4;font-size:17px}
+@media (max-width:980px){.pw{grid-template-columns:1fr}}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin-top:18px}
+
+/* итог */
+.score{text-align:center;margin:6px 0 14px}
+.score .n{font-size:96px;font-weight:bold;line-height:1;color:var(--blue)}
+.score .of{font-size:26px}
+.parts{border-collapse:collapse;width:100%;font-size:21px;margin-bottom:12px}
+.parts td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.parts td.p{text-align:right;font-weight:bold;white-space:nowrap}
+.res{display:flex;flex-direction:column;gap:6px}
+.ri{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;font-size:20px}
+.ri .k{font-weight:bold}
+.ri .v{font-weight:bold;white-space:nowrap}
+.ri.ok{background:var(--ok-soft)} .ri.ok .v{color:var(--ok)}
+.ri.half{background:var(--part-soft)} .ri.half .v{color:var(--part)}
+.ri.bad{background:var(--err-soft)} .ri.bad .v{color:var(--err)}
+.ri .ya{font-size:17px;color:var(--muted)}
+.send{margin-top:12px;padding:10px 14px;border-radius:10px;font-size:19px}
+.send.ok{background:var(--ok-soft);color:var(--ok)}
+.send.wait{background:var(--blue-soft);color:var(--blue)}
+.send.bad{background:var(--err-soft);color:var(--err)}
+
+/* окна */
+.overlay{position:fixed;inset:0;background:rgba(27,43,74,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.overlay[hidden]{display:none}
+.modal{background:#fff;border-radius:16px;padding:22px 26px;max-width:640px;width:100%;border:3px solid var(--blue)}
+.modal.warn{border-color:#e0a000}
+.modal h3{margin:0 0 10px;font-size:26px}
+.modal p{margin:8px 0}
+.modal .row{justify-content:flex-end;margin-top:16px}
+
+@media print{body *{display:none!important}body:after{content:"Печать недоступна";display:block}}
+@media (max-width:760px){.form{grid-template-columns:1fr}.ansbox input{width:170px}.prac td{font-size:20px}.prac td.task{white-space:normal}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>СОР «Системы счисления»</h1>
+      <div class="sub">Суммативное оценивание за раздел</div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+  <div id="app"></div>
+</div>
+<div class="overlay" id="overlay" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   НАСТРОЙКА
+   Вставьте сюда адрес веб-приложения Google Apps Script (заканчивается на /exec).
+   Если оставить пустым, результат только сохраняется в файл .txt.
+   ===================================================================== */
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYuV30STMTm48NLdXspjDwJDQ9pH8NlmSPXtEvrjzHvvUwTPsiF634to3vVsDGzUzn/exec';
+var WORK_NAME = 'СОР «Системы счисления»';
+var STORE_KEY = 'SOR_sistemy_schisleniya_v1';
+
+/* =====================================================================
+   ВАРИАНТЫ ПРАКТИЧЕСКОЙ ЧАСТИ (совпадают с печатными карточками)
+   c — перевод: [из, в, число];  o — действие: [основание, знак, a, b]
+   ===================================================================== */
+var VARIANTS = {
+ 1:{c:[[10,2,'190'],[10,8,'363'],[10,16,'693'],[2,10,'11000110'],[8,10,'565'],[16,10,'A9']],
+    o:[[2,'+','111000','11100'],[2,'-','1111100','10111'],[8,'+','163','575'],[8,'-','760','277']]},
+ 2:{c:[[10,2,'173'],[10,8,'422'],[10,16,'503'],[2,10,'11011010'],[8,10,'253'],[16,10,'B1']],
+    o:[[2,'+','111101','11010'],[2,'-','1000110','10101'],[8,'+','333','255'],[8,'-','411','233']]},
+ 3:{c:[[10,2,'209'],[10,8,'332'],[10,16,'383'],[2,10,'11110010'],[8,10,'437'],[16,10,'C8']],
+    o:[[2,'+','111100','11001'],[2,'-','1101000','10110'],[8,'+','277','156'],[8,'-','423','135']]},
+ 4:{c:[[10,2,'142'],[10,8,'204'],[10,16,'555'],[2,10,'10011010'],[8,10,'627'],[16,10,'D5']],
+    o:[[2,'+','100101','10111'],[2,'-','1010101','11001'],[8,'+','315','176'],[8,'-','540','155']]}
+};
+
+/* =====================================================================
+   БАНК ТЕОРЕТИЧЕСКИХ ВОПРОСОВ
+   single: первый вариант ответа — верный (варианты перемешиваются)
+   multi: ok — верные утверждения, no — неверные; берётся 2 + 2
+   match: термины и определения; stmt: одно верное утверждение + три неверных
+   ===================================================================== */
+var SLOTS = [
+ /* 1. Понятие и причина алгоритмической предвзятости (все вопросы банка — одного типа) */
+ {part:0, pool:[
+  {t:'single',q:'Что называют алгоритмической предвзятостью (bias) в системах искусственного интеллекта?',
+   o:['Систематические ошибки ИИ, из-за которых он хуже или несправедливо работает для отдельных групп людей или объектов',
+      'Любую ошибку ИИ, даже если она произошла один раз',
+      'Ошибки ИИ, которые возникают из-за сбоя оборудования или ошибки в программном коде',
+      'Ситуацию, когда ИИ отказывается выполнять запрос пользователя']},
+  {t:'single',q:'Какое утверждение об алгоритмической предвзятости верно?',
+   o:['Она возникает, если в обучающих данных одни группы представлены намного больше, чем другие',
+      'Она исчезает, если обучать ИИ дольше на тех же самых данных',
+      'Она появляется, только если разработчик специально настроил ИИ несправедливо',
+      'Её не бывает, если обучающих данных очень много, даже если почти все они об одной группе']},
+  {t:'single',q:'Что чаще всего становится причиной алгоритмической предвзятости ИИ?',
+   o:['Неполные или несбалансированные обучающие данные',
+      'Слишком короткое время обучения ИИ',
+      'Ошибки в программном коде интерфейса',
+      'Недостаточная мощность компьютера, на котором работает ИИ']}
+ ]},
+ /* 2. Примеры: отличить предвзятость от других ошибок ИИ */
+ {part:0, pool:[
+  {t:'multi',q:'Отметьте ВСЕ ситуации, которые являются примерами алгоритмической предвзятости.',
+   ok:['Система распознавания лиц хуже узнаёт людей с тёмной кожей: её обучали в основном на фотографиях светлокожих людей.',
+       'ИИ для отбора резюме занижает оценки женщинам: его обучали на резюме сотрудников, среди которых почти не было женщин.',
+       'Голосовой помощник плохо понимает людей с акцентом: его обучали на записях голосов дикторов без акцента.',
+       'ИИ, обученный на фотографиях серых и чёрных кошек, не узнаёт рыжих кошек и принимает их за лис.',
+       'Медицинский ИИ хуже определяет болезнь у пожилых людей: в обучающих данных были в основном снимки молодых пациентов.'],
+   no:['Камера с ИИ не распознала лицо человека, потому что фотографию сделали в полной темноте.',
+       'Фильтр спама с ИИ однажды пропустил одно рекламное письмо из тысячи.',
+       'Голосовой помощник не понял команду, потому что в комнате громко играла музыка.',
+       'Программа с ИИ не распознала текст на сильно размытой фотографии страницы.']}
+ ]},
+ /* 3. Основные понятия: соответствие */
+ {part:1, pool:[
+  {t:'match',q:'Установите соответствие между понятием и его определением.',
+   fixed:[['Система счисления','Способ записи чисел с помощью цифр по определённым правилам'],
+          ['Алфавит системы счисления','Набор всех цифр, которые разрешено использовать для записи чисел'],
+          ['Основание системы счисления','Количество различных цифр, которые используются в системе (например, 10 для десятичной)'],
+          ['Разряд','Место, которое занимает цифра в записи числа']],
+   extra:[]}
+ ]},
+ /* 4. Позиционные и непозиционные системы: выбрать верное утверждение */
+ {part:1, pool:[
+  {t:'stmt',q:'Выберите ВЕРНОЕ утверждение.',
+   /* [утверждение, тема]: неверные утверждения берутся только из других тем, чтобы пары-противоположности не подсказывали ответ */
+   yes:[['В позиционной системе значение цифры зависит от её места (разряда) в записи числа.','def'],
+        ['В числе 333 (в десятичной системе) каждая цифра 3 обозначает разное количество: 300, 30 и 3.','dig'],
+        ['Двоичная, восьмеричная и шестнадцатеричная системы счисления — позиционные.','kind'],
+        ['В римской системе значение цифры не зависит от её разряда, поэтому римская система — непозиционная.','rom']],
+   no:[['В числе 555 (в десятичной системе) все три цифры 5 обозначают одно и то же количество.','dig'],
+       ['Римская система счисления является позиционной.','rom'],
+       ['В непозиционной системе значение цифры зависит от её разряда в записи числа.','def'],
+       ['Позиционной называют только ту систему, в которой используются цифры 0 и 1.','kind'],
+       ['Десятичная система счисления является непозиционной.','kind'],
+       ['В двоичной системе значение цифры 1 не зависит от её разряда.','bin'],
+       ['В восьмеричной системе цифра 7 в любом разряде обозначает семь единиц.','bin']]}
+ ]},
+ /* 5. Алфавит: какое число не может быть записано */
+ {part:1, pool:[
+  {t:'single',q:'Какое число НЕ может быть записано в восьмеричной системе счисления?',mono:true,o:['193','173','4057','1750']},
+  {t:'single',q:'Какое число НЕ может быть записано в восьмеричной системе счисления?',mono:true,o:['2486','2475','7016','3333']},
+  {t:'single',q:'Какое число НЕ может быть записано в шестнадцатеричной системе счисления?',mono:true,o:['5G2','5F2','A0B','9E1']},
+  {t:'single',q:'Какое число НЕ может быть записано в шестнадцатеричной системе счисления?',mono:true,o:['3K7','FF0','2C9','B07']},
+  {t:'single',q:'Какое число НЕ может быть записано в двоичной системе счисления?',mono:true,o:['10201','10101','11100','1001']}
+ ]}
+];
+var PARTS=['Алгоритмическая предвзятость в ИИ','Основные понятия систем счисления','Перевод чисел','Сложение и вычитание'];
+var GOALS=['8.4.2.1','8.2.1.1','8.2.1.1','8.2.1.2'];
+var NT=5,TOTAL=15,MX=[2,3,6,4];
+
+/* ===================== УТИЛИТЫ ===================== */
+var DIG='0123456789ABCDEF';
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function range(n){var r=[];for(var i=0;i<n;i++)r.push(i);return r;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function two(n){return n<10?'0'+n:''+n;}
+function hm(t){var d=new Date(t);return two(d.getHours())+':'+two(d.getMinutes())+':'+two(d.getSeconds());}
+function dur(ms){var s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+' мин '+two(s%60)+' с';}
+function fmt(p){return String(p).replace('.',',');}
+function toBase(n,b){return n.toString(b).toUpperCase();}
+function norm(s){return String(s||'').replace(/\s+/g,'').toUpperCase();}
+function stripZeros(s){s=s.replace(/^0+(?=.)/,'');return s;}
+function validFor(s,base){if(!s)return true;for(var i=0;i<s.length;i++){var v=DIG.indexOf(s.charAt(i));if(v<0||v>=base)return false;}return true;}
+function sub(b){return '<sub>'+b+'</sub>';}
+function numHTML(s,b){return '<span class="num">'+esc(s)+'</span>'+sub(b);}
+
+/* практические задания варианта: 10 штук (№7–16) */
+function pracTasks(v){
+  var V=VARIANTS[v],r=[];
+  V.c.forEach(function(c){
+    var val=parseInt(c[2],c[0]);
+    r.push({kind:'conv',from:c[0],to:c[1],x:c[2],ans:toBase(val,c[1]),part:2});
+  });
+  V.o.forEach(function(o){
+    var a=parseInt(o[2],o[0]),b=parseInt(o[3],o[0]),res=o[1]==='+'?a+b:a-b;
+    r.push({kind:'op',base:o[0],op:o[1],a:o[2],b:o[3],ans:toBase(res,o[0]),part:3});
+  });
+  return r;
+}
+function pracText(t,plain){
+  if(t.kind==='conv'){
+    return plain?(t.x+'('+t.from+') = ?('+t.to+')'):(numHTML(t.x,t.from)+' = ?'+sub(t.to));
+  }
+  var sg=t.op==='+'?'+':'−';
+  return plain?(t.a+'('+t.base+') '+(t.op==='+'?'+':'-')+' '+t.b+'('+t.base+') = ?('+t.base+')'):(numHTML(t.a,t.base)+' '+sg+' '+numHTML(t.b,t.base)+' = ?'+sub(t.base));
+}
+function pracBase(t){return t.kind==='conv'?t.to:t.base;}
+
+/* сборка теоретических вопросов для ученика */
+function buildTheory(){
+  return SLOTS.map(function(S){
+    var src=S.pool[Math.floor(Math.random()*S.pool.length)],q={t:src.t,q:src.q,part:S.part,mono:!!src.mono};
+    if(src.t==='single'){
+      var ord=shuffle(range(src.o.length));
+      q.opts=ord.map(function(i){return src.o[i];});q.right=ord.indexOf(0);
+    }else if(src.t==='multi'){
+      var ok=shuffle(src.ok).slice(0,2),no=shuffle(src.no).slice(0,2),all=shuffle(ok.concat(no));
+      q.opts=all;q.right=all.map(function(s){return ok.indexOf(s)>=0;});
+    }else if(src.t==='stmt'){
+      var y=src.yes[Math.floor(Math.random()*src.yes.length)],used={},fl=[];
+      used[y[1]]=1;
+      shuffle(src.no).forEach(function(x){if(fl.length<3&&!used[x[1]]){used[x[1]]=1;fl.push(x[0]);}});
+      var all2=shuffle([y[0]].concat(fl));
+      q.t='single';q.opts=all2;q.right=all2.indexOf(y[0]);
+    }else if(src.t==='match'){
+      var pairs=src.extra.length?src.fixed.concat([src.extra[Math.floor(Math.random()*src.extra.length)]]):src.fixed.slice();
+      q.terms=pairs.map(function(p){return p[0];});
+      var dord=shuffle(range(pairs.length));
+      q.defs=dord.map(function(i){return pairs[i][1];});
+      q.right=pairs.map(function(p,i){return dord.indexOf(i);});
+    }else if(src.t==='classify'){
+      var items=shuffle(src.fixed.concat([[src.pick[Math.floor(Math.random()*src.pick.length)],0]]));q.items=items.map(function(x){return x[0];});q.right=items.map(function(x){return x[1];});q.cats=src.cats;
+    }
+    return q;
+  });
+}
+function emptyAns(q){
+  if(q.t==='single')return -1;
+  if(q.t==='multi')return q.opts.map(function(){return false;});
+  if(q.t==='match')return q.terms.map(function(){return -1;});
+  return q.items.map(function(){return -1;});
+}
+function answered(q,a){
+  if(q.t==='single')return a>=0;
+  if(q.t==='multi')return a.some(function(x){return x;});
+  return a.every(function(x){return x>=0;});
+}
+/* баллы: 1 — всё верно; 0,5 — одна ошибка (для заданий из нескольких частей); 0 — иначе */
+function scoreTheory(q,a){
+  if(q.t==='single')return a===q.right?1:0;
+  var err=0;
+  for(var i=0;i<q.right.length;i++){
+    if(q.t==='multi'){if(!!a[i]!==q.right[i])err++;}
+    else if(a[i]!==q.right[i])err++;
+  }
+  return err===0?1:(err===1?0.5:0);
+}
+function theoryAnswerText(q,a){
+  if(q.t==='single')return a>=0?q.opts[a]:'—';
+  if(q.t==='multi'){var s=[];a.forEach(function(x,i){if(x)s.push(q.opts[i]);});return s.length?s.join(' | '):'—';}
+  if(q.t==='match')return q.terms.map(function(t,i){return t+' → '+(a[i]>=0?q.defs[a[i]]:'—');}).join(' | ');
+  return q.items.map(function(t,i){return t+' → '+(a[i]>=0?q.cats[a[i]]:'—');}).join(' | ');
+}
+
+/* ===================== СОСТОЯНИЕ ===================== */
+var S=null;            /* текущая работа */
+var app=document.getElementById('app'),who=document.getElementById('who');
+var overlay=document.getElementById('overlay'),modal=document.getElementById('modal');
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(S));}catch(e){}}
+function load(){try{var s=localStorage.getItem(STORE_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearStore(){try{localStorage.removeItem(STORE_KEY);}catch(e){}}
+function logEv(text){if(!S)return;S.log.push({t:Date.now(),e:text});save();}
+function inProgress(){return S&&S.status==='run';}
+
+/* экраны: 0..5 — вопросы 1–6, 6 — перевод (7–12), 7 — арифметика (13–16) */
+var SCREENS=NT+2;
+function screenOfTask(n){return n<=NT?n-1:(n<=NT+6?NT:NT+1);}
+
+/* ===================== ЗАГОЛОВОК И ТАЙМЕР ===================== */
+function renderWho(){
+  if(!S||!S.fio){who.innerHTML='';return;}
+  var h='<div><b>'+esc(S.fio)+'</b>, '+esc(S.cls)+' · вариант '+S.variant+'</div>';
+  if(S.status==='run')h+='<div class="timer" id="tm"></div>';
+  who.innerHTML=h;tick();
+}
+function tick(){var el=document.getElementById('tm');if(el&&S&&S.status==='run')el.textContent='Время работы: '+dur(Date.now()-S.start);}
+setInterval(tick,1000);
+
+/* ===================== ВХОД ===================== */
+function renderStart(){
+  var h='<div class="card"><h2>Вход в работу</h2>'+
+  '<div class="form">'+
+  '<label for="fio">Фамилия и имя</label><input type="text" id="fio" autocomplete="off" spellcheck="false">'+
+  '<label for="cls">Класс</label><input type="text" id="cls" autocomplete="off" spellcheck="false" style="max-width:160px">'+
+  '<span>Вариант<br><span class="note">(номер на вашей карточке)</span></span><div class="vars" id="vars">';
+  for(var v=1;v<=4;v++)h+='<button type="button" data-v="'+v+'">'+v+'</button>';
+  h+='</div></div>'+
+  '<table class="plan"><tr><td>Часть 1. '+PARTS[0]+'</td><td>задания 1–2</td><td>2 балла</td></tr>'+
+  '<tr><td>Часть 2. '+PARTS[1]+'</td><td>задания 3–5</td><td>3 балла</td></tr>'+
+  '<tr><td>Часть 3. '+PARTS[2]+' (по карточке)</td><td>задания 6–11</td><td>6 баллов</td></tr>'+
+  '<tr><td>Часть 4. '+PARTS[3]+' (по карточке)</td><td>задания 12–15</td><td>4 балла</td></tr>'+
+  '<tr><td><b>Всего</b></td><td></td><td><b>15 баллов</b></td></tr></table>'+
+  '<div class="rules"><b>Правила работы</b><ul>'+
+  '<li>Задания 6–15 решайте на карточке, а ответы вписывайте в этот файл. Сложение и вычитание — только столбиком, с отметками переноса и заёма.</li>'+
+  '<li>Между заданиями можно переходить по номерам; ответ можно изменить до завершения работы.</li>'+
+  '<li>Работа открывается на весь экран. Не переключайтесь на другие окна и вкладки: каждый уход со страницы записывается в результат.</li>'+
+  '<li>Баллы вы увидите после того, как нажмёте «Завершить работу».</li></ul></div>'+
+  '<div class="row" style="margin-top:16px"><button type="button" class="btn primary" id="go">Начать работу</button></div></div>';
+  app.innerHTML=h;
+  var chosen=0;
+  document.getElementById('vars').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;chosen=+b.getAttribute('data-v');
+    Array.prototype.forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});
+    this.classList.remove('need');
+  });
+  ['fio','cls'].forEach(function(id){var el=document.getElementById(id);el.value='';el.addEventListener('input',function(){el.classList.remove('need');});});
+  document.getElementById('go').addEventListener('click',function(){
+    var f=document.getElementById('fio'),c=document.getElementById('cls');
+    var fv=f.value.trim().replace(/\s+/g,' '),cv=c.value.trim();
+    f.classList.toggle('need',fv.length<3);c.classList.toggle('need',!cv);
+    document.getElementById('vars').classList.toggle('need',!chosen);
+    if(fv.length<3||!cv||!chosen)return;
+    confirmBox('Проверьте данные','<p><b>'+esc(fv)+'</b>, класс <b>'+esc(cv)+'</b></p><p>Вариант <b>'+chosen+'</b> — совпадает с номером на вашей карточке?</p>','Да, начать','Исправить',function(){
+      var th=buildTheory();
+      S={status:'run',fio:fv,cls:cv,variant:chosen,start:Date.now(),end:null,theory:th,
+         ta:th.map(emptyAns),pa:pracTasks(chosen).map(function(){return '';}),screen:0,log:[],away:0,result:null,sent:false};
+      save();goFull();renderWho();renderTest();
+    });
+  });
+}
+
+/* ===================== РАБОТА ===================== */
+function taskDone(n){
+  if(n<=NT)return answered(S.theory[n-1],S.ta[n-1]);
+  return norm(S.pa[n-NT-1])!=='';
+}
+function navHTML(){
+  var g=[[1,2,'Часть 1'],[3,NT,'Часть 2'],[NT+1,NT+6,'Часть 3 · перевод'],[NT+7,NT+10,'Часть 4 · арифметика']],h='<div class="nav">';
+  g.forEach(function(x){
+    h+='<div class="grp"><span class="lbl">'+x[2]+'</span><div class="dots">';
+    for(var n=x[0];n<=x[1];n++){
+      var c='dot'+(taskDone(n)?' ans':'')+(screenOfTask(n)===S.screen?' cur':'');
+      h+='<button type="button" class="'+c+'" data-go="'+n+'">'+n+'</button>';
+    }
+    h+='</div></div>';
+  });
+  return h+'</div>';
+}
+function renderTest(){
+  var sc=S.screen,h=navHTML()+'<div class="card" id="qcard">';
+  if(sc<NT)h+=theoryHTML(sc);
+  else h+=pracHTML(sc===NT?0:6,sc===NT?6:10,sc===NT);
+  h+='<div class="foot"><div class="row">'+
+     '<button type="button" class="btn" data-act="prev"'+(sc===0?' disabled':'')+'>◀ Назад</button>'+
+     '<button type="button" class="btn primary" data-act="next"'+(sc===SCREENS-1?' disabled':'')+'>Далее ▶</button></div>'+
+     '<button type="button" class="btn" data-act="finish">Завершить работу</button></div></div>';
+  app.innerHTML=h;
+}
+function theoryHTML(i){
+  var q=S.theory[i],a=S.ta[i],h='<div class="qhead">Часть '+(q.part+1)+' · '+PARTS[q.part]+' · задание '+(i+1)+' из '+TOTAL+' · 1 балл</div>';
+  h+='<p class="qtext">'+esc(q.q)+'</p>';
+  if(q.t==='single'||q.t==='multi'){
+    if(q.t==='multi')h+='<p class="hint">Верных ответов может быть несколько.</p>';
+    h+='<div class="opts">';
+    q.opts.forEach(function(o,k){
+      var on=q.t==='single'?a===k:a[k];
+      h+='<button type="button" class="opt '+(q.t==='single'?'radio':'check')+(on?' on':'')+'" data-opt="'+k+'"><span class="mk">'+(on?(q.t==='single'?'●':'✓'):'')+'</span><span'+(q.mono?' class="num" style="font-size:23px"':'')+'>'+esc(o)+'</span></button>';
+    });
+    h+='</div>';
+  }else if(q.t==='match'){
+    h+='<p class="hint">Для каждого понятия выберите определение из списка.</p><table class="mt">';
+    q.terms.forEach(function(t,k){
+      h+='<tr><td class="term">'+esc(t)+'</td><td><select data-m="'+k+'"'+(a[k]>=0?' class="on"':'')+'><option value="-1">— выберите определение —</option>';
+      q.defs.forEach(function(d,j){h+='<option value="'+j+'"'+(a[k]===j?' selected':'')+'>'+esc(d)+'</option>';});
+      h+='</select></td></tr>';
+    });
+    h+='</table>';
+  }else{
+    h+='<table class="mt cls">';
+    q.items.forEach(function(t,k){
+      h+='<tr><td class="name">'+esc(t)+'</td><td><span class="seg">';
+      q.cats.forEach(function(c,j){h+='<button type="button" data-c="'+k+'" data-v="'+j+'"'+(a[k]===j?' class="on"':'')+'>'+c+'</button>';});
+      h+='</span></td></tr>';
+    });
+    h+='</table>';
+  }
+  return h;
+}
+function pracHTML(from,to,isConv){
+  var T=pracTasks(S.variant),h='<div class="qhead">Часть '+(isConv?3:4)+' · '+PARTS[isConv?2:3]+' · задания '+(from+NT+1)+'–'+(to+NT)+' · по 1 баллу</div>';
+  h+='<p class="qtext" style="font-size:22px;font-weight:normal">'+(isConv
+     ?'Переведите числа. Решение запишите на карточке, ответ впишите в поле.'
+     :'Выполните действия столбиком на карточке, отмечая перенос и заём. Ответ запишите в той же системе счисления.')+'</p>';
+  if(isConv)h+='<div class="pw"><div>';
+  h+='<table class="prac">';
+  for(var i=from;i<to;i++){
+    var t=T[i],v=S.pa[i],b=pracBase(t),bad=!validFor(norm(v),b);
+    if(isConv&&i===0)h+='<tr class="grh"><td colspan="3">Из десятичной системы счисления в другую</td></tr>';
+    if(isConv&&i===3)h+='<tr class="grh"><td colspan="3">Из другой системы счисления в десятичную</td></tr>';
+    h+='<tr><td class="n">'+(i+NT+1)+'.</td><td class="task">'+pracText(t).replace(' = ?'+sub(b),' =')+'</td><td><span class="ansbox"><input type="text" data-p="'+i+'" value="'+esc(v)+'" maxlength="16" autocomplete="off" spellcheck="false" class="'+(bad?'badch':(norm(v)?'filled':''))+'" aria-label="Ответ к заданию '+(i+NT+1)+'">'+sub(b)+'</span>'+
+       '<span class="chw" id="w'+i+'">'+(bad?warnText(b):'')+'</span></td></tr>';
+  }
+  h+='</table>';
+  if(isConv)h+='<p class="note">Буквы A–F можно вводить в любой раскладке клавиатуры — нажимайте клавиши A, B, C, D, E, F.</p></div>'+sideHTML()+'</div>';
+  return h;
+}
+/* ===================== ПОДСКАЗКИ И КАЛЬКУЛЯТОР ===================== */
+function sideHTML(){
+  var h='<div class="side"><div class="panel"><h4>Цифры 16 СС</h4><div class="hx mono">';
+  for(var v=10;v<16;v++)h+='<span><b>'+DIG.charAt(v)+'</b> = '+v+'</span>';
+  h+='</div></div><div class="panel"><h4>Степени</h4><table class="pw2 mono">';
+  h+='<tr><td class="h">n</td><td class="h">2<sup>n</sup></td><td class="h">8<sup>n</sup></td><td class="h">16<sup>n</sup></td></tr>';
+  for(var k=0;k<=8;k++)h+='<tr><td class="h">'+k+'</td><td>'+Math.pow(2,k)+'</td><td>'+(k<=3?Math.pow(8,k):'')+'</td><td>'+(k<=3?Math.pow(16,k):'')+'</td></tr>';
+  h+='</table></div><div class="panel calc"><h4>Калькулятор</h4><div class="cd"><div class="ce" id="ce">'+esc(CALC.expr)+'</div><div class="cr mono" id="cr">'+esc(CALC.cur)+'</div></div><div class="ck">';
+  ['7','8','9','÷','4','5','6','×','1','2','3','−','C','0','=','+'].forEach(function(k){
+    h+='<button type="button" data-k="'+k+'"'+('÷×−+='.indexOf(k)>=0?' class="o"':'')+'>'+k+'</button>';
+  });
+  return h+'<button type="button" class="w o" data-k="mod">÷ с остатком (частное и остаток)</button></div></div></div>';
+}
+var CALC={acc:null,op:null,cur:'0',expr:'',fresh:true};
+function calcNum(){var n=parseFloat(CALC.cur);return isNaN(n)?0:n;}
+function calcFmt(x){if(!isFinite(x))return 'Ошибка';return String(Math.round(x*1e6)/1e6);}
+function calcApply(a,op,b){
+  if(op==='+')return a+b;if(op==='−')return a-b;if(op==='×')return a*b;
+  if(op==='÷')return b===0?NaN:a/b;return b;
+}
+function calcPress(k){
+  var C=CALC;
+  if(/^[0-9]$/.test(k)){
+    if(C.fresh||C.cur==='0'||/ост|Ошибка/.test(C.cur)){C.cur=k;C.fresh=false;}else if(C.cur.length<12)C.cur+=k;
+    if(C.op===null&&C.expr.indexOf('=')>=0)C.expr='';
+  }else if(k==='C'){C.acc=null;C.op=null;C.cur='0';C.expr='';C.fresh=true;}
+  else if(k==='='||k==='mod'){
+    if(/ост|Ошибка/.test(C.cur))return calcShow();
+    if(k==='mod'){
+      if(C.op!==null&&!C.fresh){var r0=calcApply(C.acc,C.op,calcNum());C.acc=r0;C.op=null;}
+      else if(C.op===null)C.acc=calcNum();
+      C.op='mod';C.expr=calcFmt(C.acc)+' ÷ с остатком';C.cur='0';C.fresh=true;return calcShow();
+    }
+    if(C.op===null)return calcShow();
+    var b=calcNum();
+    if(C.op==='mod'){
+      var a=Math.floor(C.acc);b=Math.floor(b);
+      C.expr=a+' ÷ '+b+' =';C.cur=b===0?'Ошибка':(Math.floor(a/b)+' ост. '+(a%b));
+    }else{
+      C.expr=calcFmt(C.acc)+' '+C.op+' '+calcFmt(b)+' =';C.cur=calcFmt(calcApply(C.acc,C.op,b));
+    }
+    C.acc=null;C.op=null;C.fresh=true;
+  }else{
+    if(/ост|Ошибка/.test(C.cur))C.cur='0';
+    if(C.op!==null&&C.op!=='mod'&&!C.fresh)C.acc=calcApply(C.acc,C.op,calcNum());
+    else if(C.op===null||C.op==='mod')C.acc=calcNum();
+    C.op=k;C.expr=calcFmt(C.acc)+' '+k;C.fresh=true;C.cur=calcFmt(C.acc);
+  }
+  calcShow();
+}
+function calcShow(){var e=document.getElementById('ce'),r=document.getElementById('cr');if(e)e.textContent=CALC.expr;if(r)r.textContent=CALC.cur;}
+function warnText(b){return b===16?'В шестнадцатеричной системе цифры 0–9 и латинские буквы A–F':b===2?'В двоичной системе только цифры 0 и 1':(b===8?'В восьмеричной системе только цифры 0–7':(b===16?'В шестнадцатеричной системе цифры 0–9 и буквы A–F':'В десятичной системе только цифры 0–9'));}
+
+app.addEventListener('click',function(e){
+  if(!inProgress())return;
+  var b=e.target.closest('button');if(!b||b.disabled)return;
+  if(b.hasAttribute('data-k')){calcPress(b.getAttribute('data-k'));return;}
+  var go=b.getAttribute('data-go');
+  if(go){S.screen=screenOfTask(+go);save();renderTest();
+    if(+go>NT){var el=app.querySelector('input[data-p="'+(+go-NT-1)+'"]');if(el)el.focus();}return;}
+  var act=b.getAttribute('data-act');
+  if(act==='prev'){S.screen=Math.max(0,S.screen-1);save();renderTest();return;}
+  if(act==='next'){S.screen=Math.min(SCREENS-1,S.screen+1);save();renderTest();return;}
+  if(act==='finish'){askFinish();return;}
+  var i=S.screen;if(i>=NT)return;
+  var q=S.theory[i];
+  if(b.hasAttribute('data-opt')){
+    var k=+b.getAttribute('data-opt');
+    if(q.t==='single')S.ta[i]=(S.ta[i]===k?-1:k);else S.ta[i][k]=!S.ta[i][k];
+  }else if(b.hasAttribute('data-c')){
+    var c=+b.getAttribute('data-c'),v=+b.getAttribute('data-v');S.ta[i][c]=(S.ta[i][c]===v?-1:v);
+  }else return;
+  save();var y=window.scrollY;renderTest();window.scrollTo(0,y);
+});
+app.addEventListener('change',function(e){
+  if(!inProgress())return;
+  var el=e.target;if(!el.hasAttribute('data-m'))return;
+  S.ta[S.screen][+el.getAttribute('data-m')]=+el.value;el.classList.toggle('on',+el.value>=0);
+  save();var nav=app.querySelector('.nav');if(nav)nav.outerHTML=navHTML();
+});
+app.addEventListener('input',function(e){
+  if(!inProgress())return;
+  var el=e.target;if(!el.hasAttribute('data-p'))return;
+  var i=+el.getAttribute('data-p'),T=pracTasks(S.variant),b=pracBase(T[i]);
+  S.pa[i]=el.value;save();
+  var n=norm(el.value),bad=!validFor(n,b);
+  el.classList.toggle('badch',bad);el.classList.toggle('filled',!bad&&n!=='');
+  document.getElementById('w'+i).textContent=bad?warnText(b):'';
+  var nav=app.querySelector('.nav');if(nav)nav.outerHTML=navHTML();
+});
+app.addEventListener('keydown',function(e){
+  if(!inProgress())return;
+  /* буквы A–F вводятся по клавише, а не по раскладке: в русской раскладке клавиша F тоже даёт F */
+  var m=/^Key([A-F])$/.exec(e.code||'');
+  if(m&&e.target.hasAttribute('data-p')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault();var el=e.target,st=el.selectionStart,en=el.selectionEnd;
+    if(el.value.length-(en-st)>=el.maxLength)return;
+    el.setRangeText(m[1],st,en,'end');el.dispatchEvent(new Event('input',{bubbles:true}));return;
+  }
+  if(e.key==='Enter'&&e.target.hasAttribute('data-p')){
+    e.preventDefault();var n=+e.target.getAttribute('data-p')+1,nx=app.querySelector('input[data-p="'+n+'"]');
+    if(nx)nx.focus();
+  }
+});
+
+/* ===================== ЗАВЕРШЕНИЕ ===================== */
+function askFinish(){
+  var miss=[];for(var n=1;n<=TOTAL;n++)if(!taskDone(n))miss.push(n);
+  var body=miss.length?'<p>Нет ответа на задания: <b>'+miss.join(', ')+'</b>.</p><p>Всё равно завершить работу? Изменить ответы после этого будет нельзя.</p>'
+                      :'<p>Все задания выполнены. После завершения изменить ответы будет нельзя.</p>';
+  confirmBox('Завершить работу?',body,'Завершить','Вернуться к работе',finish);
+}
+function grade(){
+  var T=pracTasks(S.variant),items=[],parts=[0,0,0,0];
+  S.theory.forEach(function(q,i){
+    var p=scoreTheory(q,S.ta[i]);parts[q.part]+=p;
+    items.push({n:i+1,part:q.part,p:p,text:q.q,ans:theoryAnswerText(q,S.ta[i])});
+  });
+  T.forEach(function(t,i){
+    var a=stripZeros(norm(S.pa[i])),p=(a!==''&&a===t.ans)?1:0;parts[t.part]+=p;
+    items.push({n:i+NT+1,part:t.part,p:p,text:pracText(t,true),html:pracText(t),ans:a||'—',base:pracBase(t)});
+  });
+  var sum=parts.reduce(function(x,y){return x+y;},0);
+  return {items:items,parts:parts,sum:sum};
+}
+function finish(){
+  S.status='done';S.end=Date.now();S.result=grade();save();
+  if(document.fullscreenElement&&document.exitFullscreen){try{document.exitFullscreen();}catch(e){}}
+  renderWho();renderResult();sendResult();downloadTxt();
+}
+function renderResult(){
+  var R=S.result,h='<div class="card"><h2>Результат</h2>';
+  h+='<div class="score"><div class="n">'+fmt(R.sum)+'</div><div class="of">из '+TOTAL+' баллов</div></div>';
+  h+='<table class="parts">';
+  var mx=MX;
+  PARTS.forEach(function(p,i){h+='<tr><td>Часть '+(i+1)+'. '+p+'</td><td class="p">'+fmt(R.parts[i])+' из '+mx[i]+'</td></tr>';});
+  h+='</table><div class="res">';
+  R.items.forEach(function(it){
+    var c=it.p===1?'ok':(it.p===0.5?'half':'bad'),v=it.p===1?'✓ верно':(it.p===0.5?'½ частично':'✗ ошибка');
+    var txt=it.n<=NT?esc(it.text):(it.html+'<div class="ya">Ваш ответ: <span class="num" style="font-size:19px">'+esc(it.ans)+'</span>'+(it.ans!=='—'?sub(it.base):'')+'</div>');
+    h+='<div class="ri '+c+'"><span class="k">'+it.n+'.</span><span>'+txt+'</span><span class="v">'+v+' · '+fmt(it.p)+'</span></div>';
+  });
+  h+='</div><div id="sendbox"></div>';
+  h+='<div class="foot"><button type="button" class="btn" id="dl">Сохранить результат (.txt) ещё раз</button>'+
+     '<button type="button" class="btn ghost" id="nextSt">Следующий ученик</button></div></div>';
+  app.innerHTML=h;
+  document.getElementById('dl').onclick=downloadTxt;
+  document.getElementById('nextSt').onclick=function(){
+    confirmBox('Следующий ученик','<p>Результат ученика <b>'+esc(S.fio)+'</b> будет убран с экрана. Он уже сохранён в файле'+(SCRIPT_URL?' и отправлен в таблицу':'')+'.</p>','Да, следующий ученик','Отмена',function(){
+      S=null;clearStore();renderWho();renderStart();
+    });
+  };
+  showSend();
+}
+function showSend(){
+  var box=document.getElementById('sendbox');if(!box)return;
+  if(!SCRIPT_URL){box.innerHTML='';return;}
+  if(S.sent==='ok')box.innerHTML='<div class="send ok">Результат отправлен учителю.</div>';
+  else if(S.sent==='wait')box.innerHTML='<div class="send wait">Отправка результата учителю…</div>';
+  else box.innerHTML='<div class="send bad">Не удалось отправить результат учителю. Проверьте интернет и нажмите <button type="button" class="btn" id="resend" style="padding:3px 12px">Отправить ещё раз</button></div>';
+  var r=document.getElementById('resend');if(r)r.onclick=sendResult;
+}
+
+/* ===================== ОТПРАВКА В GOOGLE-ТАБЛИЦУ ===================== */
+function payload(){
+  var R=S.result,d=new Date(S.end),o={
+    date:two(d.getDate())+'.'+two(d.getMonth()+1)+'.'+d.getFullYear(),
+    start:hm(S.start),end:hm(S.end),duration:dur(S.end-S.start),
+    fio:S.fio,cls:S.cls,variant:S.variant,score:R.sum,max:TOTAL,
+    part1:R.parts[0],part2:R.parts[1],part3:R.parts[2],part4:R.parts[3],
+    away:S.away,log:S.log.map(function(x){return hm(x.t)+' '+x.e;}).join('; ')
+  };
+  R.items.forEach(function(it){o['z'+it.n]=it.p;});
+  o.answers=R.items.filter(function(it){return it.n>NT;}).map(function(it){return it.n+') '+it.ans;}).join('; ');
+  return o;
+}
+function sendResult(){
+  if(!SCRIPT_URL||!S||!S.result)return;
+  S.sent='wait';save();showSend();
+  var done=false;
+  fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload())})
+   .then(function(){done=true;if(S){S.sent='ok';save();showSend();}})
+   .catch(function(){done=true;if(S){S.sent='bad';save();showSend();}});
+  setTimeout(function(){if(!done&&S){S.sent='bad';save();showSend();}},20000);
+}
+
+/* ===================== ФАЙЛ .TXT ===================== */
+function downloadTxt(){
+  if(!S||!S.result)return;
+  var R=S.result,L=[],d=new Date(S.end),mx=MX;
+  L.push(WORK_NAME);
+  L.push('Ученик: '+S.fio);L.push('Класс: '+S.cls);L.push('Вариант: '+S.variant);
+  L.push('Дата: '+two(d.getDate())+'.'+two(d.getMonth()+1)+'.'+d.getFullYear()+', начало '+hm(S.start)+', конец '+hm(S.end)+' ('+dur(S.end-S.start)+')');
+  L.push('');
+  L.push('ИТОГО: '+fmt(R.sum)+' из '+TOTAL+' баллов');
+  PARTS.forEach(function(p,i){L.push('  Часть '+(i+1)+'. '+p+' ('+GOALS[i]+'): '+fmt(R.parts[i])+' из '+mx[i]);});
+  L.push('');
+  L.push('Уходы со страницы: '+S.away);
+  if(S.log.length){L.push('Журнал событий:');S.log.forEach(function(x){L.push('  '+hm(x.t)+' — '+x.e);});}
+  L.push('');L.push('ПО ЗАДАНИЯМ');
+  R.items.forEach(function(it){
+    L.push(it.n+'. '+it.text);
+    L.push('   Ответ ученика: '+it.ans+(it.n>NT&&it.ans!=='—'?'('+it.base+')':''));
+    L.push('   Баллы: '+fmt(it.p)+(it.p===1?' (верно)':(it.p===0.5?' (частично)':' (неверно)')));
+  });
+  var blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/plain;charset=utf-8'});
+  var name=(S.fio+'_'+S.cls+'_СОР_системы_счисления').replace(/[\\\/:*?"<>|]+/g,'').replace(/\s+/g,'_')+'.txt';
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(a.href);},500);
+}
+
+/* ===================== ОКНА ===================== */
+var modalOpen=false;
+function confirmBox(title,body,yes,no,onYes,warn){
+  modal.className='modal'+(warn?' warn':'');
+  modal.innerHTML='<h3>'+title+'</h3>'+body+'<div class="row">'+(no?'<button type="button" class="btn ghost" data-r="0">'+no+'</button>':'')+'<button type="button" class="btn primary" data-r="1">'+yes+'</button></div>';
+  overlay.hidden=false;modalOpen=true;
+  var y=modal.querySelector('[data-r="1"]');if(y)y.focus();
+  modal.onclick=function(e){
+    var b=e.target.closest('[data-r]');if(!b)return;
+    overlay.hidden=true;modalOpen=false;
+    if(b.getAttribute('data-r')==='1'&&onYes)onYes();
+  };
+}
+
+/* ===================== ЗАЩИТА ===================== */
+function goFull(){
+  var el=document.documentElement;
+  try{if(el.requestFullscreen&&!document.fullscreenElement)el.requestFullscreen().catch(function(){});}catch(e){}
+}
+var awayStart=0;
+function leave(why){
+  if(!inProgress()||awayStart)return;
+  awayStart=Date.now();S.away++;logEv('ушёл со страницы ('+why+')');
+}
+function back(){
+  if(!inProgress()||!awayStart)return;
+  var sec=Math.round((Date.now()-awayStart)/1000);awayStart=0;
+  logEv('вернулся на страницу через '+sec+' с');
+  confirmBox('Вы покидали страницу работы','<p>Уход со страницы записан в результат (всего: <b>'+S.away+'</b>).</p><p>Продолжайте работу и не переключайтесь на другие окна.</p>','Продолжить работу',null,function(){goFull();},true);
+}
+document.addEventListener('visibilitychange',function(){if(document.hidden)leave('другая вкладка или окно');else back();});
+window.addEventListener('blur',function(){setTimeout(function(){if(!document.hasFocus())leave('окно потеряло фокус');},300);});
+window.addEventListener('focus',function(){if(!document.hidden)back();});
+document.addEventListener('fullscreenchange',function(){
+  if(inProgress()&&!document.fullscreenElement){
+    logEv('вышел из полноэкранного режима');
+    if(!modalOpen)confirmBox('Полноэкранный режим','<p>Работа выполняется на весь экран. Выход из полноэкранного режима записан в результат.</p>','Вернуться на весь экран',null,goFull,true);
+  }
+});
+document.addEventListener('keydown',function(e){
+  var k=(e.key||'').toUpperCase(),ctrl=e.ctrlKey||e.metaKey;
+  var block=k==='F12'||(ctrl&&e.shiftKey&&['I','J','C','K','Ш','О','С','Л'].indexOf(k)>=0)||
+            (ctrl&&['U','S','P','F','Г','Ы','З','А'].indexOf(k)>=0);
+  if(block){e.preventDefault();e.stopPropagation();if(inProgress())logEv('попытка нажать запрещённую комбинацию клавиш');return false;}
+},true);
+document.addEventListener('contextmenu',function(e){e.preventDefault();});
+['copy','cut','paste'].forEach(function(ev){document.addEventListener(ev,function(e){if(inProgress())e.preventDefault();});});
+document.addEventListener('dragstart',function(e){e.preventDefault();});
+window.addEventListener('beforeunload',function(e){if(inProgress()){e.preventDefault();e.returnValue='';}});
+
+/* ===================== ЗАПУСК ===================== */
+S=load();
+if(S&&S.status==='run'){
+  logEv('страница была перезагружена или открыта заново');
+  renderWho();
+  app.innerHTML='<div class="card"><h2>Продолжение работы</h2><p>Найдена незавершённая работа: <b>'+esc(S.fio)+'</b>, '+esc(S.cls)+', вариант '+S.variant+'.</p><p class="note">Ответы сохранены. Перезагрузка страницы записана в результат.</p>'+
+    '<div class="row" style="margin-top:14px"><button type="button" class="btn primary" id="cont">Продолжить работу</button>'+
+    '<button type="button" class="btn ghost" id="drop">Удалить и начать заново</button></div></div>';
+  document.getElementById('cont').onclick=function(){goFull();renderTest();};
+  document.getElementById('drop').onclick=function(){
+    confirmBox('Удалить работу?','<p>Все ответы ученика <b>'+esc(S.fio)+'</b> будут удалены без сохранения. Делайте это, только если так решил учитель.</p>','Удалить','Отмена',function(){S=null;clearStore();renderWho();renderStart();});
+  };
+}else if(S&&S.status==='done'){
+  renderWho();renderResult();
+}else{S=null;renderStart();}
+
+/* для автотестов */
+window.__sor={calcPress:calcPress,CALC:function(){return CALC;},VARIANTS:VARIANTS,pracTasks:pracTasks,scoreTheory:scoreTheory,norm:norm,get S(){return S;}};
+})();
+</script>
+</body>
+</html>
